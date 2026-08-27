@@ -25,4 +25,7 @@ typings/
 .env
 
 # Production files
-dist
+# NOTE: dist IS committed in this repo — jsDelivr serves the bundle straight
+# from GitHub, so an ignored dist/ means every pinned CDN URL 404s.
+# Only the local smoke-test harness stays out.
+dist/test.html
