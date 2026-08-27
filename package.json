@@ -25,6 +25,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development node ./bin/build.js",
     "build": "cross-env NODE_ENV=production node ./bin/build.js",
+    "deploy": "node ./bin/deploy.js",
     "lint": "eslint ./src && prettier --check ./src",
     "lint:fix": "eslint ./src --fix",
     "check": "tsc --noEmit",
@@ -52,7 +53,9 @@
     "typescript-eslint": "^8.23.0"
   },
   "dependencies": {
-    "@finsweet/ts-utils": "^0.40.0"
+    "@finsweet/attributes-list": "workspace:*",
+    "@finsweet/ts-utils": "^0.40.0",
+    "@finsweet/attributes-utils": "workspace:*"
   },
   "engines": {
     "pnpm": ">=10"

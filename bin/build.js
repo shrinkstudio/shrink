@@ -2,12 +2,14 @@ import * as esbuild from 'esbuild';
 import { readdirSync } from 'fs';
 import { join, sep } from 'path';
 
+import { inlineWorkerPlugin } from './inline-worker-plugin.js';
+
 // Config output
 const BUILD_DIRECTORY = 'dist';
 const PRODUCTION = process.env.NODE_ENV === 'production';
 
 // Config entrypoint files
-const ENTRY_POINTS = ['src/index.ts'];
+const ENTRY_POINTS = ['src/index.ts', 'src/list.ts'];
 
 // Config dev serving
 const LIVE_RELOAD = !PRODUCTION;
@@ -26,6 +28,12 @@ const context = await esbuild.context({
   define: {
     SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
   },
+  plugins: [
+    inlineWorkerPlugin({
+      minify: PRODUCTION,
+      target: PRODUCTION ? 'es2020' : 'esnext',
+    }),
+  ],
 });
 
 // Build files in prod

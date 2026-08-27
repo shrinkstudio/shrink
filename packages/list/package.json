@@ -1,0 +1,37 @@
+{
+  "name": "@finsweet/attributes-list",
+  "version": "1.14.6",
+  "description": "Supercharge your Webflow CMS and static lists.",
+  "private": true,
+  "type": "module",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "eslint ./src && prettier --check ./src",
+    "lint:fix": "eslint ./src --fix && prettier --write ./src",
+    "check": "tsc --noEmit"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./selectors": {
+      "types": "./src/utils/selectors.ts",
+      "import": "./src/utils/selectors.ts"
+    },
+    "./dom": {
+      "types": "./src/utils/dom.ts",
+      "import": "./src/utils/dom.ts"
+    }
+  },
+  "dependencies": {
+    "@finsweet/attributes-utils": "workspace:*",
+    "@vue/reactivity": "^3.5.13",
+    "fuzzysort": "^3.1.0",
+    "just-debounce": "^1.1.0",
+    "just-throttle": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/dlv": "^1.1.5"
+  }
+}
