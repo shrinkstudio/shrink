@@ -21,31 +21,7 @@
 // Without them the nav still works — this just no-ops (no highlight).
 // -----------------------------------------
 
-type FlipState = unknown;
-
-interface GsapTimeline {
-  fromTo(target: unknown, fromVars: object, toVars: object): GsapTimeline;
-  play(): void;
-  reverse(): void;
-  kill(): void;
-}
-
-interface Gsap {
-  timeline(vars: { paused?: boolean; onReverseComplete?: () => void }): GsapTimeline;
-  registerPlugin(...plugins: unknown[]): void;
-}
-
-interface FlipPlugin {
-  getState(targets: Element | Element[]): FlipState;
-  from(state: FlipState, vars: { duration?: number; ease?: string }): unknown;
-}
-
-declare global {
-  interface Window {
-    gsap?: Gsap;
-    Flip?: FlipPlugin;
-  }
-}
+import type { GsapTimeline } from '../utils/gsap';
 
 interface StoredListener {
   element: Element;

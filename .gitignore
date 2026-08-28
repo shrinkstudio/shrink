@@ -30,3 +30,4 @@ typings/
 # Only the local smoke-test harness stays out.
 dist/test.html
 dist/nav-test.html
+dist/team-test.html

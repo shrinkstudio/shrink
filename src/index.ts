@@ -4,10 +4,12 @@
 // owns behaviour/GSAP. Add modules per section as the build progresses and
 // initialise them inside the Webflow.push callback below.
 //
-// GSAP + Flip are expected as globals from the CDN (see hover-list.ts).
+// GSAP + Flip are expected as globals from the CDN (see utils/gsap.ts).
 import { initHoverList } from './modules/hover-list';
+import { initTeamHover } from './modules/team-hover';
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
   initHoverList();
+  initTeamHover();
 });
