@@ -49,7 +49,9 @@ const getButtonValue = (button: HTMLElement) => {
  * plus a `destroy` cleanup. `undefined` if there are no button filters.
  */
 export const initButtonFilters = () => {
-  const buttons = [...document.querySelectorAll<HTMLElement>(`[${ELEMENT_ATTRIBUTE}="${BUTTON_ELEMENT}"]`)];
+  const buttons = [
+    ...document.querySelectorAll<HTMLElement>(`[${ELEMENT_ATTRIBUTE}="${BUTTON_ELEMENT}"]`),
+  ];
   if (!buttons.length) return;
 
   const form = document.createElement('form');
