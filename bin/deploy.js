@@ -21,7 +21,15 @@ import { readFileSync } from 'node:fs';
 
 const REPO = 'shrinkstudio/shrink';
 const BRANCH = 'master';
-const FILES = ['dist/index.js', 'dist/list.js'];
+
+// Where each bundle goes in Webflow. `site` applies it site-wide; `page`
+// applies it to that page only (keeps the 100KB list bundle off every page).
+const WEBFLOW_SITE_ID = '6a8daa3ae6b8009a3d00e586'; // SS 2027
+const BUNDLES = [
+  { file: 'dist/index.js', displayName: 'shrinkIndex', target: 'site' },
+  { file: 'dist/list.js', displayName: 'shrinkList', target: 'page', pageId: '6a903c18cab25430c55fb644' }, // Resources
+];
+const FILES = BUNDLES.map(({ file }) => file);
 
 const run = (cmd) => execSync(cmd, { stdio: ['inherit', 'pipe', 'inherit'] }).toString().trim();
 const log = (msg) => process.stdout.write(`${msg}\n`);
@@ -84,3 +92,68 @@ log(`  short SHA : ${sha.slice(0, 7)}`);
 log('  Pinned URLs are immutable — no jsDelivr purge needed.');
 log(`  At go-live, swap to @${BRANCH} (and purge on each push).`);
 log('');
+
+// 4. Point Webflow at the new SHA.
+//
+// Registering the same displayName with a new version adds a version under the
+// existing script id, so the id stays stable and only the pin moves. Then the
+// applied lists are re-PUT at that version. Endpoints per
+// developers.webflow.com/data/docs/working-with-custom-code.
+//
+// Needs a token with custom_code:write (plus sites/pages read+write):
+//   WEBFLOW_API_TOKEN=… pnpm deploy "msg"
+const token = process.env.WEBFLOW_API_TOKEN;
+
+if (!token) {
+  log('⚠ WEBFLOW_API_TOKEN not set — Webflow still points at the PREVIOUS SHA.');
+  log('  Set it to update the pin automatically, or update the registered');
+  log(`  scripts (${BUNDLES.map(({ displayName }) => displayName).join(', ')}) by hand.`);
+  log('');
+} else {
+  const api = async (method, path, body) => {
+    const response = await fetch(`https://api.webflow.com/v2${path}`, {
+      method,
+      headers: {
+        authorization: `Bearer ${token}`,
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webflow ${method} ${path} → ${response.status} ${await response.text()}`);
+    }
+
+    return response.json();
+  };
+
+  log('▶ Updating Webflow…');
+
+  const applied = new Map(); // target key → scripts[] to PUT
+
+  for (const bundle of BUNDLES) {
+    const { id } = await api('POST', `/sites/${WEBFLOW_SITE_ID}/registered_scripts/hosted`, {
+      displayName: bundle.displayName,
+      hostedLocation: `https://cdn.jsdelivr.net/gh/${REPO}@${sha}/${bundle.file}`,
+      integrityHash: `sha384-${createHash('sha384').update(readFileSync(bundle.file)).digest('base64')}`,
+      version,
+      canCopy: true,
+    });
+
+    // PUT replaces the whole list, so group everything bound for the same
+    // target and send it in one request.
+    const key = bundle.target === 'site' ? `/sites/${WEBFLOW_SITE_ID}` : `/pages/${bundle.pageId}`;
+    applied.set(key, [...(applied.get(key) || []), { id, location: 'footer', version }]);
+
+    log(`  registered ${bundle.displayName} @ ${version}`);
+  }
+
+  for (const [key, scripts] of applied) {
+    await api('PUT', `${key}/custom_code`, { scripts });
+    log(`  applied to ${key}`);
+  }
+
+  log('▶ Webflow now points at the new SHA. Publish to see it live.');
+  log('');
+}
