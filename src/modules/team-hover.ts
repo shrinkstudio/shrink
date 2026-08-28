@@ -119,6 +119,13 @@ export const initTeamHover = (scope: ParentNode = document) => {
       const gif = item.querySelector<HTMLElement>('[data-team-gif]');
       if (!gif) continue;
 
+      // Webflow images default to loading="lazy", and a lazy image inside a
+      // display:none container is never fetched — so the first hover on each
+      // person would show an empty follower. Flipping the property to eager
+      // starts the load immediately. The Designer setting isn't exposed by the
+      // Data API, so this has to be done here.
+      for (const img of gif.querySelectorAll('img')) img.loading = 'eager';
+
       listen(item, 'mouseenter', () => {
         // One GIF visible at a time: the follower only ever holds the current one.
         follower.replaceChildren(gif);
