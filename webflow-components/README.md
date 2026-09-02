@@ -14,15 +14,34 @@ and type mirror the ss-2027 MAST tokens (blue `#4469fc`, ink `#0a0a0a`, smoke
 ### Readiness Quiz (`src/ReadinessQuiz`)
 
 "Ready to brief a build?" — a 7-question readiness quiz for venture-backed teams.
-Intro card, one question at a time, then a results screen with a score, the gaps
-worth closing, and where we'd start. Figma: node `3793-6378`.
+Intro card, one question at a time, then a results screen. Ported from the live
+tools.shrink.studio quiz so it matches the proven tool. Figma: intro `3793-6378`,
+results `3793-7390`.
 
-- `quiz.ts` — questions + scoring (pure, unit-tested). Edit copy/points here.
+Results screen: two-axis score (**Readiness** = moment+clarity+team / 9,
+**Urgency** = gapExternal+gapInternal / 6), a "what the next site needs" list
+(from the jobs-to-be-done multi-select), a "where we'd start" engagement
+recommendation (Seed Website / Clarity Sprint / Discovery), a lead-capture form,
+and a shareable result link.
+
+- `quiz.ts` — questions, two-axis scoring, engagement routing, share-link
+  encoding (pure, unit-tested). Edit questions/scoring/copy here.
 - `styles.ts` — scoped CSS (MAST palette).
-- `ReadinessQuiz.tsx` — the UI (intro / quiz / results phases).
+- `ReadinessQuiz.tsx` — the UI (intro / quiz / results phases; single + multi
+  select).
 - `ReadinessQuiz.webflow.tsx` — Webflow declaration. Editable props: theme,
-  eyebrow, intro heading/body, three bullets, button labels, results CTA
-  label + link. Questions and scoring stay in code.
+  intro copy, button labels, and the two integration endpoints below.
+
+**Integration endpoints (props):**
+
+- **Lead submit endpoint** — where the form POSTs JSON `{ contact, answers,
+  result }`. Defaults to `https://tools.shrink.studio/api/quiz-submit` (creates a
+  ClickUp task). Because the embed runs on a different origin (shrink.studio),
+  that route needs CORS headers + an `OPTIONS` handler for the browser preflight
+  to pass. Until that's added, the form submit will be blocked cross-origin.
+- **Share link base URL** — base for the shareable result link
+  (`<base>/quiz/r/<slug>?d=<encoded answers>`). Defaults to
+  `https://tools.shrink.studio`, whose `/quiz/r/[slug]` route rehydrates it.
 
 ## Develop
 

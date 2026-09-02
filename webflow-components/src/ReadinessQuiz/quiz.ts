@@ -1,191 +1,368 @@
 /**
- * "Ready to brief a build?" — readiness quiz logic. Pure + testable: no React,
- * no DOM. Seven questions, each scored 0–3, mapped to a readiness band plus the
- * gaps worth closing and where we'd start.
+ * "Ready to brief a build?" — readiness quiz logic. Pure + framework-free.
+ * Ported from the live tools.shrink.studio quiz (src/lib/quiz) so the embedded
+ * Webflow component matches the proven tool: two-axis scoring (Readiness / 9 +
+ * Urgency / 6), a jobs-to-be-done list, a recommended engagement, and a
+ * shareable-result link.
  *
- * Aimed at Shrink's ICP: venture-backed B2B software teams, Seed–Series B,
- * weighing a website redesign. Honest read, not a sales pitch.
+ * Keep questions, scoring, and copy here — the component reads it, Ben refines it.
  */
 
-export interface Option {
+export type Dimension =
+  | 'moment'
+  | 'clarity'
+  | 'gapExternal'
+  | 'gapInternal'
+  | 'jtbd'
+  | 'team'
+  | 'shape';
+
+export type QuestionType = 'single' | 'multi';
+
+export interface QuestionOption {
+  id: string;
   label: string;
-  points: number;
+  score?: number;
 }
 
 export interface Question {
   id: string;
-  /* dimension of readiness this probes */
-  dimension: string;
-  question: string;
-  options: Option[];
-  /* surfaced in results when the chosen option scores at or below GAP_THRESHOLD */
-  gap: string;
+  dimension: Dimension;
+  type: QuestionType;
+  prompt: string;
+  helper?: string;
+  options: QuestionOption[];
+  maxSelections?: number;
 }
 
-/* An answer scoring this low flags its dimension as a gap. */
-export const GAP_THRESHOLD = 1;
+export type Answers = Record<string, string | string[]>;
 
 export const QUESTIONS: Question[] = [
   {
-    id: 'stage',
-    dimension: 'Timing',
-    question: "Where's the business right now?",
+    id: 'moment',
+    dimension: 'moment',
+    type: 'single',
+    prompt: 'Where are you in the funding journey?',
+    helper: 'We work with venture-backed teams. This helps us tell you if now is the moment.',
     options: [
-      { label: 'Pre-seed or bootstrapping', points: 0 },
-      { label: 'Recently closed a Seed round', points: 2 },
-      { label: 'Series A or B, scaling', points: 3 },
-      { label: 'Mid-raise, closing soon', points: 2 },
+      { id: 'pre-raise', label: "Pre-seed, or haven't raised yet", score: 0 },
+      { id: 'recent-seed', label: 'Recently raised seed (within 6 months)', score: 3 },
+      { id: 'mid-cycle', label: 'Raised seed or Series A 6–18 months ago', score: 3 },
+      { id: 'post-cycle', label: 'Raised over 18 months ago', score: 2 },
+      { id: 'bootstrapped', label: 'Bootstrapped, post-revenue', score: 1 },
     ],
-    gap: 'Timing. A redesign lands best just after a raise, when there is budget and a clear next chapter to build toward.',
   },
   {
-    id: 'trigger',
-    dimension: 'Motivation',
-    question: "What's prompting a new site?",
+    id: 'clarity',
+    dimension: 'clarity',
+    type: 'single',
+    prompt: "Whose homepage are you writing — yours, or your customer's?",
+    helper: "The sharpest sites are written from the customer's point of view, not the product's.",
     options: [
-      { label: 'It looks dated next to where we are now', points: 2 },
-      { label: "We've repositioned or changed who we sell to", points: 3 },
-      { label: "We're chasing bigger, more considered deals", points: 3 },
-      { label: 'Nothing specific, just curious', points: 0 },
+      { id: 'customer', label: "Our customer's — their problems, their world", score: 3 },
+      { id: 'mixed', label: 'A mix, depending where you look', score: 2 },
+      { id: 'ours', label: 'Ours — our product, our story', score: 1 },
+      { id: 'unclear', label: "Honestly, we haven't worked that out yet", score: 0 },
     ],
-    gap: 'Motivation. Without a clear trigger a rebuild tends to stall. Pin down the one thing the new site has to fix.',
   },
   {
-    id: 'positioning',
-    dimension: 'Positioning',
-    question: 'How clear is your positioning and messaging?',
+    id: 'gap-external',
+    dimension: 'gapExternal',
+    type: 'single',
+    prompt: 'When an investor or enterprise prospect Googles you, does the site hold up?',
     options: [
-      { label: 'Sharp. We could write the homepage today', points: 3 },
-      { label: 'Mostly there, needs tightening', points: 2 },
-      { label: 'It shifts depending on who is talking', points: 1 },
-      { label: 'Honestly, unclear', points: 0 },
+      { id: 'confident', label: "Confidently — we'd point them straight at it", score: 0 },
+      { id: 'does-job', label: 'It does the job', score: 1 },
+      { id: 'rather-not', label: "We'd rather they didn't look too hard", score: 2 },
+      { id: 'hurts', label: 'It actively hurts us', score: 3 },
     ],
-    gap: 'Positioning. A site cannot fix a fuzzy story. Nail the message first, then design around it.',
   },
   {
-    id: 'content',
-    dimension: 'Content',
-    question: 'Do you have the content and proof ready: case studies, product story, visuals?',
+    id: 'gap-internal',
+    dimension: 'gapInternal',
+    type: 'single',
+    prompt: 'Does your marketing team have somewhere to point campaigns?',
     options: [
-      { label: 'Yes, in good shape', points: 3 },
-      { label: 'Some of it, gaps to fill', points: 2 },
-      { label: "Very little, we'd start from scratch", points: 1 },
-      { label: 'No, and no one owns it', points: 0 },
+      { id: 'yes-kit', label: 'Yes — landing pages, sector pages, the full kit', score: 0 },
+      { id: 'sort-of', label: 'Sort of — they make it work', score: 1 },
+      { id: 'work-around', label: 'They mostly work around the site', score: 2 },
+      { id: 'no-team', label: "There isn't really a marketing team yet", score: 3 },
     ],
-    gap: 'Content. Great design dies without substance. Line up your proof and product narrative early.',
   },
   {
-    id: 'ownership',
-    dimension: 'Ownership',
-    question: "Who's driving this internally?",
+    id: 'jtbd',
+    dimension: 'jtbd',
+    type: 'multi',
+    prompt: 'What does the next site need to do?',
+    helper: "Pick up to three. We'll play these back as the priorities your build has to deliver on.",
+    maxSelections: 3,
     options: [
-      { label: 'A founder or exec, hands-on', points: 3 },
-      { label: 'A marketing lead with real authority', points: 3 },
-      { label: "Someone, but they're stretched thin", points: 1 },
-      { label: 'No clear owner yet', points: 0 },
+      { id: 'convert-demos', label: 'Convert demo or trial requests' },
+      { id: 'land-enterprise', label: 'Land enterprise prospects' },
+      { id: 'support-recruiting', label: 'Support hiring and recruiting' },
+      { id: 'brief-investors', label: 'Brief investors on the next round' },
+      { id: 'launch-narratives', label: 'Launch new product narratives' },
+      { id: 'marketing-experiments', label: 'Let marketing experiment fast' },
+      { id: 'company-story', label: 'Tell the company story properly' },
     ],
-    gap: 'Ownership. Builds without an engaged internal owner drift. Name a decision-maker before you start.',
   },
   {
-    id: 'timeline',
-    dimension: 'Timeline',
-    question: 'When do you need it live?',
+    id: 'team',
+    dimension: 'team',
+    type: 'single',
+    prompt: 'Who owns this internally — and have they got the time?',
     options: [
-      { label: 'Flexible. We want it right', points: 3 },
-      { label: 'Next two to three months', points: 3 },
-      { label: 'Yesterday, tied to a launch', points: 2 },
-      { label: 'No timeline in mind', points: 1 },
+      { id: 'named-time', label: 'Named owner with time carved out', score: 3 },
+      { id: 'named-no-time', label: 'Named owner, but no real time', score: 2 },
+      { id: 'whoever', label: "Whoever's free that week", score: 1 },
+      { id: 'no-one', label: 'No one yet', score: 0 },
     ],
-    gap: 'Timeline. Set a real target date. Open-ended projects rarely ship.',
   },
   {
-    id: 'measure',
-    dimension: 'Measurement',
-    question: 'How will you know the new site worked?',
+    id: 'shape',
+    dimension: 'shape',
+    type: 'single',
+    prompt: 'What feels closest to what you need?',
+    helper: 'There are no wrong answers. We use this to point you at the right starting point.',
     options: [
-      { label: 'Clear metrics: demos, signups, pipeline', points: 3 },
-      { label: 'A rough sense, not tracked yet', points: 1 },
-      { label: 'It will just look and feel better', points: 1 },
-      { label: 'Not sure', points: 0 },
+      { id: 'rebuild', label: 'A full rebuild' },
+      { id: 'sprint', label: 'A targeted sprint on specific gaps' },
+      { id: 'discovery', label: 'Discovery first, build later' },
+      { id: 'unsure', label: 'Honestly, not sure' },
     ],
-    gap: "Measurement. Decide what 'better' means in numbers, or you will never know if it paid off.",
   },
 ];
 
-export const MAX_SCORE = QUESTIONS.reduce(
-  (sum, q) => sum + Math.max(...q.options.map((o) => o.points)),
-  0,
-);
+export const QUESTION_COUNT = QUESTIONS.length;
 
-export type Band = 'not-yet' | 'getting-close' | 'ready';
+// -------------------------------------------------------------------
+// Scoring
+// -------------------------------------------------------------------
 
-export interface Result {
-  score: number;
-  max: number;
-  percent: number;
-  band: Band;
-  bandLabel: string;
-  bandBlurb: string;
-  gaps: string[];
-  recommendation: string;
+export type ResultState = 'ready' | 'close' | 'not_yet';
+
+export interface ScoreBreakdown {
+  moment: number;
+  clarity: number;
+  team: number;
+  gapExternal: number;
+  gapInternal: number;
+  readiness: number; // moment + clarity + team, out of 9
+  urgency: number; // gapExternal + gapInternal, out of 6
 }
 
-const BANDS: Record<Band, { label: string; blurb: string; recommendation: string }> = {
-  'not-yet': {
-    label: 'Not yet',
-    blurb: 'A full rebuild now would be building on sand. Worth firming up the basics first.',
-    recommendation:
-      "Hold off on a full rebuild. Start with positioning and proof. We can help you get there, or point you to what to fix first, no pressure.",
-  },
-  'getting-close': {
-    label: 'Getting close',
-    blurb: "You're nearly there. A few gaps to close and you'd be in a strong spot to brief.",
-    recommendation:
-      'A short positioning and content working session to close the gaps above, then straight into design.',
-  },
-  ready: {
-    label: 'Ready to brief',
-    blurb: "You're in a strong spot. The inputs are there, so a build would move fast.",
-    recommendation:
-      'A focused discovery sprint: audit, a positioning check, and a plan for the pages that move the needle.',
-  },
-};
-
-function bandFor(score: number, max: number): Band {
-  const pct = score / max;
-  if (pct < 0.38) return 'not-yet';
-  if (pct < 0.72) return 'getting-close';
-  return 'ready';
+export interface RecommendedEngagement {
+  id: 'seed-website' | 'clarity-sprint' | 'discovery' | 'audit' | 'resource';
+  label: string;
+  blurb: string;
+  cta: string;
 }
 
-/**
- * Score a completed quiz. `answers` holds the chosen option index for each
- * question, in QUESTIONS order. Missing/invalid answers count as zero.
- */
-export function scoreQuiz(answers: Array<number | null>): Result {
-  let score = 0;
-  const gaps: string[] = [];
+export interface QuizResult {
+  state: ResultState;
+  scores: ScoreBreakdown;
+  jtbd: string[]; // selected option labels
+  shape: string | null;
+  eyebrow: string;
+  headline: string;
+  diagnosis: string;
+  readinessNote: string;
+  urgencyNote: string;
+  jtbdLabel: string;
+  recommendedEngagement: RecommendedEngagement;
+}
 
-  QUESTIONS.forEach((q, i) => {
-    const choice = answers[i];
-    const opt = choice != null ? q.options[choice] : undefined;
-    const points = opt ? opt.points : 0;
-    score += points;
-    if (points <= GAP_THRESHOLD) gaps.push(q.gap);
-  });
+export const READINESS_MAX = 9;
+export const URGENCY_MAX = 6;
 
-  const max = MAX_SCORE;
-  const band = bandFor(score, max);
-  const meta = BANDS[band];
+function scoreOf(questionId: string, answers: Answers): number {
+  const q = QUESTIONS.find((x) => x.id === questionId);
+  if (!q) return 0;
+  const ans = answers[questionId];
+  if (typeof ans !== 'string') return 0;
+  return q.options.find((o) => o.id === ans)?.score ?? 0;
+}
+
+function dimensionScore(dim: Dimension, answers: Answers): number {
+  const q = QUESTIONS.find((x) => x.dimension === dim);
+  return q ? scoreOf(q.id, answers) : 0;
+}
+
+export function computeScores(answers: Answers): ScoreBreakdown {
+  const moment = dimensionScore('moment', answers);
+  const clarity = dimensionScore('clarity', answers);
+  const team = dimensionScore('team', answers);
+  const gapExternal = dimensionScore('gapExternal', answers);
+  const gapInternal = dimensionScore('gapInternal', answers);
+  return {
+    moment,
+    clarity,
+    team,
+    gapExternal,
+    gapInternal,
+    readiness: moment + clarity + team,
+    urgency: gapExternal + gapInternal,
+  };
+}
+
+function deriveState(s: ScoreBreakdown): ResultState {
+  if (s.moment < 2) return 'not_yet';
+  if (s.clarity >= 2 && s.team >= 2) return 'ready';
+  return 'close';
+}
+
+function buildHeadline(state: ResultState): string {
+  if (state === 'ready') return "You're at the moment.";
+  if (state === 'close') return "Close — but the brief isn't there yet.";
+  return 'Not the moment yet — but worth laying the groundwork.';
+}
+
+function buildDiagnosis(state: ResultState, s: ScoreBreakdown, urgent: boolean): string {
+  if (state === 'ready') {
+    if (urgent) {
+      return "The brief is there, the team's there, and the gap between where you are and what's expected is wide enough that moving sooner pays off.";
+    }
+    return 'Clarity, team, and timing all line up. This is the point where briefing a build pays the most.';
+  }
+  if (state === 'close') {
+    const weakClarity = s.clarity < 2;
+    const weakTeam = s.team < 2;
+    if (weakClarity && weakTeam) {
+      return "The funding's there, but the brief isn't yet. Positioning and team ownership need to land before a build is worth briefing.";
+    }
+    if (weakClarity) {
+      return "The timing and team are there. What's missing is the clarity — whose homepage you're writing and what it has to say.";
+    }
+    return 'The thinking is there. What is missing is someone inside the company who owns the build with real time to give it.';
+  }
+  return "Now isn't the moment for a full rebuild, but there's groundwork worth doing so you're ready when it is.";
+}
+
+function readinessNote(readiness: number): string {
+  if (readiness >= 7) return 'Clear on what and why.';
+  if (readiness >= 4) return 'The pieces are mostly there.';
+  return 'Still finding the shape.';
+}
+
+function urgencyNote(urgency: number): string {
+  if (urgency >= 4) return 'The window is open now.';
+  if (urgency >= 2) return 'A gap worth closing.';
+  return 'No pressing gap yet.';
+}
+
+function recommendEngagement(
+  state: ResultState,
+  s: ScoreBreakdown,
+  shape: string | null,
+): RecommendedEngagement {
+  if (state === 'ready') {
+    if (shape === 'sprint') {
+      return {
+        id: 'clarity-sprint',
+        label: 'Clarity Sprint',
+        blurb: 'A focused sprint on the specific gaps holding the site back.',
+        cta: 'Send us the brief',
+      };
+    }
+    if (shape === 'discovery') {
+      return {
+        id: 'discovery',
+        label: 'Discovery',
+        blurb: 'Get the thinking right first, then build with a clear plan.',
+        cta: 'Send us the brief',
+      };
+    }
+    return {
+      id: 'seed-website',
+      label: 'Seed Website',
+      blurb: 'Fixed scope, fixed price, six weeks. The productised route for a Seed-stage build.',
+      cta: 'Send us the brief',
+    };
+  }
+  if (state === 'close') {
+    if (s.clarity < 2) {
+      return {
+        id: 'clarity-sprint',
+        label: 'Clarity Sprint',
+        blurb: 'Nail whose homepage you are writing and what it has to say, before you build.',
+        cta: 'Book a free audit',
+      };
+    }
+    return {
+      id: 'discovery',
+      label: 'Discovery',
+      blurb: 'A short piece of discovery to line up ownership and scope before a build.',
+      cta: 'Book a free audit',
+    };
+  }
+  return {
+    id: 'resource',
+    label: 'The funding moment',
+    blurb: 'Groundwork worth doing now, so you are ready to brief when the moment comes.',
+    cta: 'Book a free audit',
+  };
+}
+
+function jtbdLabels(answers: Answers): string[] {
+  const ids = answers['jtbd'];
+  if (!Array.isArray(ids)) return [];
+  const q = QUESTIONS.find((x) => x.id === 'jtbd');
+  if (!q) return [];
+  return ids
+    .map((id) => q.options.find((o) => o.id === id)?.label)
+    .filter((x): x is string => Boolean(x));
+}
+
+export function computeResult(answers: Answers): QuizResult {
+  const scores = computeScores(answers);
+  const state = deriveState(scores);
+  const urgent = scores.urgency >= 4;
+  const shapeRaw = answers['shape'];
+  const shape = typeof shapeRaw === 'string' ? shapeRaw : null;
 
   return {
-    score,
-    max,
-    percent: Math.round((score / max) * 100),
-    band,
-    bandLabel: meta.label,
-    bandBlurb: meta.blurb,
-    gaps,
-    recommendation: meta.recommendation,
+    state,
+    scores,
+    jtbd: jtbdLabels(answers),
+    shape,
+    eyebrow: 'Your readiness',
+    headline: buildHeadline(state),
+    diagnosis: buildDiagnosis(state, scores, urgent),
+    readinessNote: readinessNote(scores.readiness),
+    urgencyNote: urgencyNote(scores.urgency),
+    jtbdLabel: state === 'ready' ? 'What the next site needs' : 'What to nail before briefing',
+    recommendedEngagement: recommendEngagement(state, scores, shape),
   };
+}
+
+// -------------------------------------------------------------------
+// Shareable result link (base64url-encoded answers), client-only.
+// -------------------------------------------------------------------
+
+export function slugifyCompany(input: string): string {
+  const cleaned = input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return cleaned || 'anon';
+}
+
+function toBase64Url(s: string): string {
+  return btoa(unescape(encodeURIComponent(s)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+export function encodeAnswers(answers: Answers): string {
+  return toBase64Url(JSON.stringify(answers));
+}
+
+/** `${base}/quiz/r/<slug>?d=<data>` — points at the tools.shrink.studio result route. */
+export function buildShareUrl(base: string, company: string, answers: Answers): string {
+  const root = base.replace(/\/+$/, '');
+  return `${root}/quiz/r/${slugifyCompany(company)}?d=${encodeAnswers(answers)}`;
 }

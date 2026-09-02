@@ -5,7 +5,7 @@ import { ReadinessQuiz } from './ReadinessQuiz';
 export default declareComponent(ReadinessQuiz, {
   name: 'Readiness Quiz',
   description:
-    "'Ready to brief a build?' — 7-question readiness quiz. Returns a score, the gaps worth closing, and where we'd start. Questions + scoring live in code; copy below is editable.",
+    "'Ready to brief a build?' — 7-question readiness quiz. Two-axis score (Readiness / Urgency), what the next site needs, where we'd start, a lead form, and a shareable link. Questions + scoring live in code; copy + endpoints below are editable.",
   group: 'Shrink',
   props: {
     theme: props.Variant({ name: 'Theme', options: ['light', 'dark'], defaultValue: 'light' }),
@@ -25,12 +25,16 @@ export default declareComponent(ReadinessQuiz, {
 
     // In-quiz
     backLabel: props.Text({ name: 'Back button label', defaultValue: 'Back' }),
-
-    // Results
-    gapsLabel: props.Text({ name: 'Results — gaps heading', defaultValue: 'Gaps worth closing' }),
-    recoLabel: props.Text({ name: 'Results — recommendation heading', defaultValue: "Where we'd start" }),
-    ctaLabel: props.Text({ name: 'Results CTA label', defaultValue: 'Book a call' }),
-    ctaLink: props.Link({ name: 'Results CTA link' }),
     restartLabel: props.Text({ name: 'Retake label', defaultValue: 'Retake the quiz' }),
+
+    // Integration
+    submitEndpoint: props.Text({
+      name: 'Lead submit endpoint',
+      defaultValue: 'https://tools.shrink.studio/api/quiz-submit',
+    }),
+    shareBaseUrl: props.Text({
+      name: 'Share link base URL',
+      defaultValue: 'https://tools.shrink.studio',
+    }),
   },
 });
