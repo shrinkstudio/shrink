@@ -1,0 +1,10 @@
+{
+  "library": {
+    "name": "Shrink Tools",
+    "components": [
+      "./src/**/*.webflow.@(ts|tsx|js|jsx)"
+    ],
+    "description": "Code components for the Shrink Studio site (including but not limited to the Readiness Quiz).",
+    "id": "shrink-tools"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules
+dist
+.webflow
+.env
+.env.*
+*.log
+
+# local preview harness (esbuild)
+.preview
