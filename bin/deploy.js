@@ -22,12 +22,11 @@ import { readFileSync } from 'node:fs';
 const REPO = 'shrinkstudio/shrink';
 const BRANCH = 'master';
 
-// Where each bundle goes in Webflow. `site` applies it site-wide; `page`
-// applies it to that page only (keeps the 100KB list bundle off every page).
+// Single site-wide bundle. `target: 'site'` applies it across the whole site;
+// `page` + pageId would scope one to a single page if ever needed again.
 const WEBFLOW_SITE_ID = '6a8daa3ae6b8009a3d00e586'; // SS 2027
 const BUNDLES = [
   { file: 'dist/index.js', displayName: 'shrinkIndex', target: 'site' },
-  { file: 'dist/list.js', displayName: 'shrinkList', target: 'page', pageId: '6a903c18cab25430c55fb644' }, // Resources
 ];
 const FILES = BUNDLES.map(({ file }) => file);
 

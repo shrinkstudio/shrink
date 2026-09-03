@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Purge bundles from jsDelivr
         run: |
-          for file in dist/index.js dist/list.js; do
+          for file in dist/index.js; do
             echo "Purging $file"
             curl -sS -o /dev/null -w "  %{http_code}  https://purge.jsdelivr.net/gh/${{ github.repository }}@master/$file\n" \
               "https://purge.jsdelivr.net/gh/${{ github.repository }}@master/$file"
