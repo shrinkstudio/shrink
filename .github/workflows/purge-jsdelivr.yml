@@ -1,0 +1,23 @@
+name: Purge jsDelivr
+
+# Every push to master invalidates the @master jsDelivr cache for the bundles,
+# so the embed (pinned to @master, no SHA) serves the new build within seconds.
+# Runs on GitHub after the commit has landed, so the re-fetch pulls the new file.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'dist/**'
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge bundles from jsDelivr
+        run: |
+          for file in dist/index.js dist/list.js; do
+            echo "Purging $file"
+            curl -sS -o /dev/null -w "  %{http_code}  https://purge.jsdelivr.net/gh/${{ github.repository }}@master/$file\n" \
+              "https://purge.jsdelivr.net/gh/${{ github.repository }}@master/$file"
+          done
