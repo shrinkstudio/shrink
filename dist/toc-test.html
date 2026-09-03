@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>toc smoke test</title>
+<style>
+  body { font: 16px/1.5 "Helvetica Neue", system-ui; margin: 0; color: #0a0a0a; }
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 64px; max-width: 1100px; margin: 0 auto; padding: 64px 24px; }
+  .toc { position: sticky; top: 24px; align-self: start; }
+  .toc_label { font-weight: 600; margin: 0 0 12px; }
+  .toc hr { border: 0; border-top: 1px solid #eee; margin: 0 0 16px; }
+  .toc_list { display: flex; flex-direction: column; gap: 12px; }
+  /* the lean design: inactive grey, active black */
+  .toc_link { color: #bbb; text-decoration: none; transition: color .2s; }
+  .toc_link.is-active { color: #0a0a0a; }
+  .toc_link[data-toc-level="3"] { padding-left: 16px; font-size: .95em; }
+  .body h2 { margin: 0 0 16px; }
+  .section { min-height: 90vh; }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="toc">
+      <p class="toc_label">In this case study</p>
+      <hr>
+      <nav class="toc_list" fs-toc-element="table" fs-toc-offsettop="24">
+        <a class="toc_link" fs-toc-element="link" href="#">Template</a>
+      </nav>
+    </aside>
+
+    <article class="body" fs-toc-element="contents">
+      <div class="section"><h2>Overview</h2><p>Lorem ipsum overview.</p></div>
+      <div class="section"><h2>The Problem</h2><p>Lorem ipsum problem.</p></div>
+      <div class="section"><h2>The Discovery</h2><p>Lorem ipsum discovery.</p><h3>A sub point</h3><p>nested</p></div>
+      <div class="section"><h2>The Solution</h2><p>Lorem ipsum solution.</p></div>
+      <div class="section"><h2>The Results</h2><p>Lorem ipsum results.</p></div>
+      <div class="section"><h2>Key Takeaway</h2><p>Lorem ipsum takeaway.</p></div>
+    </article>
+  </div>
+
+  <script>window.Webflow = { push: (fn) => fn() };</script>
+  <script defer src="/index.js"></script>
+</body>
+</html>
