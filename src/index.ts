@@ -6,6 +6,7 @@
 //
 // GSAP + Flip are expected as globals from the CDN (see utils/gsap.ts).
 import { initAskAI } from './modules/ask-ai';
+import { initCurrentTime } from './modules/current-time';
 import { initHoverList } from './modules/hover-list';
 import { initTeamHover } from './modules/team-hover';
 
@@ -14,4 +15,5 @@ window.Webflow.push(() => {
   initHoverList();
   initTeamHover();
   initAskAI();
+  initCurrentTime();
 });

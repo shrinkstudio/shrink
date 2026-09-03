@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>current time smoke test</title>
+<style>
+  body { font: 18px/1.4 "Helvetica Neue", system-ui; padding: 3rem; }
+  .clock { font-variant-numeric: tabular-nums; margin: 0 0 1rem; }
+  .clock b { font-weight: 600; }
+</style>
+</head>
+<body>
+  <p class="clock" data-current-time="Europe/Amsterdam">
+    Amsterdam:
+    <b data-current-time-hours>--</b>:<b data-current-time-minutes>--</b>:<b data-current-time-seconds>--</b>
+    <span data-current-time-timezone></span>
+  </p>
+  <p class="clock" data-current-time="America/New_York">
+    New York:
+    <b data-current-time-hours>--</b>:<b data-current-time-minutes>--</b>:<b data-current-time-seconds>--</b>
+    <span data-current-time-timezone></span>
+  </p>
+  <p class="clock" data-current-time>
+    Default:
+    <b data-current-time-hours>--</b>:<b data-current-time-minutes>--</b>:<b data-current-time-seconds>--</b>
+    <span data-current-time-timezone></span>
+  </p>
+
+  <script>window.Webflow = { push: (fn) => fn() };</script>
+  <script defer src="/index.js"></script>
+</body>
+</html>

@@ -7,5 +7,6 @@
       "$utils/*": ["src/utils/*"]
     },
     "types": ["@finsweet/ts-utils"]
-  }
+  },
+  "exclude": ["node_modules", "dist", "webflow-components", "packages"]
 }
