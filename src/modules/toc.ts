@@ -18,7 +18,7 @@
 // fs-toc-omit attribute on any wrapper to skip every heading inside it (handy
 // for CMS meta blocks). [fs-toc-h3] etc. overrides a heading's level. Setting
 // fs-toc-offsettop="96" (px, on the contents or table element) sets the scroll
-// offset for a sticky header.
+// offset for a sticky header; "auto" tracks the .w-nav height + 2em live.
 //
 // Posts without headings get no TOC: the link template is removed, the table
 // gets data-toc-empty, and an optional [fs-toc-element="wrap"] around the whole
@@ -128,10 +128,20 @@ export const initToc = (scope: ParentNode = document) => {
   }
 
   table.setAttribute('data-toc-init', '');
-  const offsetTop =
-    Number(
-      contents.getAttribute(`fs-${TOC}-offsettop`) || table.getAttribute(`fs-${TOC}-offsettop`)
-    ) || 0;
+  const offsetAttr =
+    contents.getAttribute(`fs-${TOC}-offsettop`) || table.getAttribute(`fs-${TOC}-offsettop`) || '';
+
+  // "auto" tracks the live nav: its height plus 2em, recomputed on resize so
+  // fluid type scaling keeps jumps, the active line and the nav in agreement.
+  const computeOffset = () => {
+    if (offsetAttr === 'auto') {
+      const nav = document.querySelector<HTMLElement>('.w-nav');
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      return (nav?.offsetHeight || 0) + 2 * rem;
+    }
+    return Number(offsetAttr) || 0;
+  };
+  let offsetTop = computeOffset();
   const hideHash = contents.getAttribute(`fs-${TOC}-hideurlhash`) === 'true';
 
   const used = new Set<string>();
@@ -185,8 +195,14 @@ export const initToc = (scope: ParentNode = document) => {
     if (!frame) frame = requestAnimationFrame(paint);
   };
 
+  const onResize = () => {
+    offsetTop = computeOffset();
+    for (const { heading } of entries) heading.style.scrollMarginTop = `${offsetTop}px`;
+    onScroll();
+  };
+
   listen(window, 'scroll', onScroll);
-  listen(window, 'resize', onScroll);
+  listen(window, 'resize', onResize);
   paint();
 };
 
