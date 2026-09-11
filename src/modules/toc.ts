@@ -146,7 +146,6 @@ export const initToc = (scope: ParentNode = document) => {
 
     anchor.setAttribute('href', `#${id}`);
     anchor.textContent = cleanText(heading.textContent || '');
-    anchor.style.transition = 'opacity 0.3s ease';
     root.setAttribute('data-toc-level', String(levelOf(heading)));
 
     const jump = (event: Event) => {
@@ -177,7 +176,6 @@ export const initToc = (scope: ParentNode = document) => {
     entries.forEach(({ anchor }, i) => {
       const on = i === active;
       anchor.classList.toggle('is-active', on);
-      anchor.style.opacity = on ? '1' : '0.5';
       if (on) anchor.setAttribute('aria-current', 'true');
       else anchor.removeAttribute('aria-current');
     });
