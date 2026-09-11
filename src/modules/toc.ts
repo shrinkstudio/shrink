@@ -14,9 +14,15 @@
 //
 // Each generated link gets href="#<slug>", data-toc-level="2..6" (indent deeper
 // levels via CSS), and .is-active on the current section (also aria-current).
-// In-heading markers: [fs-toc-omit] skips a heading; [fs-toc-h3] etc. overrides
-// its level. Setting fs-toc-offsettop="96" (px, on the contents or table
-// element) sets the scroll offset for a sticky header.
+// Omit headings: prefix a heading's text with [fs-toc-omit], or put the
+// fs-toc-omit attribute on any wrapper to skip every heading inside it (handy
+// for CMS meta blocks). [fs-toc-h3] etc. overrides a heading's level. Setting
+// fs-toc-offsettop="96" (px, on the contents or table element) sets the scroll
+// offset for a sticky header.
+//
+// Posts without headings get no TOC: the link template is removed, the table
+// gets data-toc-empty, and an optional [fs-toc-element="wrap"] around the whole
+// TOC block (heading included) is hidden.
 // -----------------------------------------
 
 const TOC = 'toc';
@@ -73,7 +79,9 @@ const ensureId = (heading: HTMLElement, used: Set<string>): string => {
  * bare anchor. Returns the anchor to wire up (found within the clone if the
  * template itself is not the <a>).
  */
-const buildLink = (template: HTMLElement | null): { root: HTMLElement; anchor: HTMLAnchorElement } => {
+const buildLink = (
+  template: HTMLElement | null
+): { root: HTMLElement; anchor: HTMLAnchorElement } => {
   if (!template) {
     const a = document.createElement('a');
     a.className = 'toc_link';
@@ -81,7 +89,9 @@ const buildLink = (template: HTMLElement | null): { root: HTMLElement; anchor: H
   }
   const root = template.cloneNode(true) as HTMLElement;
   root.removeAttribute(`fs-${TOC}-element`);
-  const anchor = (root instanceof HTMLAnchorElement ? root : root.querySelector('a')) as HTMLAnchorElement;
+  const anchor = (
+    root instanceof HTMLAnchorElement ? root : root.querySelector('a')
+  ) as HTMLAnchorElement;
   return { root, anchor };
 };
 
@@ -96,16 +106,32 @@ export const initToc = (scope: ParentNode = document) => {
   const table = scope.querySelector<HTMLElement>(el('table'));
   if (!contents || !table || table.hasAttribute('data-toc-init')) return;
 
+  // Skip headings marked with a [fs-toc-omit] text prefix, sitting inside an
+  // element that carries the fs-toc-omit attribute (e.g. a meta / "at a glance"
+  // block), or empty after cleaning.
   const headings = [...contents.querySelectorAll<HTMLElement>('h2, h3, h4, h5, h6')].filter(
-    (h) => !OMIT_RE.test(h.textContent || '') && cleanText(h.textContent || ''),
+    (h) =>
+      !OMIT_RE.test(h.textContent || '') &&
+      !h.closest(`[fs-${TOC}-omit]`) &&
+      cleanText(h.textContent || '')
   );
-  if (!headings.length) return;
-
-  table.setAttribute('data-toc-init', '');
 
   const template = scope.querySelector<HTMLElement>(el('link'));
+
+  // No headings, no TOC: never leave the styled template link showing.
+  if (!headings.length) {
+    template?.remove();
+    table.setAttribute('data-toc-empty', '');
+    const wrap = scope.querySelector<HTMLElement>(el('wrap'));
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  table.setAttribute('data-toc-init', '');
   const offsetTop =
-    Number(contents.getAttribute(`fs-${TOC}-offsettop`) || table.getAttribute(`fs-${TOC}-offsettop`)) || 0;
+    Number(
+      contents.getAttribute(`fs-${TOC}-offsettop`) || table.getAttribute(`fs-${TOC}-offsettop`)
+    ) || 0;
   const hideHash = contents.getAttribute(`fs-${TOC}-hideurlhash`) === 'true';
 
   const used = new Set<string>();
@@ -177,5 +203,7 @@ export const destroyToc = () => {
   for (const node of created) node.remove();
   created = [];
 
-  document.querySelectorAll('[data-toc-init]').forEach((node) => node.removeAttribute('data-toc-init'));
+  document
+    .querySelectorAll('[data-toc-init]')
+    .forEach((node) => node.removeAttribute('data-toc-init'));
 };
