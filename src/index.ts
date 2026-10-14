@@ -8,6 +8,7 @@
 import { initFinsweetList } from './list';
 import { initAskAI } from './modules/ask-ai';
 import { initCurrentTime } from './modules/current-time';
+import { initFormValidate } from './modules/form-validate';
 import { initHoverList } from './modules/hover-list';
 import { initInview } from './modules/inview';
 import { initReadTime } from './modules/read-time';
@@ -28,6 +29,7 @@ window.Webflow.push(() => {
   initToc();
   initReadTime();
   initInview();
+  initFormValidate();
 
   // The vendored Finsweet list is ~100KB of the bundle; only stand it up on
   // pages that actually have a list to filter.
