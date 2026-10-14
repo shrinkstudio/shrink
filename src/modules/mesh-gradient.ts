@@ -10,7 +10,8 @@
 // The element needs a size (eg. absolute, inset 0) and a CSS gradient
 // background as the fallback: it stays when WebGL is missing. Reduced motion
 // renders one still frame. Inside the mega nav the shader mounts the first
-// time the menu opens and only runs while it is open.
+// time the menu opens and only runs while it is open; elsewhere (eg. the
+// footer) it mounts near the viewport and pauses when scrolled away.
 // -----------------------------------------
 
 import {
@@ -105,12 +106,13 @@ export const initMeshGradient = (scope: ParentNode = document) => {
   }
 
   if (onPage.length) {
+    // mount on first approach, then only animate while near the viewport
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          mount(entry.target as HTMLElement);
-          io.unobserve(entry.target);
+          const el = entry.target as HTMLElement;
+          if (entry.isIntersecting) mount(el)?.setSpeed(speedOf(el));
+          else mounts.get(el)?.setSpeed(0);
         }
       },
       { rootMargin: '200px' }
