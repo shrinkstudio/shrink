@@ -65,6 +65,9 @@ export const initMegaNav = (scope: ParentNode = document) => {
   // reduced motion: same states, no travel
   const speed = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0.01 : 1;
   const d = (key: keyof typeof DUR) => DUR[key] * speed;
+  // phone menus feel slow at desktop timings
+  const quick = speed * 0.6;
+  const quickStagger = (n: number) => (n <= 1 ? 0 : { amount: 0.12 * speed });
 
   const state = {
     isOpen: false,
@@ -447,16 +450,22 @@ export const initMegaNav = (scope: ParentNode = document) => {
   const animateBurger = (toX: boolean) => {
     const tl = gsap.timeline({ defaults: { ease: 'power2.inOut' } });
     if (!lineTop || !lineMid || !lineBot) return tl;
+    // meet on the middle line's real position, so the cross is centred
+    // whatever gap and line weight the style panel sets
+    const up = lineMid.offsetTop - lineTop.offsetTop;
+    const down = lineBot.offsetTop - lineMid.offsetTop;
+    const t = (sec: number) => sec * quick;
+    gsap.set([lineTop, lineBot], { transformOrigin: '50% 50%' });
     if (toX) {
-      tl.to(lineTop, { y: '0.3125em', duration: 0.15 }, 0);
-      tl.to(lineBot, { y: '-0.3125em', duration: 0.15 }, 0);
-      tl.to(lineMid, { autoAlpha: 0, duration: 0.1 }, 0.1);
-      tl.to(lineTop, { rotation: 45, duration: 0.2 }, 0.15);
-      tl.to(lineBot, { rotation: -45, duration: 0.2 }, 0.15);
+      tl.to(lineTop, { y: up, duration: t(0.15) }, 0);
+      tl.to(lineBot, { y: -down, duration: t(0.15) }, 0);
+      tl.to(lineMid, { autoAlpha: 0, duration: t(0.1) }, t(0.1));
+      tl.to(lineTop, { rotation: 45, duration: t(0.2) }, t(0.15));
+      tl.to(lineBot, { rotation: -45, duration: t(0.2) }, t(0.15));
     } else {
-      tl.to([lineTop, lineBot], { rotation: 0, duration: 0.2 }, 0);
-      tl.to([lineTop, lineBot], { y: 0, duration: 0.15 }, 0.15);
-      tl.to(lineMid, { autoAlpha: 1, duration: 0.1 }, 0.15);
+      tl.to([lineTop, lineBot], { rotation: 0, duration: t(0.2) }, 0);
+      tl.to([lineTop, lineBot], { y: 0, duration: t(0.15) }, t(0.15));
+      tl.to(lineMid, { autoAlpha: 1, duration: t(0.1) }, t(0.15));
     }
     return tl;
   };
@@ -478,7 +487,7 @@ export const initMegaNav = (scope: ParentNode = document) => {
       tl.fromTo(
         items,
         { autoAlpha: 0, y: 16 },
-        { autoAlpha: 1, y: 0, duration: 0.4 * speed, stagger: 0.05 * speed, ease: 'power3.out' },
+        { autoAlpha: 1, y: 0, duration: 0.4 * quick, stagger: 0.05 * quick, ease: 'power3.out' },
         0.1
       );
     }
@@ -504,11 +513,11 @@ export const initMegaNav = (scope: ParentNode = document) => {
     state.mobileTl = tl;
     tl.add(animateBurger(false), 0);
     if (panelEl) {
-      tl.to(panelEl, { autoAlpha: 0, duration: 0.3 * speed, ease: 'power2.inOut' }, 0.05);
-      tl.set(dropWrapper, { autoAlpha: 0, pointerEvents: 'none' }, 0.35 * speed);
-      if (backBtn) tl.to(backBtn, { autoAlpha: 0, duration: 0.2 * speed, ease: 'power2.in' }, 0.05);
+      tl.to(panelEl, { autoAlpha: 0, duration: 0.3 * quick, ease: 'power2.inOut' }, 0.05);
+      tl.set(dropWrapper, { autoAlpha: 0, pointerEvents: 'none' }, 0.35 * quick);
+      if (backBtn) tl.to(backBtn, { autoAlpha: 0, duration: 0.2 * quick, ease: 'power2.in' }, 0.05);
     }
-    tl.set(navList, { autoAlpha: 0 }, 0.35 * speed);
+    tl.set(navList, { autoAlpha: 0 }, 0.35 * quick);
   };
 
   // PHONE: panel slides over the menu, Back replaces the logo
@@ -530,16 +539,16 @@ export const initMegaNav = (scope: ParentNode = document) => {
       {
         xPercent: -10,
         autoAlpha: 0,
-        duration: 0.35 * speed,
-        stagger: 0.03 * speed,
+        duration: 0.35 * quick,
+        stagger: 0.03 * quick,
         ease: 'power2.in',
       },
       0
     );
-    if (logo) tl.to(logo, { autoAlpha: 0, duration: 0.2 * speed, ease: 'power2.in' }, 0);
+    if (logo) tl.to(logo, { autoAlpha: 0, duration: 0.2 * quick, ease: 'power2.in' }, 0);
     if (backBtn)
-      tl.to(backBtn, { autoAlpha: 1, duration: 0.25 * speed, ease: 'power2.inOut' }, 0.15 * speed);
-    tl.set(el, { autoAlpha: 1, x: 0, pointerEvents: 'auto' }, 0.2 * speed);
+      tl.to(backBtn, { autoAlpha: 1, duration: 0.25 * quick, ease: 'power2.inOut' }, 0.15 * quick);
+    tl.set(el, { autoAlpha: 1, x: 0, pointerEvents: 'auto' }, 0.2 * quick);
     if (fade.length) {
       tl.fromTo(
         fade,
@@ -547,14 +556,14 @@ export const initMegaNav = (scope: ParentNode = document) => {
         {
           xPercent: 0,
           autoAlpha: 1,
-          duration: 0.3 * speed,
-          stagger: stagger(fade.length),
+          duration: 0.3 * quick,
+          stagger: quickStagger(fade.length),
           ease: 'power3.out',
         },
-        0.25 * speed
+        0.25 * quick
       );
     }
-    window.setTimeout(() => backBtn?.querySelector<HTMLElement>('button')?.focus(), 300 * speed);
+    window.setTimeout(() => backBtn?.querySelector<HTMLElement>('button')?.focus(), 300 * quick);
   };
 
   const closeMobilePanel = () => {
@@ -574,22 +583,22 @@ export const initMegaNav = (scope: ParentNode = document) => {
       },
     });
     state.panelTl = tl;
-    tl.to(el, { xPercent: 20, autoAlpha: 0, duration: 0.3 * speed, ease: 'power2.in' }, 0);
-    tl.set(el, { pointerEvents: 'none', xPercent: 0 }, 0.3 * speed);
-    if (backBtn) tl.to(backBtn, { autoAlpha: 0, duration: 0.2 * speed, ease: 'power2.in' }, 0);
+    tl.to(el, { xPercent: 20, autoAlpha: 0, duration: 0.3 * quick, ease: 'power2.in' }, 0);
+    tl.set(el, { pointerEvents: 'none', xPercent: 0 }, 0.3 * quick);
+    if (backBtn) tl.to(backBtn, { autoAlpha: 0, duration: 0.2 * quick, ease: 'power2.in' }, 0);
     if (logo)
-      tl.to(logo, { autoAlpha: 1, duration: 0.25 * speed, ease: 'power2.out' }, 0.15 * speed);
+      tl.to(logo, { autoAlpha: 1, duration: 0.25 * quick, ease: 'power2.out' }, 0.15 * quick);
     tl.fromTo(
       items,
       { xPercent: -20, autoAlpha: 0 },
       {
         xPercent: 0,
         autoAlpha: 1,
-        duration: 0.35 * speed,
-        stagger: 0.03 * speed,
+        duration: 0.35 * quick,
+        stagger: 0.03 * quick,
         ease: 'power3.out',
       },
-      0.25 * speed
+      0.25 * quick
     );
   };
 

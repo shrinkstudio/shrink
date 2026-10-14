@@ -10,6 +10,9 @@
 //       [data-hover-background] > [data-hover-fill]
 //       [data-hover-visual]                ← the link; background is flipped into it
 //
+// [data-hover-list="slide"] keeps the background inside the list and slides it
+// under the items instead (the list needs position: relative and isolation).
+//
 // Author one background/fill per item in the Designer if that's easier — only
 // the first survives at runtime; the rest are removed, since the whole point is
 // that ONE background travels between items.
@@ -89,7 +92,34 @@ export const initHoverList = (scope: ParentNode = document) => {
     tl.fromTo(fill, { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.2 });
     timelines.push(tl);
 
+    // [data-hover-list="slide"]: the background stays a child of the list and
+    // slides under the items, so it can never land on top of their text
+    const slide = component.getAttribute('data-hover-list') === 'slide';
+    if (slide) {
+      component.prepend(background);
+      gsap.set(background, { top: 0, left: 0, right: 'auto', bottom: 'auto' });
+    }
+
+    const slideTo = (item: HTMLElement) => {
+      const target = item.querySelector<HTMLElement>('[data-hover-visual]') || item;
+      const box = target.getBoundingClientRect();
+      const root = component.getBoundingClientRect();
+      const to = {
+        x: box.left - root.left - component.clientLeft,
+        y: box.top - root.top - component.clientTop,
+        width: box.width,
+        height: box.height,
+      };
+      if (hoverBetween) gsap.to(background, { ...to, duration: 0.3, ease: 'power1.inOut' });
+      else gsap.set(background, to);
+    };
+
     const flipInto = (item: HTMLElement) => {
+      if (slide) {
+        slideTo(item);
+        return;
+      }
+
       const state = Flip.getState(background);
 
       item.querySelector<HTMLElement>('[data-hover-visual]')?.prepend(background);
