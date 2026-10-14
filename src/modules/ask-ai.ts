@@ -89,6 +89,14 @@ export function initAskAI(scope: ParentNode = document): void {
   if (!triggers.length) return;
 
   triggers.forEach((btn) => {
+    // link tools become real links (middle click, copy link, no "#")
+    const tool = TOOLS[btn.getAttribute('data-ask-ai') ?? ''];
+    if (tool?.mode === 'link' && btn instanceof HTMLAnchorElement) {
+      btn.href = tool.url + encodeURIComponent(getPrompt(btn));
+      btn.target = '_blank';
+      btn.rel = 'noopener';
+      return;
+    }
     btn.addEventListener('click', handleClick);
     listeners.push({ element: btn, type: 'click', handler: handleClick });
   });
