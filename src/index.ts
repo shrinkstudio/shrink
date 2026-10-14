@@ -16,6 +16,7 @@ import { initMegaNav } from './modules/mega-nav';
 import { initMeshGradient } from './modules/mesh-gradient';
 import { initReadTime } from './modules/read-time';
 import { initTeamHover } from './modules/team-hover';
+import { initTestimonials } from './modules/testimonials';
 import { initToc } from './modules/toc';
 
 // Capture our own <script> tag now: document.currentScript is only valid during
@@ -36,6 +37,7 @@ window.Webflow.push(() => {
   initInview();
   initFormValidate();
   initCopyClip();
+  initTestimonials();
 
   // The vendored Finsweet list is ~100KB of the bundle; only stand it up on
   // pages that actually have a list to filter.
