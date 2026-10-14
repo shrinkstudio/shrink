@@ -68,6 +68,7 @@ export const initMegaNav = (scope: ParentNode = document) => {
 
   const state = {
     isOpen: false,
+    closing: false,
     active: null as string | null,
     isMobile: window.innerWidth <= PHONE,
     mobileOpen: false,
@@ -182,6 +183,10 @@ export const initMegaNav = (scope: ParentNode = document) => {
 
   // DESKTOP: first open
   const openDropdown = (name: string) => {
+    if (state.closing && state.active === name) {
+      reopen(name);
+      return;
+    }
     if (state.isOpen && state.active === name) return;
     if (state.isOpen && state.active) {
       switchPanel(state.active, name);
@@ -223,15 +228,40 @@ export const initMegaNav = (scope: ParentNode = document) => {
     }
   };
 
+  // DESKTOP: pointer came back while the panel was closing; grow it again
+  const reopen = (name: string) => {
+    const el = getPanel(name);
+    const size = measure(name);
+    if (!el || !size) return;
+    killDropdown();
+    state.closing = false;
+    menuWrap.setAttribute('data-menu-open', 'true');
+    setActive(name);
+
+    const tl = gsap.timeline();
+    state.tl = tl;
+    if (backdrop)
+      tl.to(backdrop, { autoAlpha: 1, duration: d('backdropIn'), ease: 'power2.out' }, 0);
+    tl.to(dropContainer, { height: size.height, duration: d('open'), ease: 'power3.out' }, 0);
+    tl.set(el, show, 0);
+    tl.to(
+      getFade(el),
+      { autoAlpha: 1, x: 0, y: 0, duration: d('contentIn'), ease: 'power3.out' },
+      0
+    );
+  };
+
   // DESKTOP: close
   const closeDropdown = () => {
     if (!state.isOpen) return;
     const el = getPanel(state.active);
     const fade = el ? getFade(el) : [];
     killDropdown();
+    state.closing = true;
 
     const tl = gsap.timeline({
       onComplete: () => {
+        state.closing = false;
         state.isOpen = false;
         state.active = null;
         state.tl = null;
@@ -259,6 +289,7 @@ export const initMegaNav = (scope: ParentNode = document) => {
     const fromFade = getFade(fromEl);
     const toFade = getFade(toEl);
     killDropdown();
+    state.closing = false;
 
     panels.forEach((p) => {
       gsap.set(p, { ...hide, x: 0 });
