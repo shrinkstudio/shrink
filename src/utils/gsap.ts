@@ -5,15 +5,25 @@
 // bundle. These are hand-written minimal types covering only what we call, so
 // one module can't silently drift from another's idea of the API.
 
+type Position = number | string;
+
 export interface GsapTimeline {
-  fromTo(target: unknown, fromVars: object, toVars: object): GsapTimeline;
+  to(target: unknown, vars: object, position?: Position): GsapTimeline;
+  set(target: unknown, vars: object, position?: Position): GsapTimeline;
+  fromTo(target: unknown, fromVars: object, toVars: object, position?: Position): GsapTimeline;
+  add(child: GsapTimeline, position?: Position): GsapTimeline;
   play(): void;
   reverse(): void;
   kill(): void;
 }
 
 export interface Gsap {
-  timeline(vars: { paused?: boolean; onReverseComplete?: () => void }): GsapTimeline;
+  timeline(vars?: {
+    paused?: boolean;
+    defaults?: object;
+    onComplete?: () => void;
+    onReverseComplete?: () => void;
+  }): GsapTimeline;
   registerPlugin(...plugins: unknown[]): void;
   set(target: unknown, vars: object): void;
   to(target: unknown, vars: object): void;

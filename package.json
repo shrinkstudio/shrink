@@ -54,8 +54,9 @@
   },
   "dependencies": {
     "@finsweet/attributes-list": "workspace:*",
+    "@finsweet/attributes-utils": "workspace:*",
     "@finsweet/ts-utils": "^0.40.0",
-    "@finsweet/attributes-utils": "workspace:*"
+    "@paper-design/shaders": "0.0.81"
   },
   "engines": {
     "pnpm": ">=10"

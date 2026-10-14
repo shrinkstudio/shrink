@@ -12,6 +12,8 @@ import { initCurrentTime } from './modules/current-time';
 import { initFormValidate } from './modules/form-validate';
 import { initHoverList } from './modules/hover-list';
 import { initInview } from './modules/inview';
+import { initMegaNav } from './modules/mega-nav';
+import { initMeshGradient } from './modules/mesh-gradient';
 import { initReadTime } from './modules/read-time';
 import { initTeamHover } from './modules/team-hover';
 import { initToc } from './modules/toc';
@@ -23,6 +25,8 @@ const currentScript = document.currentScript as HTMLScriptElement | null;
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
+  initMegaNav();
+  initMeshGradient();
   initHoverList();
   initTeamHover();
   initAskAI();
