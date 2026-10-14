@@ -180,6 +180,38 @@ const setup = (root: HTMLElement) => {
   };
   root.addEventListener('click', onTrigger);
 
+  // a link used as the trigger is announced and keyed like a button
+  for (const trigger of root.querySelectorAll<HTMLElement>('[data-submit]')) {
+    if (!(trigger instanceof HTMLButtonElement)) trigger.setAttribute('role', 'button');
+  }
+  const onTriggerKey = (event: KeyboardEvent) => {
+    const trigger = (event.target as HTMLElement).closest('[data-submit]');
+    if (!trigger || event.key !== ' ' || trigger instanceof HTMLButtonElement) return;
+    event.preventDefault();
+    form.requestSubmit();
+  };
+  root.addEventListener('keydown', onTriggerKey);
+
+  // Webflow swaps the form for its done / fail message; move focus there so
+  // screen readers hear the outcome instead of losing their place
+  const notices = [...root.querySelectorAll<HTMLElement>('.w-form-done, .w-form-fail')];
+  const shown = new WeakSet<HTMLElement>();
+  for (const notice of notices) {
+    notice.tabIndex = -1;
+    if (notice.classList.contains('w-form-fail')) notice.setAttribute('role', 'alert');
+  }
+  const observer = new MutationObserver(() => {
+    for (const notice of notices) {
+      const visible = getComputedStyle(notice).display !== 'none';
+      if (visible && !shown.has(notice)) {
+        shown.add(notice);
+        notice.focus();
+      } else if (!visible) shown.delete(notice);
+    }
+  });
+  for (const notice of notices)
+    observer.observe(notice, { attributes: true, attributeFilter: ['style'] });
+
   // Enter in a single-line field submits through the same path
   const onKey = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement;
@@ -194,6 +226,8 @@ const setup = (root: HTMLElement) => {
   cleanups.push(() => {
     document.removeEventListener('submit', onSubmit, true);
     root.removeEventListener('click', onTrigger);
+    root.removeEventListener('keydown', onTriggerKey);
+    observer.disconnect();
     form.removeEventListener('keydown', onKey);
     form.removeAttribute('data-validate-init');
   });
