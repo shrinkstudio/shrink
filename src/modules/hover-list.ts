@@ -21,7 +21,7 @@
 // Without them the nav still works — this just no-ops (no highlight).
 // -----------------------------------------
 
-import type { GsapTimeline } from '../utils/gsap';
+import { canHover, type GsapTimeline } from '../utils/gsap';
 
 interface StoredListener {
   element: Element;
@@ -41,8 +41,9 @@ let listeners: StoredListener[] = [];
 export const initHoverList = (scope: ParentNode = document) => {
   const { gsap, Flip } = window;
 
-  // Graceful no-op until GSAP/Flip are loaded.
-  if (!gsap || !Flip) return;
+  // Graceful no-op until GSAP/Flip are loaded, and on touch screens, where
+  // there is no hover to follow.
+  if (!gsap || !Flip || !canHover()) return;
 
   gsap.registerPlugin(Flip);
 
