@@ -341,10 +341,14 @@ export const initMegaNav = (scope: ParentNode = document) => {
     state.hoverTimer = window.setTimeout(() => openDropdown(name), state.isOpen ? 0 : HOVER_ENTER);
   };
 
-  const onLeave = () => {
-    if (state.isMobile) return;
-    window.clearTimeout(state.hoverTimer);
+  // one pending close at a time: a stray timer would shut a panel just opened
+  const scheduleClose = () => {
+    clearTimers();
     state.leaveTimer = window.setTimeout(closeDropdown, HOVER_LEAVE);
+  };
+
+  const onLeave = () => {
+    if (!state.isMobile) scheduleClose();
   };
 
   const onWrapperEnter = () => {
@@ -356,9 +360,7 @@ export const initMegaNav = (scope: ParentNode = document) => {
     (a) => !a.closest('[data-nav-content]')
   );
   const onPlainEnter = () => {
-    if (state.isMobile || !state.isOpen) return;
-    window.clearTimeout(state.hoverTimer);
-    state.leaveTimer = window.setTimeout(closeDropdown, HOVER_LEAVE);
+    if (!state.isMobile && state.isOpen) scheduleClose();
   };
 
   // DESKTOP: keyboard
