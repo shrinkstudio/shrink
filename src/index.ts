@@ -7,6 +7,7 @@
 // GSAP + Flip are expected as globals from the CDN (see utils/gsap.ts).
 import { initFinsweetList } from './list';
 import { initAskAI } from './modules/ask-ai';
+import { initCopyClip } from './modules/copy-clip';
 import { initCurrentTime } from './modules/current-time';
 import { initFormValidate } from './modules/form-validate';
 import { initHoverList } from './modules/hover-list';
@@ -30,6 +31,7 @@ window.Webflow.push(() => {
   initReadTime();
   initInview();
   initFormValidate();
+  initCopyClip();
 
   // The vendored Finsweet list is ~100KB of the bundle; only stand it up on
   // pages that actually have a list to filter.
