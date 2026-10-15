@@ -111,6 +111,7 @@ async function handleEnquiry(s: Submission) {
   const [deal] = await create(T.deals, [
     {
       Name: `${companyName || d.name || email}, website enquiry`,
+      'Lead name': d.name || '',
       Stage: 'Lead',
       ...(service ? { Service: service } : {}),
       ...(company ? { Company: [company.id] } : {}),
