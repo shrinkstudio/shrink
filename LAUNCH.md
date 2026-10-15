@@ -14,7 +14,7 @@ Owner key: **B** = Ben (Designer or a decision), **C** = Claude (via Webflow MCP
 - [ ] **B+C** Default social share image, then one per page type
 - [ ] **C** Every `href="#"` wired (header "Start a conversation", "Book a Call", "Take the quiz", footer service and case study links)
 - [ ] **C** Sites number is 50+ (Ben, 13 Oct). Change "70+ sites" in the About page's search description in Webflow
-- [~] **C** Policies (14 Oct): the 7 legal pages are ported into the **Policies** collection (`6acfaf5869b42185ddb06b43`, renamed from Legals, now at `/policies/[slug]`). Template: Section `cc-hero` > Grid Row (Top Center) > Grid Column 6/12 > Ben's tag row, Heading (Name), Plain Text (Summary), Plain Text `u-text-muted` (Last Updated), Border, Rich Text (Body). Footer Show CTA off. All 7 bodies tightened: no em dashes, numbered H4 sections, cross links between policies, processor list matches the new stack (Webflow, Vercel, Make, Airtable, ClickUp, Cal.com, Anthropic). Last updated: October 2026. Footer links repointed to `/policies/*`
+- [~] **C** Policies (14 Oct): the 7 legal pages are ported into the **Policies** collection (`6acfaf5869b42185ddb06b43`, renamed from Legals, now at `/policies/[slug]`). Template: Section `cc-hero` > Grid Row (Top Center) > Grid Column 6/12 > Ben's tag row, Heading (Name), Plain Text (Summary), Plain Text `u-text-muted` (Last Updated), Border, Rich Text (Body). Footer Show CTA off. All 7 bodies tightened: no em dashes, numbered H4 sections, cross links between policies, processor list matches the new stack (Webflow, Vercel form handler, Airtable, ClickUp, Cal.com, Anthropic; Make and tools.shrink.studio removed 15 Oct, staged). Last updated: October 2026. Footer links repointed to `/policies/*`
 - [ ] **B** Policies template: bind SEO title and description to Meta Title and Meta Description (Page settings)
 - [ ] **B** Confirm the AI policy's "Your data" section matches how we really work (business-grade tools whose terms keep inputs out of training; personal and confidential client data kept out unless the client agrees)
 - [ ] **C** `/policies` index page: build with the FAQ page (they share list functionality)
@@ -28,6 +28,8 @@ Owner key: **B** = Ben (Designer or a decision), **C** = Claude (via Webflow MCP
 - [x] **C** Footer (14 Oct): stray placeholder text replaced ("London" + aria-hidden "·"), column titles h4 to h2 (size variant unchanged), Maps link `rel=noopener`. Year span is filled by the inline script
 - [ ] **B** Ask AI links: `ask-ai.ts` writes real `href`/`target`/`rel` for link tools (no more `#`). Pushed `bb0abc1`; footer script needs the new SHA
 - [x] **C** Section component: removed a stray static `id=""` on its container (the root already applies the ID prop only when set)
+- [ ] **B+C** Retire tools.shrink.studio on launch day (Ben, 15 Oct): upload [docs/tools-shrink-studio-redirects.csv](docs/tools-shrink-studio-redirects.csv) with `npx vercel redirects upload docs/tools-shrink-studio-redirects.csv` (or move the domain into `shrink-site-api` with host-conditioned redirects, plan in the side-session notes `tools-retirement.md`). 301s: `/calculator` and `/project-estimator` to `/tools/project-calculator`, `/quiz` and `/quiz/r/*` to the quiz page (keeps `?d=` so old share links rehydrate), everything else to `/resources`. Only after www.shrink.studio serves ss-2027 (`/resources` 404s on the old site). Check a specific row beats the `/*` catch-all, then delete the `shrink-tools` Vercel project (Adfin hero demo can die with it)
+- [ ] **C** Mega Nav + Footer "Project calculator" still link to `tools.shrink.studio/calculator` (kept on purpose, 15 Oct). Repoint both to `/tools/project-calculator` when the code component page is live
 - [ ] **C** Redirect map from the live site's URLs (`/projects/*` to `/case-studies/*`, `/legals/(.*)` to `/policies/%1`, `/contact`)
 - [ ] **B** Delete template demo content (Archives collection, 5 items)
 - [ ] **B** Launch switches: indexing on, canonical URL set, sitemap.xml on
@@ -138,6 +140,7 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 
 ### 8. Quiz (`/tools/ready-to-brief-a-build`)
 - [x] Quiz stays as it is: it is a code component in the repo, no restyle (Ben, 13 Oct)
+- [x] **C** Submits to `api/forms` (15 Oct, `c8e94f8`): Contact always, Deal at Lead when ready, Mailing opt-in; share link rehydrates on this page. **B**: accept the library update and clear the instance's old Lead submit endpoint + Share link props
 - [ ] **B+C** Copy: em dashes and one negation ending. The recommendation names ("Seed Website", "Clarity Sprint") are the package names and can link to the new package pages
 
 ---
@@ -251,10 +254,13 @@ Figma (13 Oct), all in the Updates section on the row beside the About copy, wit
 - [ ] **B** Guides: cover card styling (dark, Figma `4342:1287`), Resource Form success copy ("Thanks. Your download is ready below.") and footer line ("We'll use your details to reply" fits Enquiry, not a guide)
 - [ ] **B** Calls + Guides templates: drag the Clients Collection List into the Testimonial Slider Items slot; bind SEO title/description to Meta Title/Meta Description
 - [ ] **B** Footer script SHA: update after the bundle push (form-prefill)
-- [ ] FAQ page: `4340:1041`. Ben's old glossary pattern (search, filter chips, rows that open) with 25 real questions tagged by service. Needs the 13 drafted questions added to the FAQs collection and a "Working with Shrink" tag
+- [~] **C** FAQ page (15 Oct): `/faq` (page `6ad0e7596ffc862a55147472`; /faqs is the collection slug). FAQs gained a **Topic** option (Working with Shrink / Discovery / Development / Optimisation) and one Display Order sequence (WwS 1-7, Discovery 11+, Development 21+, Optimisation 31+); 13 new questions added (25 total). Mega Nav, quiz-style hero, search (`input.cc-search` + Icon `ph-magnifying-glass`, Finsweet `fs-list-field="*"`), clear button (Icon `ph-x`, `fs-list-element="clear"` scoped to search), Tag row as topic filter (`fs-list-element="filter-buttons"`, All on Selected variant), FAQs list of Accordion instances (sorted by Display Order) with hidden `faq_field` holders for search, Finsweet empty state, Footer CTA "Question not on the list? Let's talk it through." FAQPage JSON-LD (all 25) on the page
+- [ ] **B** FAQ: review the 6 new answers (Discovery needs/after, own the site, build needs, what to test, how often) and confirm "Who does the work?" and "every site is built in Webflow"; styling of the tag row spacing and clear button; publish
+- [ ] **C** Regenerate the FAQPage JSON-LD whenever FAQs change (it's static)
 - [x] **B** Public email: hey@shrink.studio
 - [ ] **B** Confirm: reply promise ("within one working day"), real lead magnet title, length and file
 - [ ] Pricing page: `4343:999` with notes `4343:1330`, on its own row below About. Prices table, what moves a build price, six cost FAQs, CTA card. "Migration" as a price factor and the one-line descriptions are drafts
+- [ ] **C** Project calculator (`/tools/project-calculator`): rebuild the tools.shrink.studio calculator as a Shrink Tools code component, lead posts to `api/forms` (Ben, 15 Oct: wants it on the site)
 - [ ] Tool Stack page (Ben's old design `3407:314`): keep for after launch as "what we build with"
 - [ ] Package pages (13 Oct): Clarity Sprint `4346:999`, Seed Website `4346:1267`, Compound `4346:1541`, notes `4346:1845`, on the pricing row. Service page pattern, filled from the May packages copy document (`~/Downloads/shrink-copy-docs_8.html`). The pricing page now has a Packages section
 - [x] **B** Package prices confirmed current (13 Oct). The pricing page explains that service prices are starting points and packages include more
