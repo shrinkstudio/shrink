@@ -28,6 +28,10 @@ const SERVICES: [RegExp, string][] = [
   [/optimi[sz]ation/i, 'Optimisation retainer'],
 ];
 
+/* Contacts.Next action, least to most urgent */
+const URGENCY = ['No action', 'Nurture', 'Waiting on reply', 'Meeting booked', 'Needs follow-up'];
+const rank = (v?: string) => URGENCY.indexOf(v ?? '');
+
 /* signature max age */
 const MAX_AGE_MS = 5 * 60 * 1000;
 
@@ -179,8 +183,10 @@ async function upsertContact(c: {
     const prev = (existing.fields.Notes as string) || '';
     const fields: Record<string, unknown> = {
       Notes: prev ? `${prev}\n${c.note}` : c.note,
-      'Next action': c.nextAction,
     };
+    // only ever raise urgency: a guide download mustn't bury a live enquiry
+    const current = existing.fields['Next action'] as string | undefined;
+    if (rank(c.nextAction) > rank(current)) fields['Next action'] = c.nextAction;
     const companies = (existing.fields.Company as string[]) || [];
     if (c.company && !companies.includes(c.company)) fields.Company = [...companies, c.company];
     await airtable(`${T.contacts}/${existing.id}`, 'PATCH', { fields, typecast: false });
