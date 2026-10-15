@@ -9,6 +9,7 @@ import { initFinsweetList } from './list';
 import { initAskAI } from './modules/ask-ai';
 import { initCopyClip } from './modules/copy-clip';
 import { initCurrentTime } from './modules/current-time';
+import { initFormPrefill } from './modules/form-prefill';
 import { initFormValidate } from './modules/form-validate';
 import { initHoverList } from './modules/hover-list';
 import { initInview } from './modules/inview';
@@ -36,6 +37,7 @@ window.Webflow.push(() => {
   initReadTime();
   initInview();
   initFormValidate();
+  initFormPrefill();
   initCopyClip();
   initTestimonials();
 

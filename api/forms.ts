@@ -1,0 +1,284 @@
+/**
+ * Webflow form submissions to Airtable (Shrink OS).
+ *
+ * Webflow site webhook (trigger: form_submission) POSTs here. Routed by form name:
+ * - Enquiry: upsert Company + Contact, create a Deal at Stage "Lead".
+ * - Resource: upsert Contact, note which guide they took.
+ *
+ * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature).
+ */
+
+declare const process: { env: Record<string, string | undefined> };
+
+/* ids */
+const SITE_ID = '6a8daa3ae6b8009a3d00e586';
+const BASE = 'appx76yahrfuTcbiD';
+const T = {
+  companies: 'tblutaeT4swsXdjrZ',
+  contacts: 'tblXiE8Absty3l4HW',
+  deals: 'tbl5TAoijwcEctsso',
+};
+
+/* Need chip → Deals.Service */
+const SERVICES: [RegExp, string][] = [
+  [/discovery/i, 'Discovery'],
+  [/development/i, 'Development'],
+  [/optimi[sz]ation/i, 'Optimisation retainer'],
+];
+
+/* signature max age */
+const MAX_AGE_MS = 5 * 60 * 1000;
+
+type Data = Record<string, string | undefined>;
+
+type Submission = {
+  name: string;
+  siteId: string;
+  data: Data;
+  submittedAt?: string;
+  id?: string;
+  pageUrl?: string;
+};
+
+type AirtableRecord = { id: string; fields: Record<string, unknown> };
+
+export async function POST(request: Request): Promise<Response> {
+  const raw = await request.text();
+
+  if (!(await verify(request, raw))) return json({ ok: false, error: 'bad signature' }, 401);
+
+  let submission: Submission;
+  try {
+    const body = JSON.parse(raw);
+    submission = body.payload ?? body;
+  } catch {
+    return json({ ok: false, error: 'bad json' }, 400);
+  }
+
+  if (submission.siteId !== SITE_ID) return json({ ok: false, error: 'wrong site' }, 403);
+
+  try {
+    const form = (submission.name || '').toLowerCase();
+    if (form === 'enquiry') return json(await handleEnquiry(submission));
+    if (form === 'resource') return json(await handleResource(submission));
+    return json({ ok: true, skipped: submission.name });
+  } catch (err) {
+    console.error('forms error', submission.name, submission.id, err);
+    // 500 so Webflow retries
+    return json({ ok: false, error: 'airtable failed' }, 500);
+  }
+}
+
+/* ---------- handlers ---------- */
+
+async function handleEnquiry(s: Submission) {
+  const d = normalise(s.data);
+  const email = d.email?.trim().toLowerCase();
+  if (!email) return { ok: false, error: 'no email' };
+
+  // Webflow retries: skip if this submission already made a deal
+  if (s.id) {
+    const dupe = await find(T.deals, `FIND("${esc(s.id)}", {Notes})`);
+    if (dupe) return { ok: true, duplicate: dupe.id };
+  }
+
+  const website = cleanUrl(d.website);
+  const companyName = website ? domainName(website) : '';
+  const company = website ? await upsertCompany(companyName, website) : null;
+
+  const contact = await upsertContact({
+    name: d.name,
+    email,
+    company: company?.id,
+    nextAction: 'Needs follow-up',
+    note: `${date(s)} Website enquiry${d.resources ? ', opted in to resources' : ''}`,
+  });
+
+  const service = SERVICES.find(([re]) => re.test(d.need || ''))?.[1];
+
+  const notes = [
+    d.about || '(no message)',
+    '',
+    `Need: ${d.need || 'not given'}`,
+    `Budget: ${d.budget || 'not given'}`,
+    `Website: ${website || 'not given'}`,
+    `Resources opt-in: ${d.resources ? 'yes' : 'no'}`,
+    `Contact: ${d.name || ''} <${email}>`,
+    ...(s.pageUrl ? [`Page: ${s.pageUrl}`] : []),
+    `Webflow submission ${s.id || ''}, ${s.submittedAt || ''}`,
+  ].join('\n');
+
+  const [deal] = await create(T.deals, [
+    {
+      Name: `${companyName || d.name || email}, website enquiry`,
+      Stage: 'Lead',
+      ...(service ? { Service: service } : {}),
+      ...(company ? { Company: [company.id] } : {}),
+      Notes: notes,
+      'Next step': 'Reply to enquiry',
+      'Next step date': today(),
+    },
+  ]);
+
+  return { ok: true, deal: deal.id, contact: contact.id, company: company?.id };
+}
+
+async function handleResource(s: Submission) {
+  const d = normalise(s.data);
+  const email = d.email?.trim().toLowerCase();
+  if (!email) return { ok: false, error: 'no email' };
+
+  const guide = d.guide || 'a guide';
+  const contact = await upsertContact({
+    name: d.name,
+    email,
+    nextAction: 'Nurture',
+    note: `${date(s)} Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
+  });
+
+  return { ok: true, contact: contact.id };
+}
+
+/* ---------- airtable ---------- */
+
+async function upsertCompany(name: string, website: string) {
+  const domain = domainName(website);
+  const existing = await find(T.companies, `FIND("${esc(domain)}", LOWER({Website}))`);
+  if (existing) return existing;
+  const [rec] = await create(T.companies, [{ Name: name, Website: website, Source: 'Inbound' }]);
+  return rec;
+}
+
+async function upsertContact(c: {
+  name?: string;
+  email: string;
+  company?: string;
+  nextAction: string;
+  note: string;
+}) {
+  const existing = await find(T.contacts, `LOWER({Email}) = "${esc(c.email)}"`);
+
+  if (existing) {
+    const prev = (existing.fields.Notes as string) || '';
+    const fields: Record<string, unknown> = {
+      Notes: prev ? `${prev}\n${c.note}` : c.note,
+      'Next action': c.nextAction,
+    };
+    const companies = (existing.fields.Company as string[]) || [];
+    if (c.company && !companies.includes(c.company)) fields.Company = [...companies, c.company];
+    await airtable(`${T.contacts}/${existing.id}`, 'PATCH', { fields, typecast: false });
+    return existing;
+  }
+
+  const [rec] = await create(T.contacts, [
+    {
+      Name: c.name || c.email,
+      Email: c.email,
+      'Next action': c.nextAction,
+      Notes: c.note,
+      ...(c.company ? { Company: [c.company] } : {}),
+    },
+  ]);
+  return rec;
+}
+
+async function find(table: string, formula: string): Promise<AirtableRecord | null> {
+  const qs = new URLSearchParams({ filterByFormula: formula, maxRecords: '1' });
+  const res = await airtable(`${table}?${qs}`, 'GET');
+  return res.records?.[0] ?? null;
+}
+
+async function create(table: string, rows: Record<string, unknown>[]): Promise<AirtableRecord[]> {
+  const res = await airtable(table, 'POST', {
+    records: rows.map((fields) => ({ fields })),
+    typecast: false,
+  });
+  return res.records;
+}
+
+async function airtable(path: string, method: string, body?: unknown) {
+  const token = process.env.AIRTABLE_TOKEN;
+  if (!token) throw new Error('AIRTABLE_TOKEN not set');
+  const res = await fetch(`https://api.airtable.com/v0/${BASE}/${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+/* ---------- helpers ---------- */
+
+/** Webflow signs `${timestamp}:${body}` with HMAC-SHA256. Skipped when no secret is set. */
+async function verify(request: Request, raw: string) {
+  const secret = process.env.WEBFLOW_WEBHOOK_SECRET;
+  if (!secret) return true;
+  const ts = request.headers.get('x-webflow-timestamp');
+  const sig = request.headers.get('x-webflow-signature');
+  if (!ts || !sig) return false;
+  if (Math.abs(Date.now() - Number(ts)) > MAX_AGE_MS) return false;
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode(`${ts}:${raw}`));
+  const hex = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return timingSafeEqual(hex, sig);
+}
+
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** Field names → lowercase keys; checkbox "Yes"/"true"/"on" → "yes". */
+function normalise(data: Data = {}) {
+  const out: Data = {};
+  for (const [k, v] of Object.entries(data))
+    out[k.toLowerCase()] = v?.toString().trim() || undefined;
+  const opt = (out.resources || '').toLowerCase();
+  out.resources = ['yes', 'true', 'on'].includes(opt) ? 'yes' : undefined;
+  return out;
+}
+
+function cleanUrl(v?: string) {
+  if (!v) return '';
+  const url = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
+}
+
+function domainName(url: string) {
+  return new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+}
+
+function esc(v: string) {
+  return v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function date(s: Submission) {
+  return (s.submittedAt || new Date().toISOString()).slice(0, 10);
+}
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
