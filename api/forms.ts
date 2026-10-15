@@ -254,7 +254,9 @@ function cleanUrl(v?: string) {
   if (!v) return '';
   const url = /^https?:\/\//i.test(v) ? v : `https://${v}`;
   try {
-    return new URL(url).origin;
+    const { hostname, origin } = new URL(url);
+    // "test", "n/a" etc. aren't domains: no Company for those
+    return /^[^.]+(\.[^.]+)+$/.test(hostname) ? origin : '';
   } catch {
     return '';
   }

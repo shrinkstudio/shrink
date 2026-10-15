@@ -31,3 +31,5 @@ typings/
 dist/test.html
 dist/nav-test.html
 dist/team-test.html
+.vercel
+.env*
