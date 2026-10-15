@@ -28,6 +28,32 @@ const SERVICES: [RegExp, string][] = [
   [/optimi[sz]ation/i, 'Optimisation retainer'],
 ];
 
+/* personal inboxes: no Company from these */
+const FREE_MAIL = new Set([
+  'gmail.com',
+  'googlemail.com',
+  'outlook.com',
+  'hotmail.com',
+  'hotmail.co.uk',
+  'live.com',
+  'live.co.uk',
+  'msn.com',
+  'yahoo.com',
+  'yahoo.co.uk',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  'aol.com',
+  'proton.me',
+  'protonmail.com',
+  'gmx.com',
+  'mail.com',
+  'zoho.com',
+  'yandex.com',
+  'btinternet.com',
+  'sky.com',
+]);
+
 /* Contacts.Next action, least to most urgent */
 const URGENCY = ['No action', 'Nurture', 'Waiting on reply', 'Meeting booked', 'Needs follow-up'];
 const rank = (v?: string) => URGENCY.indexOf(v ?? '');
@@ -146,9 +172,16 @@ async function handleResource(s: Submission) {
   if (!email) return { ok: false, error: 'no email' };
 
   const guide = d.guide || 'a guide';
+
+  // work email → Company, so the Sales agent can match downloads to funded leads
+  const domain = email.split('@')[1] || '';
+  const company =
+    domain && !FREE_MAIL.has(domain) ? await upsertCompany(domain, `https://${domain}`) : null;
+
   const contact = await upsertContact({
     name: d.name,
     email,
+    company: company?.id,
     nextAction: 'Nurture',
     note: `${date(s)} Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
   });
@@ -157,14 +190,19 @@ async function handleResource(s: Submission) {
     ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Guide', guide })
     : null;
 
-  return { ok: true, contact: contact.id, mailing: mailing?.id };
+  return { ok: true, contact: contact.id, company: company?.id, mailing: mailing?.id };
 }
 
 /* ---------- airtable ---------- */
 
 async function upsertCompany(name: string, website: string) {
   const domain = domainName(website);
-  const existing = await find(T.companies, `FIND("${esc(domain)}", LOWER({Website}))`);
+  // match on a host boundary so box.com doesn't match dropbox.com
+  const d = esc(domain);
+  const existing = await find(
+    T.companies,
+    `OR(FIND("//${d}", LOWER({Website})), FIND(".${d}", LOWER({Website})))`
+  );
   if (existing) return existing;
   const [rec] = await create(T.companies, [{ Name: name, Website: website, Source: 'Inbound' }]);
   return rec;
