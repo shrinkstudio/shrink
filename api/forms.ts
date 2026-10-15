@@ -4,6 +4,7 @@
  * Webflow site webhook (trigger: form_submission) POSTs here. Routed by form name:
  * - Enquiry: upsert Company + Contact, create a Deal at Stage "Lead".
  * - Resource: upsert Contact, note which guide they took.
+ * - Either form with the resources opt-in ticked: also upsert the Mailing list.
  *
  * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature).
  */
@@ -17,6 +18,7 @@ const T = {
   companies: 'tblutaeT4swsXdjrZ',
   contacts: 'tblXiE8Absty3l4HW',
   deals: 'tbl5TAoijwcEctsso',
+  mailing: 'tblCy7RBJ1r86aWvo',
 };
 
 /* Need chip → Deals.Service */
@@ -121,7 +123,17 @@ async function handleEnquiry(s: Submission) {
     },
   ]);
 
-  return { ok: true, deal: deal.id, contact: contact.id, company: company?.id };
+  const mailing = d.resources
+    ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Enquiry' })
+    : null;
+
+  return {
+    ok: true,
+    deal: deal.id,
+    contact: contact.id,
+    company: company?.id,
+    mailing: mailing?.id,
+  };
 }
 
 async function handleResource(s: Submission) {
@@ -137,7 +149,11 @@ async function handleResource(s: Submission) {
     note: `${date(s)} Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
   });
 
-  return { ok: true, contact: contact.id };
+  const mailing = d.resources
+    ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Guide', guide })
+    : null;
+
+  return { ok: true, contact: contact.id, mailing: mailing?.id };
 }
 
 /* ---------- airtable ---------- */
@@ -178,6 +194,48 @@ async function upsertContact(c: {
       'Next action': c.nextAction,
       Notes: c.note,
       ...(c.company ? { Company: [c.company] } : {}),
+    },
+  ]);
+  return rec;
+}
+
+/** One record per email. Keeps the first opt-in as the consent record; a fresh opt-in re-subscribes. */
+async function upsertMailing(
+  s: Submission,
+  m: { name?: string; email: string; contact: string; source: 'Enquiry' | 'Guide'; guide?: string }
+) {
+  const guideLine = m.guide ? `${date(s)} ${m.guide}` : '';
+  const existing = await find(T.mailing, `LOWER({Email}) = "${esc(m.email)}"`);
+
+  if (existing) {
+    const f = existing.fields;
+    const sources = (f.Source as string[]) || [];
+    const contacts = (f.Contact as string[]) || [];
+    const guides = (f['Guides taken'] as string) || '';
+    const fields: Record<string, unknown> = {
+      Source: sources.includes(m.source) ? sources : [...sources, m.source],
+      Contact: contacts.includes(m.contact) ? contacts : [...contacts, m.contact],
+    };
+    if (guideLine) fields['Guides taken'] = guides ? `${guides}\n${guideLine}` : guideLine;
+    if (f.Status !== 'Subscribed') {
+      fields.Status = 'Subscribed';
+      fields['Synced to provider'] = false;
+    }
+    if (!f.Name && m.name) fields.Name = m.name;
+    await airtable(`${T.mailing}/${existing.id}`, 'PATCH', { fields, typecast: false });
+    return existing;
+  }
+
+  const [rec] = await create(T.mailing, [
+    {
+      Email: m.email,
+      Name: m.name || '',
+      Status: 'Subscribed',
+      Source: [m.source],
+      Contact: [m.contact],
+      'Opted in': s.submittedAt || new Date().toISOString(),
+      ...(s.pageUrl ? { 'Consent page': s.pageUrl } : {}),
+      ...(guideLine ? { 'Guides taken': guideLine } : {}),
     },
   ]);
   return rec;
