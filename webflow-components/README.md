@@ -15,7 +15,7 @@ and type mirror the ss-2027 MAST tokens (blue `#4469fc`, ink `#0a0a0a`, smoke
 
 "Ready to brief a build?" — a 7-question readiness quiz for venture-backed teams.
 Intro card, one question at a time, then a results screen. Ported from the live
-tools.shrink.studio quiz so it matches the proven tool. Figma: intro `3793-6378`,
+tools.shrink.studio quiz (now retired) so it matches the proven tool. Figma: intro `3793-6378`,
 results `3793-7390`.
 
 Results screen: two-axis score (**Readiness** = moment+clarity+team / 9,
@@ -34,14 +34,15 @@ and a shareable result link.
 
 **Integration endpoints (props):**
 
-- **Lead submit endpoint** — where the form POSTs JSON `{ contact, answers,
-  result }`. Defaults to `https://tools.shrink.studio/api/quiz-submit` (creates a
-  ClickUp task). Because the embed runs on a different origin (shrink.studio),
-  that route needs CORS headers + an `OPTIONS` handler for the browser preflight
-  to pass. Until that's added, the form submit will be blocked cross-origin.
-- **Share link base URL** — base for the shareable result link
-  (`<base>/quiz/r/<slug>?d=<encoded answers>`). Defaults to
-  `https://tools.shrink.studio`, whose `/quiz/r/[slug]` route rehydrates it.
+- **Lead submit endpoint**: where the form POSTs JSON `{ form: "quiz", id,
+  pageUrl, contact, result, answers }`. Defaults to
+  `https://shrink-site-api.vercel.app/api/forms` (`~/shrink/api/forms.ts`), which
+  writes the Contact (and a Deal when the result is "ready") to Airtable Shrink OS.
+  CORS allows shrink.studio, www.shrink.studio and *.webflow.io.
+- **Share link page**: the page the shareable link opens
+  (`<page>?c=<slug>&d=<encoded answers>`). Empty = the page the quiz is on; the
+  component reads `?d=` on load and opens straight on the results.
+- **Opt-in label**: the resources checkbox; ticked adds them to the Mailing list.
 
 ## Develop
 

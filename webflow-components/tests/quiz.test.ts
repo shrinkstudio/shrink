@@ -11,6 +11,8 @@ import {
   computeResult,
   computeScores,
   buildShareUrl,
+  decodeAnswers,
+  describeAnswers,
   slugifyCompany,
   type Answers,
 } from '../src/ReadinessQuiz/quiz.ts';
@@ -102,8 +104,25 @@ it('shape routes a ready result to a sprint', () => {
 
 it('share url encodes company slug + answers', () => {
   assert.equal(slugifyCompany('  Acme, Inc! '), 'acme-inc');
-  const url = buildShareUrl('https://tools.shrink.studio/', 'Acme Inc', { moment: 'recent-seed' });
-  assert.match(url, /^https:\/\/tools\.shrink\.studio\/quiz\/r\/acme-inc\?d=/);
+  const url = buildShareUrl('https://www.shrink.studio/quiz?x=1#top', 'Acme Inc', { moment: 'recent-seed' });
+  assert.match(url, /^https:\/\/www\.shrink\.studio\/quiz\?c=acme-inc&d=/);
+});
+
+it('share link round-trips a full answer set, rejects junk', () => {
+  const full: Answers = Object.fromEntries(
+    QUESTIONS.map((q) => [q.id, q.type === 'multi' ? q.options.slice(0, 2).map((o) => o.id) : q.options[0].id]),
+  );
+  const d = new URL(buildShareUrl('https://www.shrink.studio/quiz', 'x', full)).searchParams.get('d')!;
+  assert.deepEqual(decodeAnswers(d), full);
+  assert.equal(decodeAnswers('not-base64!'), null);
+  assert.equal(decodeAnswers(d.slice(0, 10)), null);
+});
+
+it('describeAnswers gives readable pairs for the lead notes', () => {
+  const rows = describeAnswers({ moment: 'recent-seed', jtbd: ['land-enterprise', 'convert-demos'] });
+  assert.equal(rows.length, QUESTION_COUNT);
+  assert.ok(rows.some((r) => r.answer === 'Recently raised seed (within 6 months)'));
+  assert.ok(rows.some((r) => r.answer === 'Land enterprise prospects; Convert demo or trial requests'));
 });
 
 console.log(`\n${passed} passed`);

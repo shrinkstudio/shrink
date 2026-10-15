@@ -6,6 +6,10 @@
  * - Resource: upsert Contact, note which guide they took.
  * - Either form with the resources opt-in ticked: also upsert the Mailing list.
  *
+ * The Readiness Quiz code component POSTs here directly (JSON, `form: "quiz"`, CORS):
+ * upsert Contact (+ Company from a work email), score and answers into the Contact notes;
+ * state "ready" also creates a Deal at Stage "Lead", otherwise the Contact is Nurture.
+ *
  * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature).
  */
 
@@ -27,6 +31,17 @@ const SERVICES: [RegExp, string][] = [
   [/development/i, 'Development'],
   [/optimi[sz]ation/i, 'Optimisation retainer'],
 ];
+
+/* quiz engagement id → Deals.Service */
+const QUIZ_SERVICES: Record<string, string> = {
+  'seed-website': 'Development',
+  'clarity-sprint': 'Discovery',
+  discovery: 'Discovery',
+  audit: 'Optimisation retainer',
+};
+
+/* browsers allowed to post the quiz */
+const ORIGIN_RE = /^https:\/\/((www\.)?shrink\.studio|[a-z0-9-]+\.webflow\.io)$/;
 
 /* personal inboxes: no Company from these */
 const FREE_MAIL = new Set([
@@ -74,8 +89,41 @@ type Submission = {
 
 type AirtableRecord = { id: string; fields: Record<string, unknown> };
 
+type QuizPayload = {
+  form: 'quiz';
+  id?: string;
+  pageUrl?: string;
+  contact?: { name?: string; email?: string; company?: string; resources?: boolean };
+  result?: {
+    state?: string;
+    readiness?: number;
+    urgency?: number;
+    engagementId?: string;
+    engagement?: string;
+  };
+  answers?: { question?: string; answer?: string }[];
+};
+
+export function OPTIONS(request: Request): Response {
+  return new Response(null, { status: 204, headers: cors(request) });
+}
+
 export async function POST(request: Request): Promise<Response> {
   const raw = await request.text();
+
+  // quiz: browser POST from the code component, guarded by origin (no Webflow signature)
+  const quiz = parseQuiz(raw);
+  if (quiz) {
+    const headers = cors(request);
+    if (!headers['Access-Control-Allow-Origin']) return json({ ok: false, error: 'origin' }, 403);
+    try {
+      const out = await handleQuiz(quiz);
+      return json(out, out.ok ? 200 : 400, headers);
+    } catch (err) {
+      console.error('forms error quiz', quiz.id, err);
+      return json({ ok: false, error: 'airtable failed' }, 500, headers);
+    }
+  }
 
   if (!(await verify(request, raw))) return json({ ok: false, error: 'bad signature' }, 401);
 
@@ -193,6 +241,93 @@ async function handleResource(s: Submission) {
   return { ok: true, contact: contact.id, company: company?.id, mailing: mailing?.id };
 }
 
+async function handleQuiz(q: QuizPayload) {
+  const c = q.contact || {};
+  const email = c.email?.trim().toLowerCase() || '';
+  const name = c.name?.trim().slice(0, 200) || '';
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return { ok: false, error: 'name and email' };
+
+  const r = q.result || {};
+  const state = ['ready', 'close', 'not_yet'].includes(r.state || '') ? r.state! : 'not_yet';
+  const ready = state === 'ready';
+  const engagement = r.engagement?.slice(0, 100) || 'not given';
+  const id = q.id?.slice(0, 64);
+
+  // browser retries: skip if this submission already landed
+  if (id) {
+    const dupe = await find(T.contacts, `FIND("Quiz ${esc(id)}", {Notes})`);
+    if (dupe) return { ok: true, duplicate: dupe.id };
+  }
+
+  const domain = email.split('@')[1] || '';
+  const companyName = c.company?.trim().slice(0, 200) || domain;
+  const company =
+    domain && !FREE_MAIL.has(domain) ? await upsertCompany(companyName, `https://${domain}`) : null;
+
+  const answers = (q.answers || [])
+    .slice(0, 20)
+    .map((a) => `- ${a.question?.slice(0, 200) || '?'}: ${a.answer?.slice(0, 300) || '(skipped)'}`);
+
+  const score = `readiness ${num(r.readiness)}/9, urgency ${num(r.urgency)}/6`;
+  const summary = [
+    `${today()} Readiness quiz: ${state.replace('_', ' ')}, ${score}, we'd start with ${engagement}${c.resources ? ', opted in to resources' : ''}`,
+    ...answers,
+    ...(c.company ? [`- Company given: ${c.company.slice(0, 200)}`] : []),
+    `- Quiz ${id || ''}`,
+  ].join('\n');
+
+  const contact = await upsertContact({
+    name,
+    email,
+    company: company?.id,
+    nextAction: ready ? 'Needs follow-up' : 'Nurture',
+    note: summary,
+  });
+
+  let deal: AirtableRecord | undefined;
+  if (ready) {
+    const service = QUIZ_SERVICES[r.engagementId || ''];
+    [deal] = await create(T.deals, [
+      {
+        Name: `${companyName}, readiness quiz`,
+        'Lead name': name,
+        Stage: 'Lead',
+        ...(service ? { Service: service } : {}),
+        ...(company ? { Company: [company.id] } : {}),
+        Notes: [
+          `Readiness quiz: ready, ${score}`,
+          `Where we'd start: ${engagement}`,
+          '',
+          ...answers,
+          '',
+          `Contact: ${name} <${email}>`,
+          ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
+          `Quiz ${id || ''}`,
+        ].join('\n'),
+        'Next step': 'Reply to quiz lead',
+        'Next step date': today(),
+      },
+    ]);
+  }
+
+  const mailing = c.resources
+    ? await upsertMailing(
+        { name: 'Quiz', siteId: SITE_ID, data: {}, pageUrl: q.pageUrl },
+        { name, email, contact: contact.id, source: 'Quiz' }
+      )
+    : null;
+
+  return {
+    ok: true,
+    state,
+    contact: contact.id,
+    company: company?.id,
+    deal: deal?.id,
+    mailing: mailing?.id,
+  };
+}
+
 /* ---------- airtable ---------- */
 
 async function upsertCompany(name: string, website: string) {
@@ -246,7 +381,13 @@ async function upsertContact(c: {
 /** One record per email. Keeps the first opt-in as the consent record; a fresh opt-in re-subscribes. */
 async function upsertMailing(
   s: Submission,
-  m: { name?: string; email: string; contact: string; source: 'Enquiry' | 'Guide'; guide?: string }
+  m: {
+    name?: string;
+    email: string;
+    contact: string;
+    source: 'Enquiry' | 'Guide' | 'Quiz';
+    guide?: string;
+  }
 ) {
   const guideLine = m.guide ? `${date(s)} ${m.guide}` : '';
   const existing = await find(T.mailing, `LOWER({Email}) = "${esc(m.email)}"`);
@@ -266,22 +407,27 @@ async function upsertMailing(
       fields['Synced to provider'] = false;
     }
     if (!f.Name && m.name) fields.Name = m.name;
-    await airtable(`${T.mailing}/${existing.id}`, 'PATCH', { fields, typecast: false });
+    // typecast adds a new Source choice (eg. Quiz) on first use
+    await airtable(`${T.mailing}/${existing.id}`, 'PATCH', { fields, typecast: true });
     return existing;
   }
 
-  const [rec] = await create(T.mailing, [
-    {
-      Email: m.email,
-      Name: m.name || '',
-      Status: 'Subscribed',
-      Source: [m.source],
-      Contact: [m.contact],
-      'Opted in': s.submittedAt || new Date().toISOString(),
-      ...(s.pageUrl ? { 'Consent page': s.pageUrl } : {}),
-      ...(guideLine ? { 'Guides taken': guideLine } : {}),
-    },
-  ]);
+  const [rec] = await create(
+    T.mailing,
+    [
+      {
+        Email: m.email,
+        Name: m.name || '',
+        Status: 'Subscribed',
+        Source: [m.source],
+        Contact: [m.contact],
+        'Opted in': s.submittedAt || new Date().toISOString(),
+        ...(s.pageUrl ? { 'Consent page': s.pageUrl } : {}),
+        ...(guideLine ? { 'Guides taken': guideLine } : {}),
+      },
+    ],
+    true
+  );
   return rec;
 }
 
@@ -291,10 +437,14 @@ async function find(table: string, formula: string): Promise<AirtableRecord | nu
   return res.records?.[0] ?? null;
 }
 
-async function create(table: string, rows: Record<string, unknown>[]): Promise<AirtableRecord[]> {
+async function create(
+  table: string,
+  rows: Record<string, unknown>[],
+  typecast = false
+): Promise<AirtableRecord[]> {
   const res = await airtable(table, 'POST', {
     records: rows.map((fields) => ({ fields })),
-    typecast: false,
+    typecast,
   });
   return res.records;
 }
@@ -381,9 +531,34 @@ function date(s: Submission) {
   return (s.submittedAt || new Date().toISOString()).slice(0, 10);
 }
 
-function json(body: unknown, status = 200) {
+function cors(request: Request): Record<string, string> {
+  const origin = request.headers.get('origin') || '';
+  if (!ORIGIN_RE.test(origin)) return {};
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  };
+}
+
+function parseQuiz(raw: string): QuizPayload | null {
+  try {
+    const body = JSON.parse(raw);
+    return body?.form === 'quiz' ? body : null;
+  } catch {
+    return null;
+  }
+}
+
+function num(v: unknown) {
+  return typeof v === 'number' && Number.isFinite(v) ? v : '?';
+}
+
+function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 }

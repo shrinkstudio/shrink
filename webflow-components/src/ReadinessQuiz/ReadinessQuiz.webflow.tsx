@@ -28,13 +28,17 @@ export default declareComponent(ReadinessQuiz, {
     restartLabel: props.Text({ name: 'Retake label', defaultValue: 'Retake the quiz' }),
 
     // Integration
+    optInLabel: props.Text({
+      name: 'Opt-in label',
+      defaultValue: 'Send me guides and resources from Shrink',
+    }),
     submitEndpoint: props.Text({
       name: 'Lead submit endpoint',
-      defaultValue: 'https://tools.shrink.studio/api/quiz-submit',
+      defaultValue: 'https://shrink-site-api.vercel.app/api/forms',
     }),
     shareBaseUrl: props.Text({
-      name: 'Share link base URL',
-      defaultValue: 'https://tools.shrink.studio',
+      name: 'Share link page (empty = this page)',
+      defaultValue: '',
     }),
   },
 });

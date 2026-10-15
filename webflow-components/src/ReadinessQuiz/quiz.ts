@@ -1,6 +1,6 @@
 /**
  * "Ready to brief a build?" — readiness quiz logic. Pure + framework-free.
- * Ported from the live tools.shrink.studio quiz (src/lib/quiz) so the embedded
+ * Ported from the old tools.shrink.studio quiz (src/lib/quiz) so the embedded
  * Webflow component matches the proven tool: two-axis scoring (Readiness / 9 +
  * Urgency / 6), a jobs-to-be-done list, a recommended engagement, and a
  * shareable-result link.
@@ -361,8 +361,44 @@ export function encodeAnswers(answers: Answers): string {
   return toBase64Url(JSON.stringify(answers));
 }
 
-/** `${base}/quiz/r/<slug>?d=<data>` — points at the tools.shrink.studio result route. */
+/** Reverse of encodeAnswers; null when the data isn't a valid answer set. */
+export function decodeAnswers(data: string): Answers | null {
+  try {
+    const b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const out: Answers = {};
+    for (const q of QUESTIONS) {
+      const ids = new Set(q.options.map((o) => o.id));
+      const v = parsed[q.id];
+      if (q.type === 'single' && typeof v === 'string' && ids.has(v)) out[q.id] = v;
+      if (q.type === 'multi' && Array.isArray(v)) {
+        const picks = v.filter((x) => typeof x === 'string' && ids.has(x));
+        if (picks.length) out[q.id] = picks.slice(0, q.maxSelections ?? picks.length);
+      }
+    }
+    return QUESTIONS.every((q) => q.id in out) ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/** `${page}?c=<slug>&d=<data>`: the quiz page rehydrates straight into results. */
 export function buildShareUrl(base: string, company: string, answers: Answers): string {
-  const root = base.replace(/\/+$/, '');
-  return `${root}/quiz/r/${slugifyCompany(company)}?d=${encodeAnswers(answers)}`;
+  const url = new URL(base);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('c', slugifyCompany(company));
+  url.searchParams.set('d', encodeAnswers(answers));
+  return url.toString();
+}
+
+/** Readable question/answer pairs for the lead notes. */
+export function describeAnswers(answers: Answers): { question: string; answer: string }[] {
+  return QUESTIONS.map((q) => {
+    const v = answers[q.id];
+    const picks = Array.isArray(v) ? v : typeof v === 'string' ? [v] : [];
+    const labels = picks.map((id) => q.options.find((o) => o.id === id)?.label).filter(Boolean);
+    return { question: q.prompt, answer: labels.join('; ') };
+  });
 }

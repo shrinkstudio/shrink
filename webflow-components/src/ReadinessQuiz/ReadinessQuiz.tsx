@@ -5,7 +5,7 @@
  * Shadow-DOM component with scoped styles; copy + endpoints editable via props.
  * Scoring, questions and result copy live in quiz.ts.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { css } from './styles';
 import {
   QUESTIONS,
@@ -14,6 +14,8 @@ import {
   URGENCY_MAX,
   buildShareUrl,
   computeResult,
+  decodeAnswers,
+  describeAnswers,
   type Answers,
   type QuizResult,
 } from './quiz';
@@ -29,10 +31,12 @@ export interface ReadinessQuizProps {
   startLabel?: string;
   backLabel?: string;
   restartLabel?: string;
-  /** Where the lead form posts (JSON). Defaults to the tools.shrink.studio route. */
+  /** Where the lead form posts (JSON). Defaults to the site's api/forms handler. */
   submitEndpoint?: string;
-  /** Base for the shareable result link. Defaults to tools.shrink.studio. */
+  /** Page the share link opens. Empty = the page the quiz is on. */
   shareBaseUrl?: string;
+  /** Resources opt-in checkbox label. */
+  optInLabel?: string;
 }
 
 type Phase = 'intro' | 'quiz' | 'results';
@@ -55,17 +59,28 @@ export function ReadinessQuiz({
   startLabel = 'Start the quiz',
   backLabel = 'Back',
   restartLabel = 'Retake the quiz',
-  submitEndpoint = 'https://tools.shrink.studio/api/quiz-submit',
-  shareBaseUrl = 'https://tools.shrink.studio',
+  submitEndpoint = 'https://shrink-site-api.vercel.app/api/forms',
+  shareBaseUrl = '',
+  optInLabel = 'Send me guides and resources from Shrink',
 }: ReadinessQuizProps) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
 
-  const [contact, setContact] = useState({ name: '', email: '', company: '', notes: '' });
+  const [contact, setContact] = useState({ name: '', email: '', company: '', resources: false });
   const [submit, setSubmit] = useState<SubmitState>({ status: 'idle' });
   const [shareCompany, setShareCompany] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // shared link (?d=): open straight on the results
+  useEffect(() => {
+    const d = new URLSearchParams(window.location.search).get('d');
+    const shared = d ? decodeAnswers(d) : null;
+    if (shared) {
+      setAnswers(shared);
+      setPhase('results');
+    }
+  }, []);
 
   const result = useMemo<QuizResult | null>(
     () => (phase === 'results' ? computeResult(answers) : null),
@@ -106,7 +121,7 @@ export function ReadinessQuiz({
   }
   function restart() {
     setAnswers({});
-    setContact({ name: '', email: '', company: '', notes: '' });
+    setContact({ name: '', email: '', company: '', resources: false });
     setSubmit({ status: 'idle' });
     setShareCompany('');
     setStep(0);
@@ -124,10 +139,23 @@ export function ReadinessQuiz({
       const res = await fetch(submitEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact, answers, result }),
+        body: JSON.stringify({
+          form: 'quiz',
+          id: crypto.randomUUID(),
+          pageUrl: window.location.href,
+          contact,
+          result: result && {
+            state: result.state,
+            readiness: result.scores.readiness,
+            urgency: result.scores.urgency,
+            engagementId: result.recommendedEngagement.id,
+            engagement: result.recommendedEngagement.label,
+          },
+          answers: describeAnswers(answers),
+        }),
       });
-      const data = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string };
-      if (!res.ok || !data.success) throw new Error(data.error || 'Submit failed');
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Submit failed');
       setSubmit({ status: 'sent' });
     } catch {
       setSubmit({ status: 'error', message: 'Something went wrong. Please try again.' });
@@ -135,7 +163,8 @@ export function ReadinessQuiz({
   }
 
   async function handleShare() {
-    const url = buildShareUrl(shareBaseUrl, shareCompany || 'anon', answers);
+    const base = shareBaseUrl || window.location.origin + window.location.pathname;
+    const url = buildShareUrl(base, shareCompany || 'anon', answers);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -319,6 +348,16 @@ export function ReadinessQuiz({
                       onChange={(e) => setContact((c) => ({ ...c, company: e.target.value }))}
                     />
                   </label>
+                  {optInLabel && (
+                    <label className="rq__check">
+                      <input
+                        type="checkbox"
+                        checked={contact.resources}
+                        onChange={(e) => setContact((c) => ({ ...c, resources: e.target.checked }))}
+                      />
+                      <span>{optInLabel}</span>
+                    </label>
+                  )}
                   {submit.status === 'error' && <p className="rq__error">{submit.message}</p>}
                   <div className="rq__cta-wrap">
                     <button type="submit" className="rq__btn rq__btn--primary" disabled={submit.status === 'sending'}>

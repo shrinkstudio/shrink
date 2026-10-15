@@ -145,6 +145,8 @@ export const css = /* css */ `
 }
 .rq__input::placeholder { color: var(--line-strong); }
 .rq__input:focus { border-color: var(--accent); }
+.rq__check { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 12px; font-size: 14px; color: var(--muted); cursor: pointer; }
+.rq__check input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
 .rq__error { font-size: 14px; color: #b42318; margin: 8px 0 0; }
 
 /* Results — share */
