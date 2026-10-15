@@ -18,6 +18,17 @@
  * which means a CMS-bound pill needs no attribute binding at all. Set it to an
  * empty string for the "All" pill, which clears the field instead.
  *
+ * Group mode, for pills that can't take attributes (eg. Tag component
+ * instances): put the attributes on a wrapper instead and every direct child
+ * becomes a pill, valued by its text. A child reading "All" clears the field.
+ *   fs-list-element="filter-buttons"  fs-list-field="topic"
+ *   data-active-class="w-variant-…"   optional extra class for the active pill
+ *                                     (eg. the Tag's Selected variant class)
+ *
+ * The radios live inside the nearest `form[fs-list-element="filters"]` when
+ * there is one, so a search field and the pills filter together. Otherwise a
+ * hidden form is created.
+ *
  * The active pill gets `is-list-active`, matching Finsweet's own default.
  */
 
@@ -26,6 +37,8 @@ const FIELD_ATTRIBUTE = 'fs-list-field';
 const VALUE_ATTRIBUTE = 'fs-list-value';
 
 const BUTTON_ELEMENT = 'filter-button';
+const GROUP_ELEMENT = 'filter-buttons';
+const ALL_LABEL = 'all';
 const ACTIVE_CLASS = 'is-list-active';
 const FORM_ID = 'fs-list-button-filters';
 
@@ -37,7 +50,35 @@ const getButtonValue = (button: HTMLElement) => {
   const explicit = button.getAttribute(VALUE_ATTRIBUTE);
   if (explicit !== null) return explicit.trim();
 
-  return button.textContent?.trim() || '';
+  const text = button.textContent?.trim() || '';
+  return text.toLowerCase() === ALL_LABEL ? '' : text;
+};
+
+type Pill = { el: HTMLElement; field: string; activeClass?: string };
+
+/** Single pills plus the children of every pill group. */
+const collectPills = (): Pill[] => {
+  const pills: Pill[] = [];
+
+  document
+    .querySelectorAll<HTMLElement>(`[${ELEMENT_ATTRIBUTE}="${BUTTON_ELEMENT}"]`)
+    .forEach((el) => {
+      const field = el.getAttribute(FIELD_ATTRIBUTE)?.trim();
+      if (field) pills.push({ el, field });
+    });
+
+  document
+    .querySelectorAll<HTMLElement>(`[${ELEMENT_ATTRIBUTE}="${GROUP_ELEMENT}"]`)
+    .forEach((group) => {
+      const field = group.getAttribute(FIELD_ATTRIBUTE)?.trim();
+      if (!field) return;
+      const activeClass = group.dataset.activeClass?.trim() || undefined;
+      for (const el of group.children) {
+        if (el instanceof HTMLElement) pills.push({ el, field, activeClass });
+      }
+    });
+
+  return pills;
 };
 
 /**
@@ -49,23 +90,22 @@ const getButtonValue = (button: HTMLElement) => {
  * plus a `destroy` cleanup. `undefined` if there are no button filters.
  */
 export const initButtonFilters = () => {
-  const buttons = [
-    ...document.querySelectorAll<HTMLElement>(`[${ELEMENT_ATTRIBUTE}="${BUTTON_ELEMENT}"]`),
-  ];
-  if (!buttons.length) return;
+  const pills = collectPills();
+  if (!pills.length) return;
 
-  const form = document.createElement('form');
+  // share the page's filter form (eg. with a search field) when there is one
+  const hostForm = pills[0].el.closest<HTMLFormElement>(`form[${ELEMENT_ATTRIBUTE}="filters"]`);
+  const form = document.createElement(hostForm ? 'div' : 'form');
   form.id = FORM_ID;
-  form.setAttribute(ELEMENT_ATTRIBUTE, 'filters');
+  if (!hostForm) form.setAttribute(ELEMENT_ATTRIBUTE, 'filters');
   form.style.display = 'none';
 
   const radios = new Map<HTMLElement, HTMLInputElement>();
+  const activeClasses = new Map<HTMLElement, string | undefined>();
 
-  for (const button of buttons) {
-    const field = button.getAttribute(FIELD_ATTRIBUTE)?.trim();
-    if (!field) continue;
-
+  for (const { el: button, field, activeClass } of pills) {
     const value = getButtonValue(button);
+    activeClasses.set(button, activeClass);
 
     const radio = document.createElement('input');
     radio.type = 'radio';
@@ -83,12 +123,19 @@ export const initButtonFilters = () => {
 
   if (!radios.size) return;
 
-  document.body.append(form);
+  (hostForm ?? document.body).append(form);
 
   const sync = () => {
     for (const [button, radio] of radios) {
       button.classList.toggle(ACTIVE_CLASS, radio.checked);
-      button.setAttribute('aria-pressed', `${radio.checked}`);
+      const extra = activeClasses.get(button);
+      if (extra) button.classList.toggle(extra, radio.checked);
+      // Tag pills carry a cover link; that's the focusable control
+      const control = button.matches('a, button')
+        ? button
+        : (button.querySelector('a, button') ?? button);
+      control.setAttribute('role', 'button');
+      control.setAttribute('aria-pressed', `${radio.checked}`);
     }
   };
 
