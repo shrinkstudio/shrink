@@ -120,6 +120,9 @@ Ben's design is in "Sitemap Final" (`4326:2693`). Copy with three additions: Fig
 - [x] **B** Team settled: Joshua Fry, UX Designer (matches the CMS)
 - [ ] **C** Replace the "Studio updates" placeholder cards with real articles; hero button to "Start a conversation"
 - [ ] **C** Person structured data per team member at build
+- [~] **C** Testimonial Card (16 Oct): component built (Shrink), Case Studies list filtered by "Show In Testimonial Card", sorted by "Testimonial Card Order". Tabs CloudNC, Buff Motion, Steamhaus; bundle `testimonial-tabs.ts` (538f90b). Left: Ben drags the list into the card's Items slot, footer SHA bump, staging check
+- [ ] **B** Testimonial photos (Clients > Testimonial Photo, 3:4) for all three; white panel shows until then
+- [ ] **B** Adfin and Forest quotes, so they can join the tabs
 
 ### 6. Resources and articles
 
