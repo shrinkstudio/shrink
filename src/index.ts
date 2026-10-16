@@ -16,6 +16,7 @@ import { initInview } from './modules/inview';
 import { initMegaNav } from './modules/mega-nav';
 import { initMeshGradient } from './modules/mesh-gradient';
 import { initReadTime } from './modules/read-time';
+import { initSegmented } from './modules/segmented';
 import { initTeamHover } from './modules/team-hover';
 import { initTestimonialTabs } from './modules/testimonial-tabs';
 import { initTestimonials } from './modules/testimonials';
@@ -42,6 +43,7 @@ window.Webflow.push(() => {
   initFormPrefill();
   initCopyClip();
   initTestimonials();
+  initSegmented();
   initTestimonialTabs();
   initTrack();
 

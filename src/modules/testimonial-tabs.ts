@@ -1,19 +1,23 @@
 // -----------------------------------------
-// TESTIMONIAL TABS — client tabs over full testimonial panels (About page)
+// TESTIMONIAL TABS — Segmented Control switches testimonial panels (About page)
 // -----------------------------------------
 // Markup (CSS/layout built in Webflow, the Testimonial Card component):
 //   [data-testimonial-card]                 ← root
-//     [data-testimonial-tabs]               ← empty; the tab buttons are built here
-//     [data-testimonial-panel="CloudNC"]    ← each Collection Item; value = tab label
+//     [data-segmented]                      ← Segmented Control (Tabs slot); one
+//                                             Segment per client, same order as panels
+//     [data-testimonial-panel]              ← each Collection Item (Items slot)
 //       [data-testimonial-quote]            ← the long quote (muted by CSS)
 //       [data-testimonial-highlight]        ← hidden; the sentence to show in full colour
 //
-// Tabs are real buttons (filter_btn, is-list-active when selected) with
-// tablist/tab/tabpanel roles and arrow, Home and End keys. Click only, no
-// timer. One panel: the tabs hide. The highlight sentence is wrapped in
-// .testimonial-card_highlight; with no highlight (or no match) the quote gets
-// data-testimonial-quote="full" so CSS shows it all in full colour.
+// segmented.ts owns the control (pill, roles, keys); this listens for its
+// `segmented:change` and shows panel n, with a short fade. Segments and panels
+// are paired by order and linked with aria-controls/labelledby. One panel: the
+// control hides. The highlight sentence is wrapped in .testimonial-card_highlight;
+// with no highlight (or no match) the quote gets data-testimonial-quote="full"
+// so CSS shows it all in full colour.
 // -----------------------------------------
+
+import type { SegmentedChange } from './segmented';
 
 interface GsapLite {
   fromTo(target: unknown, from: Record<string, unknown>, to: Record<string, unknown>): unknown;
@@ -42,81 +46,50 @@ function highlightQuote(panel: HTMLElement) {
 
 function setup(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-testimonial-panel]'));
-  const tablist = root.querySelector<HTMLElement>('[data-testimonial-tabs]');
+  const control = root.querySelector<HTMLElement>('[data-segmented]');
   if (!panels.length) return;
 
   panels.forEach(highlightQuote);
 
-  if (panels.length < 2 || !tablist) {
-    if (tablist) tablist.hidden = true;
+  if (panels.length < 2 || !control) {
+    if (control) control.hidden = true;
+    panels.forEach((panel, i) => (panel.hidden = i > 0));
     return;
   }
 
+  const segments = Array.from(control.querySelectorAll<HTMLElement>('[data-segment]'));
   const id = `testimonial-${++uid}`;
-  tablist.setAttribute('role', 'tablist');
-  tablist.replaceChildren();
-
-  const tabs = panels.map((panel, i) => {
-    const tab = document.createElement('button');
-    tab.type = 'button';
-    tab.className = 'filter_btn';
-    tab.id = `${id}-tab-${i}`;
-    tab.textContent = panel.getAttribute('data-testimonial-panel')?.trim() || `${i + 1}`;
-    tab.setAttribute('role', 'tab');
-    tab.setAttribute('aria-controls', `${id}-panel-${i}`);
-    panel.id = `${id}-panel-${i}`;
+  panels.forEach((panel, i) => {
+    const seg = segments[i];
     panel.setAttribute('role', 'tabpanel');
-    panel.setAttribute('aria-labelledby', tab.id);
-    tablist.append(tab);
-    return tab;
+    panel.id = `${id}-panel-${i}`;
+    if (!seg) return;
+    seg.id ||= `${id}-tab-${i}`;
+    seg.setAttribute('aria-controls', panel.id);
+    panel.setAttribute('aria-labelledby', seg.id);
   });
 
-  let current = -1;
-  const select = (index: number, focus = false) => {
-    if (index === current) return;
-    tabs.forEach((tab, i) => {
-      const on = i === index;
-      tab.classList.toggle('is-list-active', on);
-      tab.setAttribute('aria-selected', `${on}`);
-      tab.tabIndex = on ? 0 : -1;
-      panels[i].hidden = !on;
-    });
-    if (focus) tabs[index].focus();
+  let current = Math.max(
+    0,
+    segments.findIndex((s) => s.classList.contains('is-active'))
+  );
+  const show = (index: number, fade: boolean) => {
+    panels.forEach((panel, i) => (panel.hidden = i !== index));
     const gsap = (window as unknown as { gsap?: GsapLite }).gsap;
-    if (current !== -1 && gsap && !reduced()) {
+    if (fade && gsap && !reduced()) {
       gsap.fromTo(panels[index], { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' });
     }
     current = index;
   };
 
-  const onClick = (event: Event) => {
-    const i = tabs.indexOf(event.currentTarget as HTMLButtonElement);
-    if (i >= 0) select(i);
+  const onChange = (event: Event) => {
+    const { index } = (event as CustomEvent<SegmentedChange>).detail;
+    if (index !== current && panels[index]) show(index, true);
   };
-  const onKey = (event: KeyboardEvent) => {
-    const keys: Record<string, number> = {
-      ArrowRight: current + 1,
-      ArrowLeft: current - 1,
-      Home: 0,
-      End: tabs.length - 1,
-    };
-    if (!(event.key in keys)) return;
-    event.preventDefault();
-    select((keys[event.key] + tabs.length) % tabs.length, true);
-  };
+  control.addEventListener('segmented:change', onChange);
+  cleanups.push(() => control.removeEventListener('segmented:change', onChange));
 
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', onClick);
-    tab.addEventListener('keydown', onKey);
-  });
-  cleanups.push(() =>
-    tabs.forEach((tab) => {
-      tab.removeEventListener('click', onClick);
-      tab.removeEventListener('keydown', onKey);
-    })
-  );
-
-  select(0);
+  show(Math.min(current, panels.length - 1), false);
 }
 
 export function initTestimonialTabs(scope: ParentNode = document): void {
