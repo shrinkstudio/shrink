@@ -120,6 +120,8 @@ Ben's design is in "Sitemap Final" (`4326:2693`). Copy with three additions: Fig
 - [x] **B** Team settled: Joshua Fry, UX Designer (matches the CMS)
 - [ ] **C** Replace the "Studio updates" placeholder cards with real articles; hero button to "Start a conversation"
 - [ ] **C** Person structured data per team member at build
+- [ ] **B** About vs Figma `4363:3862` (16 Oct): studio facts list (Founded, Based in, Partner status, Team, Clients, Works across) missing beside "Where we come from"; photos are a marquee strip on the page, 3 large photos in Figma; values heading "What we live by" (page) vs "What we stand by" (Figma); team lines + LinkedIn not built, "Who we are" vs "Who are we?"
+- [ ] **C** About "Featured resources" still uses the old image-placeholder cards (`select-resource_*`); swap to the Resources article card (grey, category mesh on hover). Figma already updated: Article card synced to the build, used in Studio updates, Studio updates (About) and Resources list
 - [x] **C** Testimonial Card (16 Oct): component built (Shrink), Case Studies list filtered by "Show In Testimonial Card", sorted by "Testimonial Card Order". Tabs CloudNC, Buff Motion, Steamhaus; bundle `testimonial-tabs.ts` (538f90b). Verified on staging: tabs, keys, highlight, results column drops out when empty
 - [x] **C** Testimonial Card rebuilt 1:1 with Figma `4356:154` from new primitives (16 Oct): Segmented Control + Segment (bundle `segmented.ts`, 02ab64e), Stat. Dot-pattern photo fallback. Style guide demos added
 - [ ] **B** Token call: Webflow `--primary--border` is #f4f4f5, Figma border-primary is 10% #1a1c21 (card hairlines use the Figma value directly for now); card radius token 12px vs Figma 8px
