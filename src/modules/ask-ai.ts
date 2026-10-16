@@ -1,7 +1,8 @@
 // -----------------------------------------
 // ASK AI — footer widget: open an AI assistant with a prefilled prompt about Shrink.
 // Buttons are Webflow elements with [data-ask-ai="<platform>"] and a CMS-bound
-// [data-ask-ai-prompt]. JS only attaches behaviour; markup + styling stay in Webflow.
+// [data-ask-ai-prompt] ({url} and {title} fill in from the page, eg. the
+// "Ask AI" component on articles). JS only attaches behaviour; markup + styling stay in Webflow.
 // Ported from shrinkstudio/shrink-studio-site/src/ask-ai.js.
 //
 // Webflow binding (LLM Answers CMS): data-ask-ai <- Data Platform field,
@@ -51,6 +52,13 @@ async function copyText(text: string): Promise<void> {
   document.body.removeChild(t);
 }
 
+// {url} and {title} in a prompt become this page's URL and title (h1)
+function fillTokens(prompt: string): string {
+  const url = window.location.origin + window.location.pathname;
+  const title = document.querySelector('h1')?.textContent?.trim() || document.title;
+  return prompt.replace(/\{url\}/g, url).replace(/\{title\}/g, title);
+}
+
 function getPrompt(el: Element): string {
   // Button first, then walk up in case the attribute sits on a wrapper
   // (some CMS bindings expose attributes higher in the tree).
@@ -58,7 +66,7 @@ function getPrompt(el: Element): string {
   while (node && node !== document.body) {
     if (node instanceof Element) {
       const v = node.getAttribute('data-ask-ai-prompt');
-      if (v && v.trim()) return v.trim();
+      if (v && v.trim()) return fillTokens(v.trim());
     }
     node = node.parentNode;
   }
