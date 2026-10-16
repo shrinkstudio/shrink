@@ -123,6 +123,14 @@ Ben's design is in "Sitemap Final" (`4326:2693`). Copy with three additions: Fig
 
 ### 6. Resources and articles
 
+- [x] **C** Article template rebuilt (16 Oct): centred column, In short card with Ask AI component, featured-card related solution, link-list related reading, `cc-compact` headings (h4 size), Article + BreadcrumbList JSON-LD, `<article>` landmark. Figma frame `4363:4485` synced
+- [ ] **B** Related reading has NO filters yet: it shows the 2 newest articles site-wide (can include itself). Pick: filter same Category + exclude current item, or hand-pick via a Related Articles multi-ref (like Solutions)
+- [ ] **B** Template page title doubles up ("… | Shrink Studio | News & Insights, Shrink Studio"): set Page settings Title to the Meta Title field only
+- [ ] **B+C** OG/Twitter image is empty on every article (no og-image values): blocked on the share image design
+- [ ] **B** Article card design without images: proposal in Figma Cards section (`4497:280`, grey card, category mesh on hover)
+- [ ] **C** Tracking sweep with PostHog before launch: install, then confirm the `data-track` hooks (ask-ai, solution-click, related-reading-click, article-read + page context) arrive; bundle module `track.ts`
+- [ ] **B** Launch settings: global canonical `https://www.shrink.studio`, sitemap on, robots allow (staging webflow.io blocks all, expected)
+
 Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the solution frame. Same centred column as solutions: category tag, title, summary, byline and dates, "In short" panel (the `ai-summary` field), body, related solution card, related reading, CTA. No hero image, no table of contents.
 
 - [x] **B** Subheadings: 63 approved H2s added to all 15 articles and the audit article retitled "How to audit a website properly" (CMS, staged 13 Oct). Drafts and Orbit post ideas are in `ARTICLE-SUBHEADINGS.md`; original bodies backed up in `~/shrink-prototypes/ss2027-gap/article-bodies-before-subheadings`
