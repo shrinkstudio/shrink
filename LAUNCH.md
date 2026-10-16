@@ -124,7 +124,7 @@ Ben's design is in "Sitemap Final" (`4326:2693`). Copy with three additions: Fig
 ### 6. Resources and articles
 
 - [x] **C** Article template rebuilt (16 Oct): centred column, In short card with Ask AI component, featured-card related solution, link-list related reading, `cc-compact` headings (h4 size), Article + BreadcrumbList JSON-LD, `<article>` landmark. Figma frame `4363:4485` synced
-- [ ] **B** Related reading has NO filters yet: it shows the 2 newest articles site-wide (can include itself). Pick: filter same Category + exclude current item, or hand-pick via a Related Articles multi-ref (like Solutions)
+- [ ] **B** Related reading: decided automatic (16 Oct). Ben adds filters in the Designer: Category = current item's Category, exclude current item (sort newest, limit 2 already set). Hide the section or show 'All resources' when a category has no other live article
 - [ ] **B** Template page title doubles up ("… | Shrink Studio | News & Insights, Shrink Studio"): set Page settings Title to the Meta Title field only
 - [ ] **B+C** OG/Twitter image is empty on every article (no og-image values): blocked on the share image design
 - [ ] **B** Article card design without images: proposal in Figma Cards section (`4497:280`, grey card, category mesh on hover)
