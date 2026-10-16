@@ -12,6 +12,8 @@
 // renders one still frame. Inside the mega nav the shader mounts the first
 // time the menu opens and only runs while it is open; elsewhere (eg. the
 // footer) it mounts near the viewport and pauses when scrolled away.
+// data-mesh-mount="hover" mounts only while the closest [data-mesh-hover]
+// (eg. an article card) is hovered or focused, and frees it after.
 // -----------------------------------------
 
 import {
@@ -24,6 +26,7 @@ import {
 
 const mounts = new Map<HTMLElement, ShaderMount>();
 const observers: (MutationObserver | IntersectionObserver)[] = [];
+const unbinds: Array<() => void> = [];
 
 const num = (el: HTMLElement, name: string, fallback: number) => {
   const value = Number(el.getAttribute(`data-mesh-${name}`));
@@ -88,8 +91,39 @@ export const initMeshGradient = (scope: ParentNode = document) => {
   const els = [...scope.querySelectorAll<HTMLElement>('[data-mesh-gradient]')];
   if (!els.length) return;
 
-  const inMenu = els.filter((el) => el.closest('[data-menu-wrap]'));
-  const onPage = els.filter((el) => !el.closest('[data-menu-wrap]'));
+  const onHover = els.filter((el) => el.getAttribute('data-mesh-mount') === 'hover');
+  const inMenu = els.filter((el) => el.closest('[data-menu-wrap]') && !onHover.includes(el));
+  const onPage = els.filter((el) => !el.closest('[data-menu-wrap]') && !onHover.includes(el));
+
+  // hover meshes (eg. article cards): one WebGL context per hovered card,
+  // released after the fade out so a grid of cards never hits the browser cap
+  for (const el of onHover) {
+    const host = el.closest<HTMLElement>('[data-mesh-hover]') ?? el.parentElement;
+    if (!host) continue;
+    let release: number | undefined;
+    const enter = () => {
+      window.clearTimeout(release);
+      mount(el)?.setSpeed(speedOf(el));
+    };
+    const leave = () => {
+      release = window.setTimeout(() => {
+        mounts.get(el)?.dispose();
+        mounts.delete(el);
+        el.removeAttribute('data-mesh-ready');
+      }, 800);
+    };
+    host.addEventListener('pointerenter', enter);
+    host.addEventListener('pointerleave', leave);
+    host.addEventListener('focusin', enter);
+    host.addEventListener('focusout', leave);
+    unbinds.push(() => {
+      window.clearTimeout(release);
+      host.removeEventListener('pointerenter', enter);
+      host.removeEventListener('pointerleave', leave);
+      host.removeEventListener('focusin', enter);
+      host.removeEventListener('focusout', leave);
+    });
+  }
 
   const menu = inMenu[0]?.closest<HTMLElement>('[data-menu-wrap]');
   if (menu) {
@@ -125,6 +159,8 @@ export const initMeshGradient = (scope: ParentNode = document) => {
 export const destroyMeshGradient = () => {
   observers.forEach((o) => o.disconnect());
   observers.length = 0;
+  unbinds.forEach((fn) => fn());
+  unbinds.length = 0;
   mounts.forEach((shader, el) => {
     shader.dispose();
     el.removeAttribute('data-mesh-ready');

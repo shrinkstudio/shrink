@@ -73,7 +73,10 @@ const collectPills = (): Pill[] => {
       const field = group.getAttribute(FIELD_ATTRIBUTE)?.trim();
       if (!field) return;
       const activeClass = group.dataset.activeClass?.trim() || undefined;
-      for (const el of group.children) {
+      // .filter_btn anywhere inside (eg. Filter Buttons in a CMS list), else the children
+      const nested = group.querySelectorAll<HTMLElement>('.filter_btn');
+      const els = nested.length ? Array.from(nested) : Array.from(group.children);
+      for (const el of els) {
         if (el instanceof HTMLElement) pills.push({ el, field, activeClass });
       }
     });
