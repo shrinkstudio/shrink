@@ -121,6 +121,8 @@ Ben's design is in "Sitemap Final" (`4326:2693`). Copy with three additions: Fig
 - [ ] **C** Replace the "Studio updates" placeholder cards with real articles; hero button to "Start a conversation"
 - [ ] **C** Person structured data per team member at build
 - [x] **C** Testimonial Card (16 Oct): component built (Shrink), Case Studies list filtered by "Show In Testimonial Card", sorted by "Testimonial Card Order". Tabs CloudNC, Buff Motion, Steamhaus; bundle `testimonial-tabs.ts` (538f90b). Verified on staging: tabs, keys, highlight, results column drops out when empty
+- [x] **C** Testimonial Card rebuilt 1:1 with Figma `4356:154` from new primitives (16 Oct): Segmented Control + Segment (bundle `segmented.ts`, 02ab64e), Stat. Dot-pattern photo fallback. Style guide demos added
+- [ ] **B** Token call: Webflow `--primary--border` is #f4f4f5, Figma border-primary is 10% #1a1c21 (card hairlines use the Figma value directly for now); card radius token 12px vs Figma 8px
 - [ ] **B** Testimonial quote: decide on the default blockquote left border
 - [ ] **B** Testimonial photos (Clients > Testimonial Photo, 3:4) for all three; white panel shows until then
 - [ ] **B** Adfin and Forest quotes, so they can join the tabs
