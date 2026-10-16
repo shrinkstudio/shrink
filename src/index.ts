@@ -19,6 +19,7 @@ import { initReadTime } from './modules/read-time';
 import { initTeamHover } from './modules/team-hover';
 import { initTestimonials } from './modules/testimonials';
 import { initToc } from './modules/toc';
+import { initTrack } from './modules/track';
 
 // Capture our own <script> tag now: document.currentScript is only valid during
 // initial execution, not inside the deferred Webflow.push callback. The list
@@ -40,6 +41,7 @@ window.Webflow.push(() => {
   initFormPrefill();
   initCopyClip();
   initTestimonials();
+  initTrack();
 
   // The vendored Finsweet list is ~100KB of the bundle; only stand it up on
   // pages that actually have a list to filter.
