@@ -1,11 +1,11 @@
 // -----------------------------------------
-// MESH GRADIENT — animated WebGL mesh with grain (Paper Shaders)
+// MESH GRADIENT — animated Offsets shader with grain (offsets-shader.ts)
 // -----------------------------------------
 // Markup:
-//   div[data-mesh-gradient="#1a1c21, #144c5e, #4469fc, #1a1c21, #b6cee2"]
-//     optional: data-mesh-grain (0 to 1, default 0.25)
-//               data-mesh-speed (default 0.3)
-//               data-mesh-distortion (default 0.8), data-mesh-swirl (default 0.1)
+//   div[data-mesh-gradient="#1b1060, #3a24d8, #5b3cf5, #9a8cf0, #e6e4f2"]
+//     five colours, darkest first
+//     optional: data-mesh-grain (0 to 1, default 0.22)
+//               data-mesh-speed (default 0.3, the designed pace)
 //
 // The element needs a size (eg. absolute, inset 0) and a CSS gradient
 // background as the fallback: it stays when WebGL is missing. Reduced motion
@@ -16,15 +16,9 @@
 // (eg. an article card) is hovered or focused, and frees it after.
 // -----------------------------------------
 
-import {
-  defaultObjectSizing,
-  getShaderColorFromString,
-  meshGradientFragmentShader,
-  ShaderFitOptions,
-  ShaderMount,
-} from '@paper-design/shaders';
+import { OffsetsMount } from './offsets-shader';
 
-const mounts = new Map<HTMLElement, ShaderMount>();
+const mounts = new Map<HTMLElement, OffsetsMount>();
 const observers: (MutationObserver | IntersectionObserver)[] = [];
 const unbinds: Array<() => void> = [];
 
@@ -34,7 +28,8 @@ const num = (el: HTMLElement, name: string, fallback: number) => {
 };
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const speedOf = (el: HTMLElement) => (reduced() ? 0 : num(el, 'speed', 0.3));
+/* 0.3 was Paper's default; keep it as the attribute's designed pace */
+const speedOf = (el: HTMLElement) => (reduced() ? 0 : num(el, 'speed', 0.3) / 0.3);
 
 const mount = (el: HTMLElement) => {
   if (mounts.has(el)) return mounts.get(el);
@@ -45,35 +40,12 @@ const mount = (el: HTMLElement) => {
     .slice(0, 10);
   if (colors.length < 2) return;
 
-  const sizing = defaultObjectSizing;
   try {
-    const shader = new ShaderMount(
-      el,
-      meshGradientFragmentShader,
-      {
-        u_colors: colors.map(getShaderColorFromString),
-        u_colorsCount: colors.length,
-        u_distortion: num(el, 'distortion', 0.8),
-        u_swirl: num(el, 'swirl', 0.1),
-        u_grainMixer: 0,
-        u_grainOverlay: num(el, 'grain', 0.25),
-        u_fit: ShaderFitOptions.cover,
-        u_scale: sizing.scale,
-        u_rotation: sizing.rotation,
-        u_offsetX: sizing.offsetX,
-        u_offsetY: sizing.offsetY,
-        u_originX: sizing.originX,
-        u_originY: sizing.originY,
-        u_worldWidth: sizing.worldWidth,
-        u_worldHeight: sizing.worldHeight,
-      },
-      undefined,
-      speedOf(el),
-      0,
-      1
-    );
-    // the canvas is decoration only
-    el.querySelector('canvas')?.setAttribute('aria-hidden', 'true');
+    const shader = new OffsetsMount(el, {
+      colors,
+      grain: num(el, 'grain', 0.22),
+      speed: speedOf(el),
+    });
     el.setAttribute('data-mesh-ready', '');
     mounts.set(el, shader);
     return shader;

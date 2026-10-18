@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offsets bundle test</title>
+<style>
+  body { margin: 0; padding: 24px; background: #f4f4f5; font: 15px/1.4 Inter, system-ui, sans-serif; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .tile { position: relative; overflow: hidden; border-radius: 12px; aspect-ratio: 4 / 3; color: #fff; }
+  .mesh { position: absolute; inset: 0; background: radial-gradient(circle at 20% 10%, #5b3cf5, #1b1060); }
+  .tile h3 { position: absolute; left: 24px; bottom: 20px; margin: 0; font-weight: 500; font-size: 24px; }
+</style>
+</head>
+<body>
+  <div class="tile"><div class="mesh" data-mesh-gradient="#1b1060, #3a24d8, #5b3cf5, #9a8cf0, #e6e4f2"></div><h3>Violet</h3></div>
+  <div class="tile"><div class="mesh" data-mesh-gradient="#1f4f8f, #3f86e2, #4fc6e8, #68e2cf, #9af2ad"></div><h3>Aqua</h3></div>
+  <div class="tile"><div class="mesh" data-mesh-gradient="#020005, #14032f, #3d0ba3, #5b12e6, #8a3cf7" data-mesh-grain="0.25"></div><h3>Ultraviolet</h3></div>
+  <script>window.Webflow = [];</script>
+  <script src="index.js"></script>
+  <script>window.Webflow.forEach((fn) => fn());</script>
+</body>
+</html>
