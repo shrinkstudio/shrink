@@ -160,6 +160,9 @@ Rebuilt 19 Oct (template, CMS-driven: How it runs + You Get fields on Services).
 - [ ] **B** Delete the two "DELETE ME" blank pages in /packages; disable the Placements template page
 
 ### 3. Case studies (`/case-studies` and 7 children)
+- [x] **C** `/case-studies` parent rebuilt to the Resources pattern (19 Oct, Figma `4363:3374`): filter group `filter_buttons[fs-list-element=filter-buttons][fs-list-field=service]` = Filter Button "All" (`is-list-active`) + Services Collection List (`u-d-contents`, sorted Display Order) of Filter Buttons bound to Name. List sorted by Home List Display Order. Each item is the home work card: `filter_list_item.work_item[data-hover]` > `work_card` (fg/bg images bound Card Foreground/Background, `work_tags` nested Services list of Tag instances + hidden `div.u-d-none[fs-list-field=service]` per service) + `latest-cases_meta-wrap` (h3.h5.work_name + muted Featured Statistic) + "Read case study" cue (`button_underline`, arrow-right) + `a.u-link-cover` with sr-only name. Grid: `filter_list.latest-cases_list` is `repeat(6,1fr)`; a page embed spans items 3/2/3 per 7 for the 2-3-2 rhythm, tablet 2 cols, phones 1
+- [ ] **B** Designer: nested `work_tags` list source = the case study's **Services** multi-reference; cover link = **Current Case Study** (API cannot do either)
+- [ ] **C** After publish: check the filter removes items (nth-child rhythm must survive filtering) and the empty state
 
 Index design is fine as is (Ben, 13 Oct). Child: Figma "Case study child: CloudNC (proposed, 13 Oct)" `4325:999` with notes card `4325:1267`, built on the original Cases Child design with CloudNC's CMS copy word for word.
 
