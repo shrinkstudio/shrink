@@ -17,6 +17,7 @@ import { initMegaNav } from './modules/mega-nav';
 import { initMeshGradient } from './modules/mesh-gradient';
 import { initReadTime } from './modules/read-time';
 import { initSegmented } from './modules/segmented';
+import { initStageScale } from './modules/stage-scale';
 import { initTeamHover } from './modules/team-hover';
 import { initTestimonialTabs } from './modules/testimonial-tabs';
 import { initTestimonials } from './modules/testimonials';
@@ -38,6 +39,7 @@ window.Webflow.push(() => {
   initCurrentTime();
   initToc();
   initReadTime();
+  initStageScale();
   initInview();
   initFormValidate();
   initFormPrefill();
