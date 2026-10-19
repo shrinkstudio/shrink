@@ -222,7 +222,7 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [ ] **C** "Read article" links wired (all 14 go nowhere)
 - [ ] **B** 9 of 15 articles are draft: publish or cut
 
-### 7. Homepage
+### 7. Homepage (signed off by Ben, 19 Oct 18:35)
 - [x] **C** Needs cards componentised (19 Oct): **Needs Card** `bddd850d-84c6-f25f-c44f-1cc7f122badb` (Shrink; variants Light / Dark `699f60a6-…` / Paper `a759c2ae-…`; props Number, Title (h3), Text, Link Text, Link, Visibility; Visual slot named "Slot"; stage `[data-stage=318]`; Underline Link inside, Class `needs-card_link`) + **Needs Art / Brief, / Branches, / Answer, / Experiments** (dots and cursor live inside each art). Number sits muted beside the title (`needs-card_head`, gap = Detail list gap var). Phones: title + number step to h6 size, body to paragraph-sm (`needs-card_desc` combo)
 - [x] **C** Needs section outline: gap statement is now `p.h4`, "What the next site needs to get right" is a Heading component (h2, Size H4, Class `needs_head u-mb-0`, ID `next-site`), Section aria-labelledby = next-site; old `.needs_head` wrapper removed
 - [x] **C** iPhone Safari blank illustrations: the CSS-only `scale(tan(atan2(100cqw, …)))` blows up in iOS Safari. Bundle `stage-scale.ts` sets `--stage-scale` on `[data-stage]` (ResizeObserver); Needs Cards + package tile embeds read `scale(var(--stage-scale, tan(atan2(…))))`. Package Tile stage has `data-stage=425`. **Needs bundle push + footer SHA**
