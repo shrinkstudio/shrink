@@ -254,6 +254,9 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [x] **C** Policies index (19 Oct): new static page **Policies** at `/legal` (`6ad641159d56e9320ef27e99`, duplicated from FAQ: Tag "Legal", h1 "Policies", muted line). FAQ search + accordion section removed; raw `section.u-pt-0 > container > row > col.col-lg-8` with a Policies Collection List (sorted Display Order, empty state hidden) as `numbered-list[data-fade-list]` rows: h3.h5 name + muted summary + `a.u-link-cover` to the policy (sr-only name). `/policies` can't be a static page because the collection owns it
 - [x] **C** Dead links fixed (19 Oct): footer + mega nav FAQs `/faqs` → `/faq`; footer "All policies" → `/legal`; Footer and CTA Card default button link `/book-a-call` → `/calls/intro` (home still overrides to /contact)
 - [x] **C** Nav copy-email tick CSS lives in Custom Code component → embed "Copy Clip"
+- [x] **C** API `collectionPage` links published as literal hrefs (`href="detail_services"` on the home services rows, same on /legal): rewritten as the Designer's `{"mode":"collectionPage"}` shape on both (19 Oct). Memory updated
+- [x] **C** /legal rows: arrow added (`span.link-list_icon[data-underline-icon]` + Icon `ph ph-arrow-right`), row is the `data-hover` target, text block is `numbered-list_content`
+- [x] **C** Copy Clip embed updated with the tick rule (Custom Code > Copy Clip); unnamed package tile embed renamed "Package Tiles"
 - [ ] **C** Rest of the home outline: Featured work and Services heads are h3 with h4 items under a hero h2; make section heads h2 and items h3 when we reach them
 - [ ] **B+C** FAQ section with structured data
 - [ ] **B** Ben's avatar (then refresh the Discovery visual and needs card 01)
