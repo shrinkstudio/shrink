@@ -40,14 +40,14 @@ SEO and sharing
 - [ ] **B** No analytics installed (only Orbit): PostHog/GA before launch so `data-track` hooks report
 - [ ] **B** Site time zone is America/Chicago: set Europe/London
 - [ ] **B** Pin `gsap@3` and `mast@latest` script URLs in the head/footer code
-- [ ] **C** Home: one `w-node` id repeats 3 times (component used three times). Polish
+- [x] **C** Home: one `w-node` id repeats 3 times (component used three times). Gone after the home rebuild (19 Oct)
 
 Clean: no em dashes, lorem or placeholder copy in visible text; one h1 per page; meta descriptions in range; every img has alt; JSON-LD parses.
 
 Visual pass (desktop 1440 + phone 375)
 - [ ] **B+C** Columns don't stack on phones: MAST `.col-lg-*` keeps its 12-column width at every breakpoint (`--grid--columns` stays 12) unless a `col-sm-12`/`col-md-12` class or the Grid Column mobile setting is added. Broken at 375: `/pricing` (price list off-screen), `/services` (Approach steps, quiz Callout, FAQ half width, meta row cut off), `/services/*` (You leave with cards clipped), `/packages/*` (At a glance overlaps body), case studies (At a glance wraps word by word)
 - [ ] **B+C** Phone menu with the top Nav Banner showing: panel ignores the banner height, logo overlaps Case Studies, Services sub-panel Back and close sit behind the panel
-- [ ] **C** Home services rows on phones: `.service-row_title` and `.service-row_price` share grid-area 2/2/3/3, so the name sits on the price
+- [x] **C** Home services rows on phones: `.service-row_title` and `.service-row_price` share grid-area 2/2/3/3, so the name sits on the price. Superseded by the services rows rebuild (19 Oct)
 - [ ] **B** Nav Banner copy differs ("Try our quote builder" on home/services/pricing, "Ready to brief a build?" elsewhere, both to the quiz); missing on `/faq` and the quiz page
 - [ ] **B** Hero "Start a conversation" goes to `#` on About and the Services template
 - [ ] **B** Services template FAQ list shows every FAQ (filter Service = current)
@@ -149,7 +149,7 @@ Fixes
 - [ ] **B+C** Share image per service (`og-image` is empty on all three)
 - [ ] **C** Show each service's 4 FAQs (12 exist in the CMS, none are on a page) with FAQ structured data
 - [ ] **C** Solution names link to their solution pages
-- [ ] **B** Homepage solutions list: switch source to the service's Solutions field, check the binding, set the link to the current Solution
+- [x] **B** Homepage solutions list: nested Solutions multi-ref, plain text, no links (19 Oct)
 
 Rebuilt 19 Oct (template, CMS-driven: How it runs + You Get fields on Services). Go-live checks
 - [x] **B** Solutions list filter (done 19 Oct)
@@ -254,10 +254,10 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [x] **C** Policies index (19 Oct): new static page **Policies** at `/legal` (`6ad641159d56e9320ef27e99`, duplicated from FAQ: Tag "Legal", h1 "Policies", muted line). FAQ search + accordion section removed; raw `section.u-pt-0 > container > row > col.col-lg-8` with a Policies Collection List (sorted Display Order, empty state hidden) as `numbered-list[data-fade-list]` rows: h3.h5 name + muted summary + `a.u-link-cover` to the policy (sr-only name). `/policies` can't be a static page because the collection owns it
 - [x] **C** Dead links fixed (19 Oct): footer + mega nav FAQs `/faqs` → `/faq`; footer "All policies" → `/legal`; Footer and CTA Card default button link `/book-a-call` → `/calls/intro` (home still overrides to /contact)
 - [x] **C** Nav copy-email tick CSS lives in Custom Code component → embed "Copy Clip"
-- [x] **C** API `collectionPage` links published as literal hrefs (`href="detail_services"` on the home services rows, same on /legal): rewritten as the Designer's `{"mode":"collectionPage"}` shape on both (19 Oct). Memory updated
+- [ ] **B** Home services rows: the cover link must be set to **Current Service** in the Designer (API-set current-item links publish as `detail_services` or `#`; Ben did the same on /legal). Memory updated
 - [x] **C** /legal rows: arrow added (`span.link-list_icon[data-underline-icon]` + Icon `ph ph-arrow-right`), row is the `data-hover` target, text block is `numbered-list_content`
 - [x] **C** Copy Clip embed updated with the tick rule (Custom Code > Copy Clip); unnamed package tile embed renamed "Package Tiles"
-- [ ] **C** Rest of the home outline: Featured work and Services heads are h3 with h4 items under a hero h2; make section heads h2 and items h3 when we reach them
+- [x] **C** Home outline: one h1, every section an h2, items h3 (checked live 19 Oct)
 - [ ] **B+C** FAQ section with structured data
 - [ ] **B** Ben's avatar (then refresh the Discovery visual and needs card 01)
 
