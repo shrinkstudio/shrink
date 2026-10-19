@@ -20,7 +20,9 @@
 //     [data-menu-backdrop]
 //
 // State written: data-menu-open on the root, aria-expanded on toggles and the
-// burger, data-panel-state="active" on the open panel. No classes.
+// burger, data-panel-state="active" on the open panel. No classes. While the
+// phone menu is open, [data-nav-list] padding-top and [data-dropdown-wrapper]
+// top are set inline to the bar's bottom edge (the Nav Banner can push it down).
 // -----------------------------------------
 
 import { canHover, type GsapTimeline } from '../utils/gsap';
@@ -158,7 +160,20 @@ export const initMegaNav = (scope: ParentNode = document) => {
     setActive(null);
   };
 
+  // PHONE: the bar sits under the Nav Banner until the page scrolls, so the
+  // fixed menu and panel layers take their top edge from the bar, not from CSS
+  const fitPhoneLayers = () => {
+    const top = Math.round(menuWrap.getBoundingClientRect().bottom);
+    gsap.set(navList, { paddingTop: top });
+    gsap.set(dropWrapper, { top });
+  };
+  const clearPhoneLayers = () => {
+    gsap.set(navList, { clearProps: 'paddingTop' });
+    gsap.set(dropWrapper, { clearProps: 'top' });
+  };
+
   const setupMobile = () => {
+    clearPhoneLayers();
     panels.forEach((p) => {
       gsap.set(p, { autoAlpha: 0, x: 0, visibility: 'visible', pointerEvents: 'none' });
       gsap.set(getFade(p), { xPercent: 20, autoAlpha: 0 });
@@ -473,6 +488,7 @@ export const initMegaNav = (scope: ParentNode = document) => {
   // PHONE: menu
   const openMobileMenu = () => {
     killMobile();
+    fitPhoneLayers();
     state.mobileOpen = true;
     menuWrap.setAttribute('data-menu-open', 'true');
     burger?.setAttribute('aria-expanded', 'true');
@@ -651,6 +667,8 @@ export const initMegaNav = (scope: ParentNode = document) => {
         menuWrap.setAttribute('data-menu-open', 'false');
         setActive(null);
         setupMobile();
+      } else if (state.isMobile && state.mobileOpen) {
+        fitPhoneLayers();
       }
     }, 150);
   };
