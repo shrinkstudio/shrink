@@ -242,7 +242,7 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [ ] **B** Designer check: nested list source = the Service's **Solutions** multi-reference (API can't confirm it), Services list sorted by Display Order, old hidden CMS rows deleted
 - [ ] **B** Figma: services rows show solutions (5 per service) instead of the 4 deliverables
 - [ ] **B** CTA Card component default Button Link is `/book-a-call` (404): set to `/calls/intro`
-- [ ] **C** Tag component renders a hidden `a.u-link-cover.cc-tag-link href="#"` in every variant (crawlers count it): add a Show Link boolean bound to its visibility, on for Link-variant instances
+- [x] **C** Tag component: **Show Link** boolean (default off) now drives the hidden `a.u-link-cover.cc-tag-link`; home had 10 phantom `#` links (19 Oct). **B** switch it on for any Tag instance that really links (article category tags?)
 - [x] **C** Home services hover cue (19 Oct): `div.button_underline` "Explore {name}" + arrow under the intro, `data-hover` on the item plays it on row hover (aria-hidden; the cover link carries the name)
 - [x] **C** Home Testimonial Card tidy (19 Oct): quote + stat value on the h4 vars, stat label on paragraph-sm vars, card padding on the card padding var; fixed rem/breakpoint overrides removed
 - [x] **C** Home Studio updates (19 Oct): News & Insights list sorted Date newest first, limit 3, empty state hidden; tag screen-reader text bound to the category name; Section aria-labelledby = `featured-insights` (Heading ID set)
@@ -257,6 +257,12 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [ ] **B** Home services rows: the cover link must be set to **Current Service** in the Designer (API-set current-item links publish as `detail_services` or `#`; Ben did the same on /legal). Memory updated
 - [x] **C** /legal rows: arrow added (`span.link-list_icon[data-underline-icon]` + Icon `ph ph-arrow-right`), row is the `data-hover` target, text block is `numbered-list_content`
 - [x] **C** Copy Clip embed updated with the tick rule (Custom Code > Copy Clip); unnamed package tile embed renamed "Package Tiles"
+- [x] **C** Home review (19 Oct, live HTML): lang en, one h1, every section h2 with aria-labelledby resolving, no duplicate ids, every image has alt, every button and link has a name, no `target=_blank` without noopener. Webflow's audit flags (hero_cluster_img, Card Cover Link, u-link-cover) are CMS-bound alt/sr-only text the Designer can't read: false positives
+- [x] **C** Footer root is now `<footer>` (contentinfo landmark); nav is `<nav aria-label=Main>`, main is `<main>`
+- [x] **C** Mega nav: package cards carry a `span.featured-card_mesh[data-mesh-gradient]` layer (per-package five-colour sets, grain 0.22, CSS gradient stays as fallback); `.package-card` gained position relative + z-index 0 + overflow hidden. "All services" is an Underline Link instance (arrow-right, hover underline)
+- [x] **C** Schema (19 Oct): Organization in site head had two placeholders (`image: [path-to-default-og].png`, `email: [hey@shrink.studio]`): fixed, image = wordmark, street address added. Home page has a WebSite node pointing at #organization. Service/article pages carry their own
+- [ ] **B** No OG image anywhere (site default and every page `imageUrl: null`): upload a 1200 x 630 default and set it site-wide; then point the Organization `image` at it
+- [ ] **B** CTA Card renders question and answer as two h2s; make the answer a p or one h2
 - [x] **C** Home outline: one h1, every section an h2, items h3 (checked live 19 Oct)
 - [ ] **B+C** FAQ section with structured data
 - [ ] **B** Ben's avatar (then refresh the Discovery visual and needs card 01)
