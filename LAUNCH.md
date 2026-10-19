@@ -261,7 +261,7 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [x] **C** Footer root is now `<footer>` (contentinfo landmark); nav is `<nav aria-label=Main>`, main is `<main>`
 - [x] **C** Mega nav: package cards carry a `span.featured-card_mesh[data-mesh-gradient]` layer (per-package five-colour sets, grain 0.22, CSS gradient stays as fallback); `.package-card` gained position relative + z-index 0 + overflow hidden. "All services" is an Underline Link instance (arrow-right, hover underline)
 - [x] **C** Schema (19 Oct): Organization in site head had two placeholders (`image: [path-to-default-og].png`, `email: [hey@shrink.studio]`): fixed, image = wordmark, street address added. Home page has a WebSite node pointing at #organization. Service/article pages carry their own
-- [ ] **B** No OG image anywhere (site default and every page `imageUrl: null`): upload a 1200 x 630 default and set it site-wide; then point the Organization `image` at it
+- [x] **C** Default OG image (19 Oct): designed in Figma (Socials page, "OG Image - Default (1200x630)" `4681:2`), exported 2x and downsampled, uploaded as asset `6ad6538e671d2f40abb32f7f` (`.../6ad6538e671d2f40abb32f7f_shrink-studio-og.png`), set on all 29 pages via bulk update (templates included, so articles/case studies share it until per-item OG images exist), Organization schema `image` points at it. The Figma cluster was detached locally to use the Forest tree icon (the shared Logo cluster still carries the wordmark)
 - [ ] **B** CTA Card renders question and answer as two h2s; make the answer a p or one h2
 - [x] **C** Home outline: one h1, every section an h2, items h3 (checked live 19 Oct)
 - [ ] **B+C** FAQ section with structured data
