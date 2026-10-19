@@ -1,7 +1,7 @@
 // -----------------------------------------
 // SCROLL DOTS — dots for a horizontally swiped row (eg. needs cards on phones)
 // -----------------------------------------
-// Markup (CSS/layout built in Webflow, dots use the testimonial dot classes):
+// Markup (CSS/layout built in Webflow, dots use the progress-dot classes):
 //   [data-scroll-list="needs"]            ← the scrolling row; its children are the slides
 //   [data-scroll-dots="needs"]            ← holds one blueprint:
 //     [data-scroll-dot] > bar > fill      ← copied once per slide as a <button>

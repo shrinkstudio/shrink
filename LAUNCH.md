@@ -7,6 +7,64 @@ Owner key: **B** = Ben (Designer or a decision), **C** = Claude (via Webflow MCP
 
 ---
 
+## Pre-launch review (19 Oct): 404s and SEO
+
+Crawl of 61 staging pages plus Webflow page settings. Launch is 20 Oct.
+
+404s and dead links
+- [ ] **B** Policies 404 at both `/policies/*` and `/legals/*`: all 7 items published, but the template page still routes to `/legals` (slug `detail_legals`) while the collection slug is `policies`. Re-save the slug in CMS > Policies settings (or recreate the template), republish. Linked from every footer
+- [ ] **C** `/faqs` links (2 per page, nav/footer): point to `/faq`
+- [ ] **C** `/book-a-call` (Footer CTA on FAQ, Pricing, Services template): point to `/calls/intro`, and add the 301 anyway
+- [ ] **C** `/privacy` (Enquiry Form consent link on Contact): point to `/policies/privacy-policy`
+- [ ] **B+C** `/tools/project-calculator` linked twice from Pricing: page not built. Hide the links or build the calculator
+- [ ] **B** Calculator in Mega Nav + Footer still `tools.shrink.studio/calculator` on every page; dies when that domain retires
+- [ ] **B** `#` links: Tag Link variants with no link (74, About + case studies), Work card cover links (15, Services template + /packages, Designer bind to Current Case Study), Detail Link rows with no link (6, case studies), one Button cover link on About. Ask AI `llm_link` hrefs are `#` until the bundle fills them (crawlers and AI bots see `#`): set real hrefs in Webflow if possible
+- [ ] **B** `/case-studies` autoplays `forest-home-2.mp4` (535.6 MB) and `buff-new-site__hero.mp4` (17.5 MB, also on /case-studies/forest-bikes). Compress to a few MB each
+- [ ] **B** Delete the empty Placements collection + template (created 19 Oct) if it was a test
+
+Launch-day redirects (from the live sitemap, 30 URLs)
+- [ ] **B** `/legals/(.*)` to `/policies/%1`
+- [ ] **B** `/projects` to `/case-studies`; `/projects/buff-motion-when-a-motion-studios-website-finally-moves` to `/case-studies/buff-motion`; `/projects/cloudnc-from-fragmented-forms-to-a-21-conversion-rate-increase` to `/case-studies/cloudnc`; `/projects/common-sense-club-quiz-how-forest-made-cycling-safety-impossible-to-ignore` to `/case-studies/forest-common-sense-quiz`; `/projects/forest-b2b-partnerships-site` to `/case-studies/forest-bikes`; `/projects/nxzen-the-beginning-of-a-global-takeover` to `/case-studies/nxzen`; `/projects/steamhaus` to `/case-studies/steamhaus`; no case study for Clarity, Johnson Law Group, Museum Studio, Skira: to `/case-studies`
+- [ ] **B** `/style-guide/*` and `/boilerplate/*` to `/`; `/book-a-call` to `/calls/intro`
+- [ ] **B** Domain: ss-2027 has no custom domain. Site plan on ss-2027, move shrink.studio + www off the current site, then the tools.shrink.studio redirects
+
+SEO and sharing
+- [ ] **B+C** No `og:image` on any page (53). Default share image first, then templates
+- [ ] **C** Site-wide JSON-LD (head code): `image` is `[path-to-default-og].png`, `email` is `[hey@shrink.studio]` in brackets
+- [ ] **C** "70+" in meta descriptions on About and Case Studies: 50+
+- [ ] **C** Pricing: og:title empty (title not copied)
+- [ ] **C** Four article titles over 65 chars with the old ", Shrink Studio" ending (conversion-questions-before-design, five-files-ai-can-read-your-site, information-architecture-buyers, landing-page-teardown)
+- [ ] **C** Services template og:description joins two fields ("summary | meta-description"): use one
+- [ ] **B** MAST demo pages live and indexable at launch: `/styles/components`, `/styles/styles-home`, `/styles/inspired-layouts`, `/styles/basic-layouts`, `/styles/styles`. Draft, delete, or noindex + exclude from sitemap
+- [ ] **C** Case study pages skip h2 to h4 (At a glance labels)
+- [ ] **B** No analytics installed (only Orbit): PostHog/GA before launch so `data-track` hooks report
+- [ ] **B** Site time zone is America/Chicago: set Europe/London
+- [ ] **B** Pin `gsap@3` and `mast@latest` script URLs in the head/footer code
+- [ ] **C** Home: one `w-node` id repeats 3 times (component used three times). Polish
+
+Clean: no em dashes, lorem or placeholder copy in visible text; one h1 per page; meta descriptions in range; every img has alt; JSON-LD parses.
+
+Visual pass (desktop 1440 + phone 375)
+- [ ] **B+C** Columns don't stack on phones: MAST `.col-lg-*` keeps its 12-column width at every breakpoint (`--grid--columns` stays 12) unless a `col-sm-12`/`col-md-12` class or the Grid Column mobile setting is added. Broken at 375: `/pricing` (price list off-screen), `/services` (Approach steps, quiz Callout, FAQ half width, meta row cut off), `/services/*` (You leave with cards clipped), `/packages/*` (At a glance overlaps body), case studies (At a glance wraps word by word)
+- [ ] **B+C** Phone menu with the top Nav Banner showing: panel ignores the banner height, logo overlaps Case Studies, Services sub-panel Back and close sit behind the panel
+- [ ] **C** Home services rows on phones: `.service-row_title` and `.service-row_price` share grid-area 2/2/3/3, so the name sits on the price
+- [ ] **B** Nav Banner copy differs ("Try our quote builder" on home/services/pricing, "Ready to brief a build?" elsewhere, both to the quiz); missing on `/faq` and the quiz page
+- [ ] **B** Hero "Start a conversation" goes to `#` on About and the Services template
+- [ ] **B** Services template FAQ list shows every FAQ (filter Service = current)
+- [ ] **B** Mega nav Resources featured card "Read article" goes to `/resources`, not the article
+- [ ] **B** Article Related reading shows Webflow's "No items found." when the category has no other article
+- [ ] **B** Guide cover card is plain text on white (dark cover design pending)
+- [ ] **B** CTA card button label varies: "Start a Project", "Book a Call", "Start a conversation". Pick one, sentence case
+- [ ] **B** "From £5,000/mo" vs "£5,000 a month": pick one
+- [ ] **B** Simple Nav has no background, content scrolls under the logo (Contact, Calls, Guides)
+- [ ] **B** Low contrast body text on gradient cards (mega nav quiz card, latest article card, Related solution card)
+- [ ] **B** About: CloudNC testimonial photo reads as an empty dark box; Work cards uneven heights on Development, packages and CloudNC Latest projects
+- [ ] **B** Quiz page title says "Free checklist" but it's a quiz
+- [ ] **C** Console: React #425/#422 hydration mismatch from code components (Cal Embed on `/calls/intro`, Readiness Quiz)
+- [ ] **B** FAQ page: topics interleave (sort by Display Order looks broken, check sort)
+
+---
+
 ## Site-wide
 
 - [ ] **B** Reconnect the Webflow connector (Claude cannot build until this is done)
@@ -64,6 +122,12 @@ Additions
 - [ ] **B+C** FAQ: 5 to 6 cross-service questions as new CMS items with no service set
 - [ ] **C** Page-level structured data: services with prices, FAQ, breadcrumb
 
+Rebuilt 19 Oct: new hero (Tag, h1 per Figma, muted line), service names now h2, meta line (investment, engagement, leads to) + case caption per row, Approach (Price Rows linking to each service), quiz Callout, FAQs (topic Working with Shrink). Go-live checks
+- [ ] **B** "Learn more" button in each row: link to the current Service page; consider text "Explore" (Designer bind)
+- [ ] **B** Solution rows inside each service: show name + arrow, link to current Solution (nested list; MCP couldn't add markup inside it)
+- [ ] **B** "Read the case study" link next to the caption (project-image page, Designer bind)
+- [ ] **B** Testimonial Card section from Figma: drop the Testimonial Card component in and its Case Studies list (slot needs Designer)
+
 ### 2. Service pages (`/services/discovery`, `/development`, `/optimisation`)
 
 Figma (13 Oct): three frames in the Updates section, cloned from the original Service Child design and filled with real content. Discovery `4314:999`, Development `4314:1298`, Optimisation `4314:1603`, notes card `4314:1896`. No local mock yet.
@@ -86,6 +150,14 @@ Fixes
 - [ ] **C** Show each service's 4 FAQs (12 exist in the CMS, none are on a page) with FAQ structured data
 - [ ] **C** Solution names link to their solution pages
 - [ ] **B** Homepage solutions list: switch source to the service's Solutions field, check the binding, set the link to the current Solution
+
+Rebuilt 19 Oct (template, CMS-driven: How it runs + You Get fields on Services). Go-live checks
+- [x] **B** Solutions list filter (done 19 Oct)
+- [ ] **B** Work list filter: Services contains Current Service (Designer was bugging out, 19 Oct)
+- [ ] **B** FAQ list filter: Service equals Current Service
+- [ ] **B** Work card cover link (`a.u-link-cover`) to Current Case Study, on the Services template AND the three /packages pages (MCP can't set current-item links, they render `#`)
+- [ ] **B** "Leads to" detail could link to the next service (Detail Link variant, Designer bind)
+- [ ] **B** Delete the two "DELETE ME" blank pages in /packages; disable the Placements template page
 
 ### 3. Case studies (`/case-studies` and 7 children)
 
@@ -151,6 +223,32 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [ ] **B** 9 of 15 articles are draft: publish or cut
 
 ### 7. Homepage
+- [x] **C** Needs cards componentised (19 Oct): **Needs Card** `bddd850d-84c6-f25f-c44f-1cc7f122badb` (Shrink; variants Light / Dark `699f60a6-…` / Paper `a759c2ae-…`; props Number, Title (h3), Text, Link Text, Link, Visibility; Visual slot named "Slot"; stage `[data-stage=318]`; Underline Link inside, Class `needs-card_link`) + **Needs Art / Brief, / Branches, / Answer, / Experiments** (dots and cursor live inside each art). Number sits muted beside the title (`needs-card_head`, gap = Detail list gap var). Phones: title + number step to h6 size, body to paragraph-sm (`needs-card_desc` combo)
+- [x] **C** Needs section outline: gap statement is now `p.h4`, "What the next site needs to get right" is a Heading component (h2, Size H4, Class `needs_head u-mb-0`, ID `next-site`), Section aria-labelledby = next-site; old `.needs_head` wrapper removed
+- [x] **C** iPhone Safari blank illustrations: the CSS-only `scale(tan(atan2(100cqw, …)))` blows up in iOS Safari. Bundle `stage-scale.ts` sets `--stage-scale` on `[data-stage]` (ResizeObserver); Needs Cards + package tile embeds read `scale(var(--stage-scale, tan(atan2(…))))`. Package Tile stage has `data-stage=425`. **Needs bundle push + footer SHA**
+- [x] **C** Marquee no longer pauses after a tap on touch (Home Marquee Hover embed: `@media (hover: none)` keeps it running; keyboard pause now on `:focus-visible` only)
+- [x] **C** Figma synced (19 Oct): four editable **Needs Art** components (Illustrations section, `4670:1041` Brief, `4670:1062` Branches, `4670:1087` Answer, `4670:1104` Experiments) rebuilt from the live layout, used in the Next site needs cards (`4363:2122`). Brief title 16px (also in Webflow `needs-art_title`)
+- [x] **C** New Adfin symbol (Ben, 19 Oct; Figma `4669:30155`): Webflow asset `6ad61bdc1dc7ce0571bfb264` in Needs Art / Brief + Package Art / Clarity Sprint; Figma Brief art + Clarity Sprint visual
+- [x] **C** Clients CMS Adfin **Hero Icon** swapped to the new symbol (staged, 19 Oct). Marquee Logo (Adfin wordmark) left as is
+- [ ] **B** Figma Logo cluster (`4105:411`) still has the old Adfin mark (API refused the edit)
+- [x] **C** Phones (≤767): needs cards are a swipe row (19 Oct). `.needs_list` small = flex, overflow-x auto, scroll-snap x mandatory, gutter padding; `.needs-card` small = flex 0 0 80%, snap start; edge bleed, snap padding and hidden scrollbar in the Needs Cards embed. Dots = testimonial dot classes (`testimonials_dots.cc-needs`, hidden above small) with `[data-scroll-dots="needs"]` after `[data-scroll-list="needs"]`; bundle `scroll-dots.ts` (82df986) builds the buttons and sets aria-current; active pill in the embed. Footer SHA set to 82df986
+- [ ] **B** Figma: phone frame for the swipe row + dots, if wanted
+- [x] **C** Dot classes renamed to `progress-dots` / `progress-dot` / `progress-dot_bar` / `progress-dot_fill` (testimonial slider + needs row); Needs Cards embed updated
+- [x] **C** Premium Partner badge blank on iOS: the SVG had a Figma shadow filter. Filter-free `wf-premium-partner-white-flat.svg` (`6ad627696fe501d77a0a6b73`) in Hero Marquee Cards + CTA Card. Confirmed on Ben's phone
+- [x] **C** Featured work (Ben moved it into a Section component): Section aria-labelledby = featured-work; "Featured work" muted line + h2 "What changed after launch"; card titles h3; hidden autoplay video removed; name hover underline removed; service pills = Tag component bound to Services Name; empty state hidden; "All case studies" link fixed (was /services). Old raw section hidden (`15b1bc0e…`): **B** delete it
+- [x] **C** Card images to WebP (CMS Case Studies, staged): Adfin card background 1.2 MB → 20 KB, CloudNC background 575 KB → 6 KB, CloudNC foreground SVG 2 MB → 95 KB
+- [x] **C** Home Services rebuilt to Figma `4363:3038` (19 Oct): raw `ol.numbered-list[data-list][data-fade-list][aria-labelledby=services]` of three **Price Row** instances, variant **Home** (`2948057f-…`: grid 7rem | name + intro | deliverables | price + terms; phones stack under the number). Price Row gained Show Deliverables + Deliverables (multiline, `price-row_deliverables`, pre-line) and Cover Link (`a.u-link-cover` + sr-only Link Text): one link per row, solutions links and row images gone. Section heading h2, row names h3. Copy is static (from the Services CMS). Old CMS rows hidden (`949089ac…`): **B** delete
+- [x] **C** Home Services v2 (Ben moved it into a slotted component): rows are the Collection Item itself, no component. Services list (`4de670b7…`, `data-list` `data-fade-list` aria-labelledby=services) > item `numbered-list_item.u-position-relative[data-list-item]` > `services-list_content` (grid 7rem | 1fr | 1fr | 10rem, phones stack) = marker + h3.h5 name + p intro (Home Card Intro) + nested Solutions list (`price-row_deliverables`, plain text, no links) + `services-list_price` (Investment Level h5 + Engagement) + `a.u-link-cover` to the current service (sr-only name). Static Price Row list removed. Price Row keeps the (now unused) Home variant, Deliverables and Cover Link options
+- [ ] **B** Designer check: nested list source = the Service's **Solutions** multi-reference (API can't confirm it), Services list sorted by Display Order, old hidden CMS rows deleted
+- [ ] **B** Figma: services rows show solutions (5 per service) instead of the 4 deliverables
+- [ ] **B** CTA Card component default Button Link is `/book-a-call` (404): set to `/calls/intro`
+- [ ] **C** Tag component renders a hidden `a.u-link-cover.cc-tag-link href="#"` in every variant (crawlers count it): add a Show Link boolean bound to its visibility, on for Link-variant instances
+- [x] **C** Home services hover cue (19 Oct): `div.button_underline` "Explore {name}" + arrow under the intro, `data-hover` on the item plays it on row hover (aria-hidden; the cover link carries the name)
+- [x] **C** Home Testimonial Card tidy (19 Oct): quote + stat value on the h4 vars, stat label on paragraph-sm vars, card padding on the card padding var; fixed rem/breakpoint overrides removed
+- [x] **C** Home Studio updates (19 Oct): News & Insights list sorted Date newest first, limit 3, empty state hidden; tag screen-reader text bound to the category name; Section aria-labelledby = `featured-insights` (Heading ID set)
+- [x] **C** Services heading was a copy carrying `id="featured-work"` (duplicate id, list label pointed at nothing): now `id="services"`, Section aria-labelledby = services. "All services" link went to /case-studies: now `/services`
+- [ ] **B** Studio updates "Read article" link: bind to Current Item in the Designer
+- [ ] **C** Rest of the home outline: Featured work and Services heads are h3 with h4 items under a hero h2; make section heads h2 and items h3 when we reach them
 - [ ] **B+C** FAQ section with structured data
 - [ ] **B** Ben's avatar (then refresh the Discovery visual and needs card 01)
 
@@ -160,6 +258,11 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [ ] **B+C** Copy: em dashes and one negation ending. The recommendation names ("Seed Website", "Clarity Sprint") are the package names and can link to the new package pages
 
 ---
+
+### 9. Pricing (`/pricing`, built 18 Oct)
+- [ ] **B** FAQ list shows all 25 FAQs: set filter Show On Pricing = on and sort Pricing Order ascending. API writes on this page fail with "[Conflict] component map", and a Designer save didn't reach the server (18 Oct). Six FAQs are flagged in CMS
+- [ ] **B** Stray empty "Lorem ipsum?" Accordion was in the published FAQ item; check it is gone after the next publish
+- [ ] **B+C** "How much does it cost" FAQ answer links to /pricing (self-link on this page)
 
 ## Design references banked (designsystems.surf, shared by Ben 12 Oct)
 
@@ -285,6 +388,9 @@ Figma (13 Oct), all in the Updates section on the row beside the About copy, wit
 - [ ] **B** Packages: stats left out for lack of a source (£40,000 typical quote, 70% uplift, CloudNC "first quarter" claim)
 
 ## After launch
+
+- [ ] Home hero LCP: measure on a throttled phone (PageSpeed/WebPageTest), check the hero image weight and preload
+- [ ] CMS tidy, every collection: delete fields nothing on the site binds to any more (eg. Case Studies Video Source + Hero Video Source now the cards and heroes are image-only; Services Home Image / Home Open By Default / Home Deliverables / Card Intro / Project (Image) now the home rows use Solutions; template leftovers like Archives, Galleries, LLM Answers, Placements). Audit each field against the Designer bindings first, then delete and regroup
 
 - [ ] Three industry pages (SaaS, fintech, AI)
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
