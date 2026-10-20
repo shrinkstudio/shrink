@@ -110,9 +110,10 @@ Local mock: `~/shrink-prototypes/ss2027-gap/services-page.html` (http://localhos
 
 Fixes
 - [x] **C** Hero lede flows as one paragraph (20 Oct, Ben's call): inside Ben's wrapper Div, the Heading + Plain Text instances are now a native `h1.h4.u-mb-0.u-d-inline#hero-title` and `p.h4.u-text-muted.u-d-inline`. New MAST-style utility `u-d-inline` (display inline); the combo `.h4.u-mb-0.u-d-inline` carries `margin-right: 0.25em` for the gap between sentences (Webflow strips whitespace between elements). Section `aria-labelledby=hero-title` still resolves
-- [ ] **C** One H1. Discovery, Development, Optimisation become H2
-- [ ] **C** "Learn more" links go to the three service pages (currently unlinked)
-- [ ] **C** Solution names link to their solution pages (currently plain text)
+- [x] **C** One H1. Discovery, Development, Optimisation are H2 (Heading instances in `services_top`, Tag h2)
+- [ ] **C** "Learn more" links go to the three service pages (currently unlinked); Figma label is "Explore {Service}"
+- [~] **C** Service rows to the Figma Service block `4362:1124` (20 Oct): solutions list is now the Related reading pattern, `solutions_list` > `link-list[data-fade-list]`, `solutions_item` > `link-list_item`, each row `a.link-list_link.cc-link[data-hover]` > text bound Solution Name + `span.link-list_icon[data-underline-icon][aria-hidden]` > Icon `ph ph-arrow-up-right` (Class u-mb-0). Case study card: `card latest-cases_card u-h-100` > `work_card` (same card as home and /case-studies), autoplaying `<video>` removed (that was the 535 MB forest-home-2.mp4 on this page), fg/bg images and caption kept. Caption gained `a.button_underline.paragraph-sm` > `button_underline_text[data-underline-link]` "Read the case study" after the client + stat line
+- [ ] **B** Designer: solution row link = Current Solution page; "Read the case study" link = Project (Image) → page; `services_caption` layout (proof text left, link right, Figma); check `work_card` height in the right column now `u-h-100` is gone
 - [ ] **C** Show price and engagement type on each service (already in the CMS)
 
 Additions
