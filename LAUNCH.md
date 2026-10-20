@@ -304,9 +304,12 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 ---
 
 ### 9. Pricing (`/pricing`, built 18 Oct)
-- [ ] **B** FAQ list shows all 25 FAQs: set filter Show On Pricing = on and sort Pricing Order ascending. API writes on this page fail with "[Conflict] component map", and a Designer save didn't reach the server (18 Oct). Six FAQs are flagged in CMS
-- [ ] **B** Stray empty "Lorem ipsum?" Accordion was in the published FAQ item; check it is gone after the next publish
-- [ ] **B+C** "How much does it cost" FAQ answer links to /pricing (self-link on this page)
+- [x] **B** FAQ list shows the six Pricing FAQs (checked live 20 Oct)
+- [x] **B** Stray "Lorem ipsum?" Accordion gone (checked live 20 Oct)
+- [x] **C** Launch pass (20 Oct): OG title and description now copied from the SEO fields (were empty); page JSON-LD added: WebPage (`#webpage`, en-GB, site @ids) + OfferCatalog of six Offers (Discovery from £3,500, Development from £15,000, Optimisation from £5,000 a month as UnitPriceSpecification, Clarity Sprint £3,500, Seed Website £20,000, Compound £10,000 a month, all ex VAT, linked to the service and package URLs) + BreadcrumbList. Hero Section instance got `aria-labelledby=hero-title` and the native h1 the id. Headings h1 > h2 sections > h3 rows, every section labelled, prices, packages, solutions and case study links resolve, no empties, no duplicate ids, no horizontal overflow at 390 (the price list stacks now). Footer CTA override `/book-a-call` (404) cleared so it inherits `/calls/intro` (200)
+- [x] **C** "Want a figure?" Callout hidden (Visibility off): `/tools/project-calculator` 404s. Flip it back on when the calculator page exists
+- [ ] **B** "How much does it cost" FAQ answer links to /pricing (self-link on this page)
+- [ ] **B+C** Site-wide still: footer "Project calculator" and the mega nav calculator link go to tools.shrink.studio/calculator (retiring at launch)
 
 ## Design references banked (designsystems.surf, shared by Ben 12 Oct)
 
