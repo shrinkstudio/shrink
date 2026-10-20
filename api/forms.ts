@@ -10,6 +10,10 @@
  * upsert Contact (+ Company from a work email), score and answers into the Contact notes;
  * state "ready" also creates a Deal at Stage "Lead", otherwise the Contact is Nurture.
  *
+ * The Project Calculator code component POSTs `form: "calculator"` the same way: upsert
+ * Contact (+ Company), and always a Deal at Stage "Lead" carrying the range, what moved
+ * it and the answers (someone who leaves an email after seeing a price is a lead).
+ *
  * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature).
  */
 
@@ -40,7 +44,15 @@ const QUIZ_SERVICES: Record<string, string> = {
   audit: 'Optimisation retainer',
 };
 
-/* browsers allowed to post the quiz */
+/* calculator project type → Deals.Service */
+const CALCULATOR_SERVICES: Record<string, string> = {
+  'marketing-site': 'Development',
+  redesign: 'Development',
+  'web-app': 'Development',
+  optimisation: 'Optimisation retainer',
+};
+
+/* browsers allowed to post the quiz and calculator */
 const ORIGIN_RE = /^https:\/\/((www\.)?shrink\.studio|[a-z0-9-]+\.webflow\.io)$/;
 
 /* personal inboxes: no Company from these */
@@ -104,6 +116,24 @@ type QuizPayload = {
   answers?: { question?: string; answer?: string }[];
 };
 
+type CalculatorPayload = {
+  form: 'calculator';
+  id?: string;
+  pageUrl?: string;
+  contact?: { name?: string; email?: string; company?: string; resources?: boolean };
+  estimate?: {
+    kind?: 'range' | 'recurring';
+    low?: number;
+    high?: number;
+    monthly?: number;
+    label?: string;
+    type?: string;
+  };
+  drivers?: { label?: string; choice?: string; low?: number; high?: number }[];
+  nextStep?: { kind?: string; label?: string; package?: string };
+  answers?: { question?: string; answer?: string }[];
+};
+
 export function OPTIONS(request: Request): Response {
   return new Response(null, { status: 204, headers: cors(request) });
 }
@@ -121,6 +151,20 @@ export async function POST(request: Request): Promise<Response> {
       return json(out, out.ok ? 200 : 400, headers);
     } catch (err) {
       console.error('forms error quiz', quiz.id, err);
+      return json({ ok: false, error: 'airtable failed' }, 500, headers);
+    }
+  }
+
+  // calculator: same browser path as the quiz
+  const calc = parseCalculator(raw);
+  if (calc) {
+    const headers = cors(request);
+    if (!headers['Access-Control-Allow-Origin']) return json({ ok: false, error: 'origin' }, 403);
+    try {
+      const out = await handleCalculator(calc);
+      return json(out, out.ok ? 200 : 400, headers);
+    } catch (err) {
+      console.error('forms error calculator', calc.id, err);
       return json({ ok: false, error: 'airtable failed' }, 500, headers);
     }
   }
@@ -328,6 +372,89 @@ async function handleQuiz(q: QuizPayload) {
   };
 }
 
+async function handleCalculator(q: CalculatorPayload) {
+  const c = q.contact || {};
+  const email = c.email?.trim().toLowerCase() || '';
+  const name = c.name?.trim().slice(0, 200) || '';
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return { ok: false, error: 'name and email' };
+
+  const e = q.estimate || {};
+  const figure =
+    e.kind === 'recurring'
+      ? `${gbp(e.monthly)} a month (${e.label?.slice(0, 60) || 'retainer'})`
+      : `${gbp(e.low)} to ${gbp(e.high)}`;
+  const id = q.id?.slice(0, 64);
+
+  // browser retries: skip if this submission already landed
+  if (id) {
+    const dupe = await find(T.contacts, `FIND("Calculator ${esc(id)}", {Notes})`);
+    if (dupe) return { ok: true, duplicate: dupe.id };
+  }
+
+  const domain = email.split('@')[1] || '';
+  const companyName = c.company?.trim().slice(0, 200) || domain;
+  const company =
+    domain && !FREE_MAIL.has(domain) ? await upsertCompany(companyName, `https://${domain}`) : null;
+
+  const answers = (q.answers || [])
+    .slice(0, 20)
+    .map((a) => `- ${a.question?.slice(0, 200) || '?'}: ${a.answer?.slice(0, 300) || '(skipped)'}`);
+  const drivers = (q.drivers || [])
+    .slice(0, 12)
+    .map((d) => `- ${d.label?.slice(0, 60) || '?'}: ${d.choice?.slice(0, 120) || ''} (+${gbp(d.low)} to ${gbp(d.high)})`);
+  const next = q.nextStep?.label?.slice(0, 80) || 'not given';
+  const pkg = q.nextStep?.package?.slice(0, 60);
+
+  const contact = await upsertContact({
+    name,
+    email,
+    company: company?.id,
+    nextAction: 'Needs follow-up',
+    note: [
+      `${today()} Project calculator: ${figure}, next step ${next}${pkg ? ` (${pkg})` : ''}${c.resources ? ', opted in to resources' : ''}`,
+      ...answers,
+      ...(c.company ? [`- Company given: ${c.company.slice(0, 200)}`] : []),
+      `- Calculator ${id || ''}`,
+    ].join('\n'),
+  });
+
+  const service = CALCULATOR_SERVICES[e.type || ''];
+  const [deal] = await create(T.deals, [
+    {
+      Name: `${companyName}, project calculator`,
+      'Lead name': name,
+      Stage: 'Lead',
+      ...(service ? { Service: service } : {}),
+      ...(company ? { Company: [company.id] } : {}),
+      Notes: [
+        `Project calculator: ${figure}`,
+        `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
+        '',
+        'What moved the figure:',
+        ...drivers,
+        '',
+        ...answers,
+        '',
+        `Contact: ${name} <${email}>`,
+        ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
+        `Calculator ${id || ''}`,
+      ].join('\n'),
+      'Next step': 'Reply to calculator lead',
+      'Next step date': today(),
+    },
+  ]);
+
+  const mailing = c.resources
+    ? await upsertMailing(
+        { name: 'Calculator', siteId: SITE_ID, data: {}, pageUrl: q.pageUrl },
+        { name, email, contact: contact.id, source: 'Calculator' }
+      )
+    : null;
+
+  return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id };
+}
+
 /* ---------- airtable ---------- */
 
 async function upsertCompany(name: string, website: string) {
@@ -385,7 +512,7 @@ async function upsertMailing(
     name?: string;
     email: string;
     contact: string;
-    source: 'Enquiry' | 'Guide' | 'Quiz';
+    source: 'Enquiry' | 'Guide' | 'Quiz' | 'Calculator';
     guide?: string;
   }
 ) {
@@ -541,6 +668,19 @@ function cors(request: Request): Record<string, string> {
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
+}
+
+function parseCalculator(raw: string): CalculatorPayload | null {
+  try {
+    const body = JSON.parse(raw);
+    return body?.form === 'calculator' ? body : null;
+  } catch {
+    return null;
+  }
+}
+
+function gbp(v: unknown) {
+  return typeof v === 'number' && Number.isFinite(v) ? '£' + Math.round(v).toLocaleString('en-GB') : '£?';
 }
 
 function parseQuiz(raw: string): QuizPayload | null {
