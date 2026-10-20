@@ -7,6 +7,20 @@ Owner key: **B** = Ben (Designer or a decision), **C** = Claude (via Webflow MCP
 
 ---
 
+## Launch day (20 Oct, evening): domain swap order
+
+Ben's call: traffic is low, so the domain moves tonight and the rest is fixed live. Do these in order, all in the Designer or Site settings.
+
+1. **Policies slug (BLOCKER):** CMS > Policies collection settings, re-save the slug `policies`, reload. Every footer links `/policies/…` and every item 404s until this is done
+2. **Publish ss-2027** (picks up today's template work, the pinned GSAP head code and the hide-empty fixes)
+3. **Site settings > Publishing > 301 redirects:** paste the rows from [docs/launch-redirects.csv](docs/launch-redirects.csv) (old path, new path; hyphens in old paths are escaped `%-` for Webflow's wildcard bug, `(.*)` to `%1` for the policy, style-guide, boilerplate and news-and-insights folders). The redirects API is Enterprise-only, so this is manual
+4. **Site settings > SEO:** indexing on, global canonical `https://www.shrink.studio`, sitemap auto-generate on. **General:** time zone Europe/London
+5. **Hosting:** add `shrink.studio` + `www.shrink.studio` to ss-2027 (www default), remove them from the old site (`69a96f677ab6e4371c499090`), publish to the custom domain. DNS stays as is if both sites are on Webflow hosting
+6. **After www serves ss-2027:** upload the tools.shrink.studio redirects (`npx vercel redirects upload docs/tools-shrink-studio-redirects.csv`, item in section 12), then the mega nav and footer calculator links can point at `/tools/project-calculator`
+7. **Check live:** `/`, `/policies/privacy-policy`, `/legals/privacy-policy` (301), `/projects/steamhaus` (301), `/book-a-call` (301), `/case-studies/buff-motion` hero, `/services/discovery` work cards, sitemap.xml and robots.txt
+
+Left for after launch (no blocker): analytics install (PostHog or GA, the `data-track` hooks are waiting), MAST demo pages are drafts so they stay off, Live Site URLs for Steamhaus / nxzen / the quiz, Hero Foreground images, the Solutions template muted line as Plain Text, the rest of this file. The bundle stays pinned at `@1eb3bd7` (nothing newer in `master` but docs); move to `@master` + purge when the next bundle change lands.
+
 ## Pre-launch review (19 Oct): 404s and SEO
 
 Crawl of 61 staging pages plus Webflow page settings. Launch is 20 Oct.

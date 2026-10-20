@@ -1,0 +1,23 @@
+old path,new path
+/legals/(.*),/policies/%1
+/projects,/case-studies
+/projects/buff-motion-when-a-motion-studios-website-finally-moves,/case-studies/buff-motion
+/projects/cloudnc-from-fragmented-forms-to-a-21-conversion-rate-increase,/case-studies/cloudnc
+/projects/common-sense-club-quiz-how-forest-made-cycling-safety-impossible-to-ignore,/case-studies/forest-common-sense-quiz
+/projects/forest-b2b-partnerships-site,/case-studies/forest-bikes
+/projects/nxzen-the-beginning-of-a-global-takeover,/case-studies/nxzen
+/projects/steamhaus,/case-studies/steamhaus
+/projects/clarity-business-travel-website,/case-studies
+/projects/johnson-law-group-localised-webflow-websites,/case-studies
+/projects/museum-studio-website-migration,/case-studies
+/projects/skira-webflow-x-shopify,/case-studies
+/style%-guide/(.*),/
+/boilerplate/(.*),/
+/book%-a%-call,/calls/intro
+/faqs,/faq
+/solutions,/services
+/news%-and%-insights/(.*),/resources/%1
+/tools/calculator,/tools/project-calculator
+/calculator,/tools/project-calculator
+/project%-estimator,/tools/project-calculator
+/quiz,/tools/ready-to-brief-a-build
