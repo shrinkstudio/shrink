@@ -7,6 +7,7 @@
 // GSAP + Flip are expected as globals from the CDN (see utils/gsap.ts).
 import { initFinsweetList } from './list';
 import { initAskAI } from './modules/ask-ai';
+import { initConsent } from './modules/consent';
 import { initCopyClip } from './modules/copy-clip';
 import { initCurrentTime } from './modules/current-time';
 import { initFormPrefill } from './modules/form-prefill';
@@ -32,6 +33,7 @@ const currentScript = document.currentScript as HTMLScriptElement | null;
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
+  initConsent();
   initMegaNav();
   initMeshGradient();
   initHoverList();
