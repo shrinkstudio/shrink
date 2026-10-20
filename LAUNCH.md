@@ -547,6 +547,25 @@ Figma (13 Oct), all in the Updates section on the row beside the About copy, wit
 
 ## After launch
 
+### CTAs parked on Contact (20 Oct, 19:50)
+- [x] **C** Every "Book a Call" CTA now reads "Start a conversation" and links `/contact` while the Calls pages are finished: Footer default CTA Button Text (`67fd4ca6…`) and CTA Card default Button Text (`2dea9ed2…`) via `update_prop default_text` (link props have no default setter in the MCP), the CTA Card inside the Footer definition has its Button Link pinned to `/contact` instead of the Footer's CTA Button Link prop (so per-page link overrides no longer apply; the Footer prop `1fb02cf2…` is dormant until re-bound), the two Footer overrides that still said `/book-a-call` (Case Studies index, Services template) and the three package-page CTA Cards that linked `/calls/<package>`. The Calls pages, cal.com event types and the `/book-a-call` 301 stay as they are; flip the defaults back to `/calls/intro` and "Book a Call" when the flow is ready. Publish to pick up
+- [ ] **B** Book a Call flow: finish the Calls template (Clients list into the Testimonial Slider slot, SEO binding), check the three cal.com event types end to end, then restore the CTAs above
+
+### Orbit signals board (20 Oct, 19:40, 14 open)
+- [ ] **C** "14 pages link to 10 pages that do not exist" (critical): the 17:54 audit crawled before the Policies slug re-save and the 301s. Re-run the health audit and confirm it drops to zero; anything left is a real dead link
+- [ ] **B+C** "/services/development and /services/discovery are not in Google's index": request indexing in Search Console for both (and /services/optimisation, /pricing, the three package pages), then watch the Pages report
+- [ ] **C** "Homepage ranks top-5 for 1 search and earns a fraction of the clicks": "webflow agency london", 357 impressions, position 5.6, 0 clicks. The new title is "Webflow agency in London for funded B2B tech"; give it four weeks, then test a title and description that lead with the query
+- [ ] **C** "Google reports structured-data errors: 1 page": the Review snippets error on /services is from the old site; clears on recrawl, check in Search Console > Enhancements
+- [ ] **B** "Pages share duplicate titles and descriptions: 4 pages": /contact?service=development|discovery|optimisation variants. Canonical is set, so Google folds them; if Orbit keeps flagging, add `?service=` to Search Console's URL parameter handling or mute the signal
+- [x] "No XML sitemap found": sitemap on since 17:11
+- [ ] **B** "Tell Orbit your competitors": add the agencies the AI prompts cite instead of Shrink (wearetenet.com, videsigns.uk, stan.vision, makebuild.studio, overpass.studio, flowscapestudio.com, tojupiter.com, rcco.uk) in Orbit > Settings > Competition
+- [ ] **B** Two "too new to judge" AI prompts ("how do I choose between Webflow agencies in London", "how much should I budget for a conversion rate optimisation agency"): leave, the weekly scan fills them in
+- [ ] **B** Content ideas Orbit proposes: "What to do when your website no longer reflects your business after a funding round" (overlaps the post-raise article and checklist, so brief it as a different angle or merge) and "Your website gets traffic but doesn't convert: who to hire and what to fix first" (fits Optimisation, worth writing)
+- [ ] **C** "10 case-study pages and the planned AEO/funding articles earn zero search impressions": case studies are new URLs under /case-studies, so this is a redirect and indexing lag; recheck after the November baseline. Each case study has a meta title with the client name, which is the right shape
+- [ ] **B** Orbit conversions: no goals configured, so Orbit reports 0 leads. Add the Enquiry form submit and /calls/* bookings as goals in Orbit > Performance > Statistics > Conversions once a form has gone through
+- [ ] **C** Orbit lab Core Web Vitals on the home page: LCP 8.2 s, performance 59 (throttled lab run, no field data yet). Revisit with the hero LCP item below once field data exists
+
+
 - [ ] Home hero LCP: measure on a throttled phone (PageSpeed/WebPageTest), check the hero image weight and preload
 - [ ] CMS tidy, every collection: delete fields nothing on the site binds to any more (eg. Case Studies Video Source + Hero Video Source now the cards and heroes are image-only; Services Home Image / Home Open By Default / Home Deliverables / Card Intro / Project (Image) now the home rows use Solutions; template leftovers like Archives, Galleries, LLM Answers, Placements). Audit each field against the Designer bindings first, then delete and regroup
 
