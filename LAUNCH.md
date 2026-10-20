@@ -316,6 +316,18 @@ Figma (13 Oct): "Article child: same simple template" `4320:999`, beside the sol
 - [ ] **B** "How much does it cost" FAQ answer links to /pricing (self-link on this page)
 - [ ] **B+C** Site-wide still: footer "Project calculator" and the mega nav calculator link go to tools.shrink.studio/calculator (retiring at launch)
 
+### 10. Package pages (`/packages/clarity-sprint`, `/seed-website`, `/compound`)
+- [x] **B** Clarity Sprint set out as the pattern (20 Oct): hero Section `cc-hero u-pb-0`, At a glance / What's included / How it works / CTA / FAQs as Section instances with `u-pt-card`, Work section removed, CTA Card in the CTA section
+- [x] **C** Clarity Sprint: the four unlabelled Sections got their `aria-labelledby` (glance, included, how, faqs) and the CTA section `aria-label="Next step"`
+- [x] **C** Seed Website and Compound matched structurally (20 Oct): hero props aligned, five Section instances appended to the page slot with the same classes and aria, Work sections deleted, CTA Card + "Prefer to write? Send a brief" Underline Link (`/contact?service=…`) in the CTA section
+- [ ] **B** Seed Website and Compound: drag the Border + row from each raw section (At a glance, What's included, How it works, FAQs) into the matching Section slot, then delete the four empty raw sections. The MCP cannot move raw elements into a slot
+- [ ] **B** Spacing between the CTA Card and the Underline Link below it (CSS, all three pages)
+- [x] **C** Decision: CTA stays Book a Call, with a Calls item per package rather than a form (the Enquiry Form is one click away and packages are buy-ready). Calls items created, staged for the next publish: `clarity-sprint`, `seed-website`, `compound` (own heading, outcomes, meta and OG; cal link still the 30-minute event). CTA Card Button Link points at `/calls/<package>` on each page
+- [ ] **C** Cal.com event type per package (connector pending in this session), then swap the three `cal-link` fields
+- [x] **C** Page JSON-LD on all three: WebPage + Service (fixed-price Offer; Compound as a monthly UnitPriceSpecification, all ex VAT, provider by @id) + BreadcrumbList through Pricing
+- [ ] **B** Shader CTA variant drafted in Figma: `CTA Card / Mesh` (`4728:1128`, 🧩 Components, under the CTA Card). Deep purple mesh palette from the site (`#020005, #14032f, #3d0ba3, #5b12e6, #8a3cf7`), white type, frosted founder panel, inverted button. In Webflow it would be a CTA Card variant whose root carries `data-mesh-gradient` (mesh-gradient.ts already mounts near the viewport and pauses off-screen)
+- [ ] **C** After Ben's drags and publish: fetch the three pages, check headings, labels, links and the Calls pages resolve
+
 ## Design references banked (designsystems.surf, shared by Ben 12 Oct)
 
 For service and solution pages. Same low-key look as the Services page: white, hairlines, small type, one tinted panel at most.
