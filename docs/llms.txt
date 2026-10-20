@@ -88,7 +88,7 @@ Optimisation
 - [About](https://www.shrink.studio/about): founded by Ben Hammond in 2022. Senior-led, no hand-offs to juniors.
 - [Contact](https://www.shrink.studio/contact): tell us about the project. It goes straight to the founder.
 - [Book a call](https://www.shrink.studio/calls/intro): 30 minutes with the founder. Leave with where your site is losing people, which service fits, and a rough scope and price.
-- [Policies](https://www.shrink.studio/legal): privacy, cookies, terms of use, acceptable use, AI, modern slavery and sustainability.
+- [Policies](https://www.shrink.studio/policies): privacy, cookies, terms of use, acceptable use, AI, modern slavery and sustainability.
 
 ## Optional
 
