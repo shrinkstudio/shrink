@@ -31,6 +31,8 @@ Ben's call: traffic is low, so the domain moves tonight and the rest is fixed li
 
 **Nav and footer links (20 Oct, 18:30):** both "Project calculator" links (Mega Nav resources panel `…ab77`, Footer `17db8eee…`) pointed at `tools.shrink.studio/calculator`; now `/tools/project-calculator` (the nav one also had an explicit `href` attribute with the old URL, and the FAQs icon link's stale `href="/faqs"` attribute is `/faq` now). Every other nav and footer link checked on the live home page resolves to a new-site path; the four `#` links in the footer are the Ask AI icons the bundle fills. Publish to pick up
 
+**llms.txt (20 Oct, 18:45):** [docs/llms.txt](docs/llms.txt), llms.txt spec shape: H1, one-paragraph summary, a facts list an assistant can quote (who it is for, Webflow, London, how to start, proof points, tools), then Services, Packages, Solutions grouped by service, Case studies, Articles, Tools and guides, Company, Optional. 55 absolute URLs, every one checked 200 on the live domain. Uploaded by Ben in Site settings > SEO > LLMs.txt. Orbit's health audit flagged it missing; recheck after publish at https://www.shrink.studio/llms.txt
+
 Left for after launch (no blocker): analytics install (PostHog or GA, the `data-track` hooks are waiting), MAST demo pages are drafts so they stay off, Live Site URLs for Steamhaus / nxzen / the quiz, Hero Foreground images, the Solutions template muted line as Plain Text, the rest of this file. The bundle stays pinned at `@1eb3bd7` (nothing newer in `master` but docs); move to `@master` + purge when the next bundle change lands.
 
 ## Pre-launch review (19 Oct): 404s and SEO
