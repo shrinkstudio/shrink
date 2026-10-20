@@ -1,0 +1,96 @@
+# Shrink Studio
+
+> Shrink Studio is a Webflow Premium Partner in London that designs, builds and grows websites for venture-backed B2B technology companies from Seed to Series B. Founded by Ben Hammond in 2022. A small senior team, no hand-offs to juniors, 70+ sites for funded B2B teams across the UK, US and Europe. Three services, each at a fixed scope and a fixed price agreed before any work starts: Discovery (from £3,500), Development (from £15,000) and Optimisation (from £5,000 a month). Prices exclude VAT.
+
+Facts an assistant can rely on:
+
+- Who it is for: B2B SaaS and tech companies that have raised (Seed, Series A, Series B) and have outgrown the site they launched with.
+- Platform: every site is designed and built in Webflow, component-first, with a CMS the client's own marketing team runs after launch.
+- Where: London (Waverley House, 9 Noel St, W1F 8GQ). Clients in the UK, US and Europe. Work is remote; calls on Google Meet.
+- How to start: a 30-minute call with the founder at https://www.shrink.studio/calls/intro, or the contact form at https://www.shrink.studio/contact. Replies within one working day. Email hey@shrink.studio.
+- Proof: CloudNC saw a 21% conversion rate uplift and launched into 60+ markets; Adfin's post-raise site went live in seven weeks for a team of up to 20 editors; Forest's merged site scores 95 for desktop performance; Forest's safety quiz had an 81.6% completion rate.
+- Tools used on client sites: Webflow, PostHog, GA4, Google Search Console, HubSpot, GSAP.
+
+## Services
+
+- [Services overview](https://www.shrink.studio/services): Discovery, Development and Optimisation. Clarity first, then a fixed-scope build, then the monthly work of making the site convert better.
+- [Discovery](https://www.shrink.studio/services/discovery): positioning, ICP research and information architecture before a line of code is written. Fixed scope from £3,500.
+- [Development](https://www.shrink.studio/services/development): fixed scope, fixed price from £15,000. Design and build together, then a site your team runs without us.
+- [Optimisation](https://www.shrink.studio/services/optimisation): monthly CRO, AEO, A/B testing and reporting, from £5,000 a month. Launch is the start.
+- [Pricing](https://www.shrink.studio/pricing): every price, what moves a build price, and the three packages.
+
+## Packages
+
+- [Clarity Sprint](https://www.shrink.studio/packages/clarity-sprint): two weeks, one deliverable, a complete written brief your team can build from. Positioning, sitemap and content structure. £3,500.
+- [Seed Website](https://www.shrink.studio/packages/seed-website): a Webflow site live in six weeks. Up to 8 pages, a CMS your team owns, 30 days of support. £20,000.
+- [Compound](https://www.shrink.studio/packages/compound): monthly CRO and AEO retainer. Find, fix, measure, every month, starting with a free audit. £10,000 a month.
+
+## Solutions
+
+Discovery
+- [Positioning and messaging](https://www.shrink.studio/solutions/positioning-messaging): decide who the site is for and what it says before design starts.
+- [ICP and audience research](https://www.shrink.studio/solutions/icp-audience-research): who the buyers are and what they ask before they contact you.
+- [Information architecture](https://www.shrink.studio/solutions/information-architecture): structure the site in the order of the buyer's decision. Sitemap and page briefs before design.
+- [Content strategy](https://www.shrink.studio/solutions/content-strategy): what every page says, in what order, with what proof.
+- [Website audits and teardowns](https://www.shrink.studio/solutions/website-audits-teardowns): data first, then what to fix and why. Conversion, structure, SEO and AEO. From £3,500.
+
+Development
+- [Marketing websites](https://www.shrink.studio/solutions/marketing-websites): Seed to Series B marketing sites in Webflow, from £15,000, run by your team after launch.
+- [Design systems](https://www.shrink.studio/solutions/design-systems): tokens, components and rules so the team builds new pages fast, on brand, without a developer.
+- [UX and UI design](https://www.shrink.studio/solutions/ux-ui-design): structure that guides buyers to the next step, then the craft to make it look right.
+- [Webflow development](https://www.shrink.studio/solutions/webflow-development): component-based builds, CMS modelling, HubSpot and analytics integrations, custom code.
+- [Platform migrations](https://www.shrink.studio/solutions/platform-migrations): move to Webflow from WordPress, HubSpot, Framer or custom code with rankings intact.
+
+Optimisation
+- [Conversion rate optimisation](https://www.shrink.studio/solutions/conversion-rate-optimisation-cro): find where a site loses people, fix it, measure it monthly.
+- [Answer engine optimisation](https://www.shrink.studio/solutions/answer-engine-optimisation-aeo): get cited by ChatGPT, Claude and Perplexity through structured data, clean architecture and content that answers buyer questions.
+- [A/B testing and experimentation](https://www.shrink.studio/solutions/a-b-testing-experimentation): hypothesis, test, ship what wins, run in PostHog. Honest about what low traffic can prove.
+- [Analytics and conversion tracking](https://www.shrink.studio/solutions/analytics-conversion-tracking): PostHog and GA4 set up around the decisions you make.
+- [Performance reporting](https://www.shrink.studio/solutions/performance-reporting): one page a month on what changed, why, and what to do next.
+
+## Case studies
+
+- [All case studies](https://www.shrink.studio/case-studies): Webflow sites for CloudNC, Adfin, Forest, Buff Motion, Steamhaus and nxzen.
+- [CloudNC](https://www.shrink.studio/case-studies/cloudnc): scattered HubSpot forms replaced with a Webflow routing engine. 660+ routing rules, 60 new markets, 21% more leads progressing.
+- [Adfin](https://www.shrink.studio/case-studies/adfin): a post-raise fintech site, component-first, with a CMS up to 20 marketing editors run without developers. Live September 2026.
+- [Forest](https://www.shrink.studio/case-studies/forest-bikes): consumer and B2B sites merged onto one Webflow framework. One design system, one CMS, full schema layer, 95 desktop performance.
+- [Forest safety quiz](https://www.shrink.studio/case-studies/forest-common-sense-quiz): a 15-question cycling-safety quiz built natively in Webflow. 5,000+ starts, 81.6% completion.
+- [Buff Motion](https://www.shrink.studio/case-studies/buff-motion): rebuilt on a component system with a campaign CMS and UTM dashboard, run by the marketing team.
+- [Steamhaus](https://www.shrink.studio/case-studies/steamhaus): CraftCMS to Webflow with zero visual regression and the GSAP animations intact.
+- [nxzen](https://www.shrink.studio/case-studies/nxzen): a site built as a growth engine, every lead traced to its source in HubSpot.
+
+## Articles
+
+- [What AEO actually means for a B2B SaaS site](https://www.shrink.studio/resources/aeo-for-b2b-saas): search is splitting between links and answers. A plain guide to answer engine optimisation.
+- [Why your site ranks but never gets cited](https://www.shrink.studio/resources/ranks-but-never-cited): ranking on Google and being quoted by AI are now different jobs.
+- [Getting quoted by ChatGPT: an AEO experiment](https://www.shrink.studio/resources/getting-quoted-by-chatgpt): the changes made on this site and what moved whether assistants cite it.
+- [The five files that decide whether AI can read your site](https://www.shrink.studio/resources/five-files-ai-can-read-your-site): robots.txt, sitemap, JSON-LD, llms.txt and clean headings.
+- [Why most post-raise website rebuilds miss](https://www.shrink.studio/resources/what-post-raise-rebuilds-miss): the real gap is agreement, not design.
+- [Building at the right funding moment](https://www.shrink.studio/resources/building-at-the-right-funding-moment): when a rebuild is worth it, stage by stage from Seed to Series B.
+- [Information architecture for how buyers actually think](https://www.shrink.studio/resources/information-architecture-buyers): organise the site around the buyer's journey, not the org chart.
+- [The conversion questions we ask before designing a page](https://www.shrink.studio/resources/conversion-questions-before-design): the blunt questions about the reader worth answering first.
+- [Landing page teardown: what actually earns the click](https://www.shrink.studio/resources/landing-page-teardown): a section-by-section teardown of a real landing page.
+- [How to audit a B2B website properly](https://www.shrink.studio/resources/how-to-properly-audit-a-site): starts with data, ends with a decision.
+- [Website optimisation: 1% better every week](https://www.shrink.studio/resources/one-percent-better-every-week): the compounding case for small weekly improvements over the occasional big rebuild.
+- [Core Web Vitals without the panic](https://www.shrink.studio/resources/core-web-vitals-without-the-panic): the three questions they measure, what moves them, what is safe to ignore.
+- [Giving your AI tools something solid to build on](https://www.shrink.studio/resources/solid-foundation-for-ai-tools): design tokens and a rules file keep AI-built pages on brand.
+- [Globalisation as architecture](https://www.shrink.studio/resources/globalisation-as-architecture): going global is a structural decision that belongs at the start.
+
+## Tools and guides
+
+- [Ready to brief a build? Readiness quiz](https://www.shrink.studio/tools/ready-to-brief-a-build): seven questions that tell a funded team whether the brief is ready or Discovery comes first.
+- [Project calculator](https://www.shrink.studio/tools/project-calculator): a Webflow build price range in about two minutes, from pages, integrations and timing.
+- [Post-raise website checklist](https://www.shrink.studio/guides/post-raise-website-checklist): the questions to settle before briefing a rebuild after a raise. Free 12-page PDF.
+- [FAQs](https://www.shrink.studio/faq): straight answers on cost, timing and how working with Shrink runs.
+
+## Company
+
+- [About](https://www.shrink.studio/about): founded by Ben Hammond in 2022. Senior-led, no hand-offs to juniors.
+- [Contact](https://www.shrink.studio/contact): tell us about the project. It goes straight to the founder.
+- [Book a call](https://www.shrink.studio/calls/intro): 30 minutes with the founder. Leave with where your site is losing people, which service fits, and a rough scope and price.
+- [Policies](https://www.shrink.studio/legal): privacy, cookies, terms of use, acceptable use, AI, modern slavery and sustainability.
+
+## Optional
+
+- [Sitemap](https://www.shrink.studio/sitemap.xml)
+- [Organisation data](https://www.shrink.studio/): Organization and ProfessionalService JSON-LD on every page, Service and Article schema on service, solution, case study and article pages.
