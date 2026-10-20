@@ -118,7 +118,8 @@ Fixes
 - [x] **C** Verified live 20 Oct: 15 solution links resolve, each card's cover link goes to its case study with the project name as the sr text, cues on one line, no video, sections labelled, WebPage + ItemList + BreadcrumbList schema published
 - [x] **C** Button label from the CMS (20 Oct, Ben's call): new Services field **Card CTA** (`card-cta`, help text "Button label on the Services page row, eg. Explore Discovery"), filled "Explore Discovery / Development / Optimisation", and the row Button's Text prop is bound to it
 - [x] **C** Meta row is a definition list (20 Oct, Ben spotted the text block read "Investment:Engagement:Leads to:"): `dl.inline-list.paragraph-sm.cc-meta.services_meta` > three `div.services_meta-item` > `dt.u-text-muted` label + `dd` bound to Investment Level / Engagement / Leads to → Name. Same classes as before so the CSS carries over
-- [ ] **B** Designer: re-apply the "Leads to is set" conditional visibility on the third `services_meta-item` (lost in the rebuild); `dd` needs `margin: 0` (browser default is 40px left) if `services_meta-item` doesn't already reset it
+- [x] **C** Browser dl/dd margins reset (20 Oct): new `services_meta-label` (dt, inline) and `services_meta-value` (dd, inline, margin 0) classes; the `services_meta` combo now zeroes the dl's top and bottom margin
+- [ ] **B** Designer: re-apply the "Leads to is set" conditional visibility on the third `services_meta-item` (lost in the rebuild)
 - [ ] **B** Designer audit flags `link-list_link` and `u-link-cover` as non-descriptive: both carry bound text (Solution Name, Project → Name) that the audit can't resolve at design time; the published HTML has the names (checked 20 Oct), so no change
 - [ ] **C** Show price and engagement type on each service (already in the CMS)
 
