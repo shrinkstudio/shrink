@@ -4,17 +4,15 @@
 // Markup (CSS/layout built in Webflow, the Testimonial Slider component):
 //   [data-testimonials="6"]               ← root; seconds per slide, 0 = click only
 //     [data-testimonials-item]            ← each Collection Item (stacked in one grid cell)
-//       [data-testimonials-logo]          ← client logo, inside a clipped slot
-//       [data-testimonials-split]         ← quote, name, role: fade in line by line
 //     [data-testimonials-dots]            ← holds one blueprint:
 //       [data-testimonials-dot] > bar > [data-testimonials-dot-fill]
 //     [data-testimonials-count]           ← "1 / 6"
 //
 // The dot blueprint is copied once per item; its bar widens into a pill while
 // active and the fill runs left to right as the timer. Autoplay pauses on hover,
-// focus and off screen. Line splitting uses GSAP SplitText when it is loaded
-// (Webflow Site settings > GSAP), otherwise each text block fades as one.
-// Reduced motion: a plain cross-fade. One item: no dots, no timer.
+// focus and off screen. Each item cross-fades as one piece (logo, quote, author
+// and photo together) with a small rise; reduced motion drops the rise.
+// One item: no dots, no timer.
 // -----------------------------------------
 
 type Vars = Record<string, unknown>;
@@ -38,37 +36,23 @@ interface GsapLike {
   timeline(vars?: Vars): Timeline;
 }
 
-interface Split {
-  lines: Element[];
-  revert(): void;
-}
-
-interface SplitTextLike {
-  create(target: Element, vars: Vars): Split;
-}
-
 interface Slide {
   item: HTMLElement;
   dot: HTMLButtonElement;
   bar: HTMLElement;
   fill: HTMLElement;
-  logo: HTMLElement | null;
-  texts: HTMLElement[];
-  splits: Split[];
 }
 
 const DOT_WIDTH = '0.375rem';
 const PILL_WIDTH = '2.5rem';
+/* px the incoming card rises from */
+const RISE = 12;
 
 let cleanups: (() => void)[] = [];
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Lines when SplitText is available, else the text blocks themselves. */
-const linesOf = (slide: Slide) =>
-  slide.splits.length ? slide.splits.flatMap((s) => s.lines) : slide.texts;
-
-const setup = (root: HTMLElement, gsap: GsapLike, SplitText?: SplitTextLike) => {
+const setup = (root: HTMLElement, gsap: GsapLike) => {
   const items = [...root.querySelectorAll<HTMLElement>('[data-testimonials-item]')];
   const dotsWrap = root.querySelector<HTMLElement>('[data-testimonials-dots]');
   const blueprint = dotsWrap?.querySelector<HTMLElement>('[data-testimonials-dot]');
@@ -90,21 +74,7 @@ const setup = (root: HTMLElement, gsap: GsapLike, SplitText?: SplitTextLike) => 
     dotsWrap.appendChild(dot);
 
     const fill = dot.querySelector<HTMLElement>('[data-testimonials-dot-fill]') ?? dot;
-    const texts = [...item.querySelectorAll<HTMLElement>('[data-testimonials-split]')];
-    const splits =
-      SplitText && !reduced()
-        ? texts.map((el) => SplitText.create(el, { type: 'lines', autoSplit: true }))
-        : [];
-
-    return {
-      item,
-      dot,
-      bar: (fill.parentElement as HTMLElement) ?? dot,
-      fill,
-      logo: item.querySelector<HTMLElement>('[data-testimonials-logo]'),
-      texts,
-      splits,
-    };
+    return { item, dot, bar: (fill.parentElement as HTMLElement) ?? dot, fill };
   });
 
   // display classes beat [hidden], so hide inline
@@ -173,48 +143,21 @@ const setup = (root: HTMLElement, gsap: GsapLike, SplitText?: SplitTextLike) => 
     if (count) count.textContent = `${next + 1} / ${slides.length}`;
     startTimer();
 
-    const outLines = linesOf(outgoing);
-    const inLines = linesOf(incoming);
-    const logos = [outgoing.logo, incoming.logo].filter(Boolean);
-
+    const rise = reduced() ? 0 : RISE;
     transition = gsap.timeline({
       onComplete: () => {
         setStatus(outgoing, 'inactive');
-        gsap.set([...outLines, ...inLines, ...logos, outgoing.item, incoming.item], {
-          clearProps: 'transform,opacity',
-        });
+        gsap.set([outgoing.item, incoming.item], { clearProps: 'transform,opacity' });
         transition = null;
       },
     });
-
-    if (reduced()) {
-      transition
-        .to(outgoing.item, { opacity: 0, duration: 0.4, ease: 'power2.out' }, 0)
-        .fromTo(
-          incoming.item,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.4, ease: 'power2.out' },
-          0
-        );
-      return;
-    }
-
     transition
-      .to(outLines, { opacity: 0, duration: 0.4, ease: 'power2.out', stagger: { amount: 0.1 } }, 0)
+      .to(outgoing.item, { opacity: 0, y: -rise, duration: 0.35, ease: 'power2.out' }, 0)
       .fromTo(
-        inLines,
-        { opacity: 0, yPercent: 40 },
-        { opacity: 1, yPercent: 0, duration: 0.8, ease: 'power3.out', stagger: { amount: 0.3 } },
-        0.35
-      );
-    if (outgoing.logo)
-      transition.to(outgoing.logo, { yPercent: -110, duration: 0.6, ease: 'power4.inOut' }, 0);
-    if (incoming.logo)
-      transition.fromTo(
-        incoming.logo,
-        { yPercent: 110 },
-        { yPercent: 0, duration: 0.7, ease: 'power4.inOut' },
-        0.15
+        incoming.item,
+        { opacity: 0, y: rise },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' },
+        0.2
       );
   };
 
@@ -268,10 +211,7 @@ const setup = (root: HTMLElement, gsap: GsapLike, SplitText?: SplitTextLike) => 
     root.removeEventListener('pointerleave', release);
     root.removeEventListener('focusin', hold);
     root.removeEventListener('focusout', release);
-    slides.forEach((s) => {
-      s.splits.forEach((split) => split.revert());
-      s.dot.remove();
-    });
+    slides.forEach((s) => s.dot.remove());
     dotsWrap.appendChild(blueprint);
     root.removeAttribute('data-testimonials-init');
   });
@@ -279,12 +219,12 @@ const setup = (root: HTMLElement, gsap: GsapLike, SplitText?: SplitTextLike) => 
 
 /** Starts every testimonial slider in the scope. Skips ones already running. */
 export const initTestimonials = (scope: ParentNode = document) => {
-  const { gsap, SplitText } = window as unknown as { gsap?: GsapLike; SplitText?: SplitTextLike };
+  const { gsap } = window as unknown as { gsap?: GsapLike };
   if (!gsap) return;
 
   scope
     .querySelectorAll<HTMLElement>('[data-testimonials]:not([data-testimonials-init])')
-    .forEach((root) => setup(root, gsap, SplitText));
+    .forEach((root) => setup(root, gsap));
 };
 
 export const destroyTestimonials = () => {
