@@ -52,6 +52,22 @@ Open issues:
 
 Mentioned in 0 of 15 prompts on ChatGPT, Gemini, Google AI Overviews and AI Mode. The 9 Oct scan had one ChatGPT mention and citation ("how do I choose between Webflow agencies in London"), lost by 13 Oct. Domains cited instead: webflow.com (12), linkedin.com, help.webflow.com, wearetenet.com, reddit.com, videsigns.uk, youtube.com (4 each), stan.vision, makebuild.studio (3).
 
+## PageSpeed Insights, home page, 21 Oct (day after launch, Lighthouse 13.5, no field data)
+
+| | Mobile | Desktop |
+| --- | --- | --- |
+| Performance | 70 | 87 |
+| Accessibility | 89 | 92 |
+| Best Practices | 100 | 100 |
+| SEO | 100 | 100 |
+| FCP | 3.1 s | 1.0 s |
+| LCP | 7.0 s | 1.6 s |
+| TBT | 0 ms | 160 ms |
+| CLS | 0.009 | 0.032 |
+| Speed Index | 3.7 s | 1.4 s |
+
+Top audits: render-blocking requests (600 ms / 820 ms), image delivery (630 / 810 KiB), unused JavaScript 266 KiB, cache lifetimes 444 KiB. Fix list in LAUNCH.md under "PageSpeed".
+
 ## What to check against this
 
 - Bounce on the home page and the service pages (new site has a lot more to read).
