@@ -22,7 +22,7 @@ Facts an assistant can rely on:
 ## Packages
 
 - [Clarity Sprint](https://www.shrink.studio/packages/clarity-sprint): two weeks, one deliverable, a complete written brief your team can build from. Positioning, sitemap and content structure. £3,500.
-- [Seed Website](https://www.shrink.studio/packages/seed-website): a Webflow site live in six weeks. Up to 8 pages, a CMS your team owns, 30 days of support. £20,000.
+- [Seed Website](https://www.shrink.studio/packages/seed-website): a Webflow site live in six weeks. Up to 8 pages, a CMS your team owns, 30 days of support. £15,000.
 - [Compound](https://www.shrink.studio/packages/compound): monthly CRO and AEO retainer. Find, fix, measure, every month, starting with a free audit. £10,000 a month.
 
 ## Solutions

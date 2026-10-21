@@ -547,6 +547,9 @@ Figma (13 Oct), all in the Updates section on the row beside the About copy, wit
 
 ## After launch
 
+### Seed Website price (21 Oct, 09:25, for the launch LinkedIn post)
+- [x] **C** Seed Website is now £15,000 + VAT everywhere the price appears: Pricing page Package Tile (Price prop), Pricing OfferCatalog JSON-LD, the package page's Investment Detail row, its SEO and OG description and its WebPage + Service + Offer JSON-LD, the FAQ answer "What does a Seed Website cost?" (`6ad5e99a4ded27f4aa002287`), the Seed Website call's AI summary, the Mega Nav package card, and [docs/llms.txt](docs/llms.txt) (re-upload). The Mega Nav card tagline drops the page count ("Live in six weeks."); "Up to 8 pages" stays on the page, the tile tag and the FAQ. Publish to pick up
+
 ### CTAs parked on Contact (20 Oct, 19:50)
 - [x] **C** Every "Book a Call" CTA now reads "Start a conversation" and links `/contact` while the Calls pages are finished: Footer default CTA Button Text (`67fd4ca6…`) and CTA Card default Button Text (`2dea9ed2…`) via `update_prop default_text` (link props have no default setter in the MCP), the CTA Card inside the Footer definition has its Button Link pinned to `/contact` instead of the Footer's CTA Button Link prop (so per-page link overrides no longer apply; the Footer prop `1fb02cf2…` is dormant until re-bound), the two Footer overrides that still said `/book-a-call` (Case Studies index, Services template) and the three package-page CTA Cards that linked `/calls/<package>`. The Calls pages, cal.com event types and the `/book-a-call` 301 stay as they are; flip the defaults back to `/calls/intro` and "Book a Call" when the flow is ready. Publish to pick up
 - [ ] **B** Book a Call flow: finish the Calls template (Clients list into the Testimonial Slider slot, SEO binding), check the three cal.com event types end to end, then restore the CTAs above
