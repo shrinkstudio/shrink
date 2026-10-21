@@ -66,6 +66,8 @@ Mentioned in 0 of 15 prompts on ChatGPT, Gemini, Google AI Overviews and AI Mode
 | CLS | 0.009 | 0.032 |
 | Speed Index | 3.7 s | 1.4 s |
 
+Re-run 21 Oct 11:59 after moving GSAP to deferred footer scripts: desktop Performance 93 (from 87), mobile 63 (from 70, within run-to-run variance; no field data yet).
+
 Top audits: render-blocking requests (600 ms / 820 ms), image delivery (630 / 810 KiB), unused JavaScript 266 KiB, cache lifetimes 444 KiB. Fix list in LAUNCH.md under "PageSpeed".
 
 ## What to check against this
