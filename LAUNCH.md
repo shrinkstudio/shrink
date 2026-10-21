@@ -574,6 +574,30 @@ Mobile: Performance 70, Accessibility 89, Best Practices 100, SEO 100, Agentic B
 - [x] **C** Every "Book a Call" CTA now reads "Start a conversation" and links `/contact` while the Calls pages are finished: Footer default CTA Button Text (`67fd4ca6…`) and CTA Card default Button Text (`2dea9ed2…`) via `update_prop default_text` (link props have no default setter in the MCP), the CTA Card inside the Footer definition has its Button Link pinned to `/contact` instead of the Footer's CTA Button Link prop (so per-page link overrides no longer apply; the Footer prop `1fb02cf2…` is dormant until re-bound), the two Footer overrides that still said `/book-a-call` (Case Studies index, Services template) and the three package-page CTA Cards that linked `/calls/<package>`. The Calls pages, cal.com event types and the `/book-a-call` 301 stay as they are; flip the defaults back to `/calls/intro` and "Book a Call" when the flow is ready. Publish to pick up
 - [ ] **B** Book a Call flow: finish the Calls template (Clients list into the Testimonial Slider slot, SEO binding), check the three cal.com event types end to end, then restore the CTAs above
 
+### Paid early traffic: Google Ads first, LinkedIn second (21 Oct, Ben: "drive some early traffic")
+The site gets ~17 visitors a day and organic search is 5% of them, so a small paid test is the fastest way to get real conversion data on the new pages. Order of attack, cheapest intent first:
+
+**1. Google Search, London Webflow queries (start here, week 1)**
+- [ ] **B** Why: Search Console already shows the demand. "webflow agency london" 357 impressions at position 5.6 with 0 clicks, plus "webflow agencies in london", "webflow designer london", "webflow design agency london", "london webflow agency" (see [docs/launch-baseline-2026-10-20.md](docs/launch-baseline-2026-10-20.md)). We rank on page one and lose the click; a text ad at the top of the same SERP tests the new messaging against those exact searchers at £3 to £6 a click
+- [ ] **B** One campaign, one ad group, exact and phrase match on 6 to 8 London Webflow terms, geo London + UK, £15 to £25 a day for 3 weeks (about 100 to 150 clicks: enough to see whether the page converts, not enough for statistical certainty)
+- [ ] **B** Landing page: /solutions/webflow-development (the page that matches the query) with /services/development as the variant. Both already carry pricing, proof and the Start a conversation CTA. Send nothing to the home page
+- [ ] **B** Negatives from day one: jobs, salary, course, tutorial, template, free, wordpress, freelance (unless we want freelance leads), login
+- [ ] **C** Tracking before the first pound: UTM convention `utm_source=google&utm_medium=cpc&utm_campaign=london-webflow&utm_content={keyword}` (PostHog reads UTMs into the session automatically; Orbit shows them under source)
+- [ ] **C** Conversion event: Google Ads conversion on `contact_form_submitted` via gtag, plus "Start a conversation" clicks as a secondary. Note GA4/gtag only fires after CookieYes consent, so Ads will under-count; PostHog (memory mode before consent) is the true count. Read both
+- [ ] **C** Orbit goal for the contact form so the Orbit pixel shows the conversion rate by source
+- [ ] **B** Google Ads account: check the old account exists and the G-G2Y3LBQPRZ property is linked, or create a fresh one; Ads conversion ID goes in the site head once (C adds it)
+
+**2. LinkedIn, boost the launch post rather than cold ads (week 1 to 2)**
+- [ ] **B** Thought Leader Ad on Ben's launch post (the "Finally took my own advice" one): the cheapest LinkedIn format, reads as organic, £10 to £20 a day for 10 days. Audience: UK + EU, job titles Founder, CEO, CMO, VP/Head of Marketing, company size 11 to 200, industries Software, IT Services, Fintech. Objective: engagement, with the site link in the first comment
+- [ ] **B** Skip Sponsored Content and Lead Gen Forms for now: £8 to £15 a click and the ICP (Seed to Series B) has no funding-stage filter without Matched Audiences. Revisit once there is a list to upload (Shrink Pipeline funding alerts to a Matched Audience is the play)
+- [ ] **C** UTMs on the post link: `utm_source=linkedin&utm_medium=social&utm_campaign=launch-v1-1`. LinkedIn strips nothing from a comment link
+- [ ] **B** Organic amplification costs nothing and probably beats the paid spend: the launch post, then one post per new pillar over three weeks (pricing in the open, 15 solution pages, case studies with numbers, AEO on our own site). Draft via /social
+
+**3. What to read after three weeks (compare against the baseline doc)**
+- [ ] **C** PostHog: sessions by `$initial_utm_campaign`, bounce and `contact_form_submitted` by landing page; Google Ads: CTR by keyword (quality of messaging), CPC, conversions; Orbit: source breakdown and the contact goal
+- [ ] **B+C** Decision rule: if the London Webflow search clicks convert at 2% or better to a form or call, keep it running and add the UK-wide terms; if under 1%, the page is the problem, so fix the page before spending more
+- [ ] **B** Also consider: Google Business Profile posts and the Webflow Partner directory listing are free and point at the same intent as the London queries
+
 ### Orbit signals board (20 Oct, 19:40, 14 open)
 - [ ] **C** "14 pages link to 10 pages that do not exist" (critical): the 17:54 audit crawled before the Policies slug re-save and the 301s. Re-run the health audit and confirm it drops to zero; anything left is a real dead link
 - [ ] **B+C** "/services/development and /services/discovery are not in Google's index": request indexing in Search Console for both (and /services/optimisation, /pricing, the three package pages), then watch the Pages report
