@@ -10,6 +10,7 @@ import { initAskAI } from './modules/ask-ai';
 import { initConsent } from './modules/consent';
 import { initCopyClip } from './modules/copy-clip';
 import { initCurrentTime } from './modules/current-time';
+import { initFaqSchema } from './modules/faq-schema';
 import { initFormPrefill } from './modules/form-prefill';
 import { initFormValidate } from './modules/form-validate';
 import { initHoverList } from './modules/hover-list';
@@ -52,6 +53,7 @@ window.Webflow.push(() => {
   initSegmented();
   initTestimonialTabs();
   initTrack();
+  initFaqSchema();
 
   // The vendored Finsweet list is ~100KB of the bundle; only stand it up on
   // pages that actually have a list to filter.

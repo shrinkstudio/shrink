@@ -1,0 +1,13 @@
+source,destination,status,caseSensitive,preserveQueryParams
+/,https://www.shrink.studio/resources,301,false,false
+/calculator,https://www.shrink.studio/tools/project-calculator,301,false,false
+/project-estimator,https://www.shrink.studio/tools/project-calculator,301,false,false
+/quiz,https://www.shrink.studio/tools/ready-to-brief-a-build,301,false,false
+/quiz/r/*,https://www.shrink.studio/tools/ready-to-brief-a-build,301,false,true
+/accessibility,https://www.shrink.studio/resources,301,false,false
+/seo-aeo,https://www.shrink.studio/resources,301,false,false
+/structure,https://www.shrink.studio/resources,301,false,false
+/plg-readiness,https://www.shrink.studio/resources,301,false,false
+/report/*,https://www.shrink.studio/resources,301,false,false
+/preview/*,https://www.shrink.studio/resources,301,false,false
+/*,https://www.shrink.studio/resources,301,false,false
