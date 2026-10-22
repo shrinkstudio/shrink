@@ -61,6 +61,7 @@ Optimisation
 
 ## Articles
 
+- [PHP2Shell: what the PHP outage means for your marketing site](https://www.shrink.studio/resources/php2shell-marketing-site): the two critical PHP flaws patched on 21 October 2026, who is exposed, and the one question to ask your host.
 - [What AEO actually means for a B2B SaaS site](https://www.shrink.studio/resources/aeo-for-b2b-saas): search is splitting between links and answers. A plain guide to answer engine optimisation.
 - [Why your site ranks but never gets cited](https://www.shrink.studio/resources/ranks-but-never-cited): ranking on Google and being quoted by AI are now different jobs.
 - [Getting quoted by ChatGPT: an AEO experiment](https://www.shrink.studio/resources/getting-quoted-by-chatgpt): the changes made on this site and what moved whether assistants cite it.

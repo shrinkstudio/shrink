@@ -574,6 +574,13 @@ Mobile: Performance 70, Accessibility 89, Best Practices 100, SEO 100, Agentic B
 - [x] **C** Every "Book a Call" CTA now reads "Start a conversation" and links `/contact` while the Calls pages are finished: Footer default CTA Button Text (`67fd4ca6…`) and CTA Card default Button Text (`2dea9ed2…`) via `update_prop default_text` (link props have no default setter in the MCP), the CTA Card inside the Footer definition has its Button Link pinned to `/contact` instead of the Footer's CTA Button Link prop (so per-page link overrides no longer apply; the Footer prop `1fb02cf2…` is dormant until re-bound), the two Footer overrides that still said `/book-a-call` (Case Studies index, Services template) and the three package-page CTA Cards that linked `/calls/<package>`. The Calls pages, cal.com event types and the `/book-a-call` 301 stay as they are; flip the defaults back to `/calls/intro` and "Book a Call" when the flow is ready. Publish to pick up
 - [ ] **B** Book a Call flow: finish the Calls template (Clients list into the Testimonial Slider slot, SEO binding), check the three cal.com event types end to end, then restore the CTAs above
 
+### PHP2Shell article (22 Oct)
+- [x] **C** News & Insights draft item `6ada1dd2d855efbde154cef7`, slug `php2shell-marketing-site`, dated 22 Oct 09:00, category Architecture, related solution Platform Migrations, author Ben, placeholder image. Source tables rewritten as lists (no article body uses tables); FAQs in the body as h3s; sources list at the end; contact link to /contact
+- [ ] **B** Read it in the Editor, swap the placeholder image, publish the item (publishing the site is not needed for a CMS item)
+- [ ] **B** Re-upload llms.txt from [docs/llms.txt](docs/llms.txt) (the article line is added at the top of Articles)
+- [ ] **C** FAQPage JSON-LD: the article template only carries Article schema, so the five FAQs are not marked up. Option: a `FAQ JSON-LD` plain-text field on News & Insights rendered through an embed on the template, written per article. Decide after launch tidy
+- [ ] **B** Share it the same day: LinkedIn post via /social (timely, security scare, "our clients had zero PHP conversations this week")
+
 ### Paid early traffic: Google Ads first, LinkedIn second (21 Oct, Ben: "drive some early traffic")
 The site gets ~17 visitors a day and organic search is 5% of them, so a small paid test is the fastest way to get real conversion data on the new pages. Order of attack, cheapest intent first:
 
