@@ -70,6 +70,12 @@ Re-run 21 Oct 11:59 after moving GSAP to deferred footer scripts: desktop Perfor
 
 Top audits: render-blocking requests (600 ms / 820 ms), image delivery (630 / 810 KiB), unused JavaScript 266 KiB, cache lifetimes 444 KiB. Fix list in LAUNCH.md under "PageSpeed".
 
+## First two days on the new site (PostHog, read 22 Oct 19:30)
+
+Pageviews by day: 148 on 20 Oct (from 17:54), 192 on 21 Oct, 89 on 22 Oct by 19:30. The old site averaged about 20 a day. Visitors and sessions equal pageviews because PostHog runs in memory mode until a visitor accepts cookies, so every page load counts as a new person and session and internal clicks show as referrer www.shrink.studio. Compare pageviews, never visitors, until that changes.
+
+Scroll depth since launch, share of page sessions reaching each mark: home (146) 49% / 38% / 31% / 24%; about (28) 61 / 61 / 54 / 43; pricing (14) 71 / 64 / 43 / 21; Adfin case study (16) 63 / 38 / 38 / 13; PHP2Shell article (9) 67 / 56 / 33 / 11. Events: article-read 11, ask-ai 4, solution-click 1, contact_form_submitted 0.
+
 ## What to check against this
 
 - Bounce on the home page and the service pages (new site has a lot more to read).
