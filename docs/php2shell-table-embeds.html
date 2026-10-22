@@ -1,0 +1,31 @@
+<!-- PHP2Shell article: paste each block into a Rich Text "Custom code" embed in the CMS editor.
+     Embed 1 goes after the paragraph ending "...because the problem sat one layer down."
+     Embed 2 goes after the paragraph ending "...The quickest way to orient yourself is by platform."
+     Delete the two flattened text paragraphs that start "When (21 Oct 2026, UTC)What happened..." and
+     "Your site runs onAffected?..." once the embeds are in. Styling comes from the site's rich text embed. -->
+
+<!-- EMBED 1: timeline -->
+<table>
+  <thead>
+    <tr><th>When (21 Oct 2026, UTC)</th><th>What happened</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>07:43</td><td>Cloudflare reports the first attacks, before any fix is available</td></tr>
+    <tr><td>14:00</td><td>PHP releases emergency fixes: 8.5.12, 8.4.27, 8.3.36 and 8.2.35</td></tr>
+    <tr><td>Rest of the day</td><td>Sites go into maintenance mode while hosts patch; exploit tools and write-ups go public</td></tr>
+  </tbody>
+</table>
+
+<!-- EMBED 2: who is affected -->
+<table>
+  <thead>
+    <tr><th>Your site runs on</th><th>Affected?</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>WordPress, Drupal, Joomla, Magento</td><td>Yes, until the PHP underneath is patched</td></tr>
+    <tr><td>Laravel or other custom PHP</td><td>Yes, until the PHP underneath is patched</td></tr>
+    <tr><td>PHP 8.1 or older</td><td>Yes, with no official fix. You need your host's own patch or an upgrade to 8.2 or later</td></tr>
+    <tr><td>Webflow, Framer, Squarespace, Wix</td><td>Hosted for you. The platform handles its own security updates, and there is no PHP server for your team to patch</td></tr>
+    <tr><td>A static site or headless front end (Astro, Next.js)</td><td>Only indirectly. Check any PHP-based CMS or tools sitting behind it</td></tr>
+  </tbody>
+</table>
