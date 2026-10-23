@@ -81,7 +81,6 @@ Optimisation
 
 - [Ready to brief a build? Readiness quiz](https://www.shrink.studio/tools/ready-to-brief-a-build): seven questions that tell a funded team whether the brief is ready or Discovery comes first.
 - [Project calculator](https://www.shrink.studio/tools/project-calculator): a Webflow build price range in about two minutes, from pages, integrations and timing.
-- [Post-raise website checklist](https://www.shrink.studio/guides/post-raise-website-checklist): the questions to settle before briefing a rebuild after a raise. Free 12-page PDF.
 - [FAQs](https://www.shrink.studio/faq): straight answers on cost, timing and how working with Shrink runs.
 
 ## Company
