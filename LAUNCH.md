@@ -649,5 +649,18 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Aria, SEO and ID sweep (23 Oct, after Ben's tidy)
+66 live pages fetched and checked (headings, ids, aria refs, labels, links, titles, OG). Fixed in Webflow (staged, Ben publishes):
+- Enquiry Form: `for` on the Name, Work email, Website, Budget and About labels (were empty). Resource Form: Name and Work email the same.
+- Calls template: "The call" section had `aria-labelledby="conversation-title"` with no matching id. Now `aria-label="The call"` (slot contents are invisible to the MCP, so no heading id).
+- Services template: "Where we start" and "Solutions" both had id `glance-title`. Now `start-title` and `solutions-title`.
+
+Checked and fine: Ask AI links get real hrefs from ask-ai.ts; testimonial dots get aria-labels from testimonials.ts; empty case study detail rows and the "#" Visit site links are hidden; the form submit cover is `role="button"` wired to `requestSubmit`; the opt-in checkbox label wraps its input.
+
+Open, Ben's call:
+- [ ] 8 articles are live on their 10 Sept versions; the 15 Oct rewrites are staged as Draft (body, meta title, OG, AI summary, author), so a site publish skips them. Live pages have an empty og:description and the old ", Shrink Studio" titles. Articles: five-files-ai-can-read-your-site, building-at-the-right-funding-moment, solid-foundation-for-ai-tools, information-architecture-buyers, conversion-questions-before-design, globalisation-as-architecture, core-web-vitals-without-the-panic, landing-page-teardown. Set them to ready and publish.
+- [ ] Titles over 65 characters (proposals): Clarity Sprint call "Book a Clarity Sprint call with the founder | Shrink Studio"; Seed Website call "Book a Seed Website call with the founder | Shrink Studio"; calculator "Webflow cost calculator for funded startups | Shrink Studio".
+- [ ] Acceptable use and AI policy rich text jumps from h1 to h3.
+
 ### API outage, 23 Oct 13:00 to 13:42
 The Slack change (28a80e1) moved the helper into api/_notify.ts and imported it from both handlers. On Vercel (ESM, no bundling) that import failed and both /api/forms and /api/cal returned 500 on every request, so the second test booking (13:18) never landed. Fixed in 15efc2e by inlining the helper; both endpoints verified (cal signed ping 200, forms 403 wrong-site on a fake payload). Rule: files in api/ stay self-contained, no relative imports. No real form submissions or bookings came in during the window.
