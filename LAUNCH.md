@@ -649,6 +649,11 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Article FAQs (23 Oct)
+Published fixes from the sweep verified live: calculator title, contact label `for`s, "The call" aria-label, Services heading ids.
+70 FAQs written for the 14 live articles (five each; PHP2Shell already had its set, plain-english-structured-data is unpublished). Source: `docs/article-faqs.json`. Created staged and ready through the API (FAQs collection, Article reference, display-order 1 to 5). Questions are the ones a buyer asks next, beyond the article headings, so they add citable answers and feed the FAQPage schema from faq-schema.ts.
+- [ ] Ben publishes the site, then check one article shows its FAQs and the JSON-LD.
+
 ### Aria, SEO and ID sweep (23 Oct, after Ben's tidy)
 66 live pages fetched and checked (headings, ids, aria refs, labels, links, titles, OG). Fixed in Webflow (staged, Ben publishes):
 - Enquiry Form: `for` on the Name, Work email, Website, Budget and About labels (were empty). Resource Form: Name and Work email the same.
