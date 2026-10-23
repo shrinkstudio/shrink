@@ -7,8 +7,13 @@
  * - Rescheduled: move the Deal's Next step date (falls back to Created if no Deal matches).
  * - Cancelled: note it, Next step "Rebook call" today, Contact back to Needs follow-up.
  *
- * Env (Vercel): AIRTABLE_TOKEN, CAL_WEBHOOK_SECRET (verifies x-cal-signature-256).
+ * Every booking change also pings Slack (see _notify.ts).
+ *
+ * Env (Vercel): AIRTABLE_TOKEN, CAL_WEBHOOK_SECRET (verifies x-cal-signature-256),
+ * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook).
  */
+
+import { clip, londonTime, notify, recordUrl } from './_notify';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -110,6 +115,28 @@ export async function POST(request: Request): Promise<Response> {
   }
 }
 
+/* a booking question's answer as text */
+const answer = (b: Booking, key: string) => {
+  const a = b.responses?.[key];
+  const v = typeof a === 'string' ? a : a?.value;
+  return typeof v === 'string' ? v : '';
+};
+
+const pingBooking = (title: string, b: Booking, dealId?: string, extra?: string) => {
+  const who = attendee(b);
+  return notify(
+    title,
+    [
+      `${who.name || 'No name'} (${who.email || 'no email'})`,
+      `${b.title || b.type || 'Call'} · ${londonTime(b.startTime)}`,
+      answer(b, 'website') && `Site: ${answer(b, 'website')}`,
+      answer(b, 'notes') && `"${clip(answer(b, 'notes'))}"`,
+      extra,
+    ],
+    recordUrl(T.deals, dealId)
+  );
+};
+
 /* ---------- handlers ---------- */
 
 async function handleCreated(b: Booking) {
@@ -154,6 +181,12 @@ async function handleCreated(b: Booking) {
     if (!f.Service && service) fields.Service = service;
     if (!(f.Company as string[] | undefined)?.length && company) fields.Company = [company.id];
     await airtable(`${T.deals}/${deal.id}`, 'PATCH', { fields, typecast: false });
+    await pingBooking(
+      'Call booked',
+      b,
+      deal.id,
+      `Existing deal moved to ${fields.Stage || f.Stage}`
+    );
     return { ok: true, deal: deal.id, updated: true, contact: contact.id, company: company?.id };
   }
 
@@ -170,6 +203,7 @@ async function handleCreated(b: Booking) {
     },
   ]);
 
+  await pingBooking('Call booked', b, created.id, 'New deal at Call booked');
   return { ok: true, deal: created.id, contact: contact.id, company: company?.id };
 }
 
@@ -197,6 +231,7 @@ async function handleRescheduled(b: Booking) {
       note: `${today()} Rescheduled call to ${when}`,
     });
 
+  await pingBooking('Call rescheduled', b, deal.id);
   return { ok: true, deal: deal.id, rescheduled: when };
 }
 
@@ -223,6 +258,12 @@ async function handleCancelled(b: Booking) {
       note: `${today()} Cancelled call${b.cancellationReason ? `: ${b.cancellationReason}` : ''}`,
     });
 
+  await pingBooking(
+    'Call cancelled',
+    b,
+    deal?.id,
+    b.cancellationReason && `Reason: ${clip(b.cancellationReason, 160)}`
+  );
   return { ok: true, deal: deal?.id ?? null, cancelled: true };
 }
 

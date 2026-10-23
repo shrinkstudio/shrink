@@ -10,8 +10,13 @@
  * upsert Contact (+ Company from a work email), score and answers into the Contact notes;
  * state "ready" also creates a Deal at Stage "Lead", otherwise the Contact is Nurture.
  *
- * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature).
+ * Every new lead also pings Slack (see _notify.ts).
+ *
+ * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature),
+ * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook).
  */
+
+import { clip, notify, recordUrl } from './_notify';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -205,6 +210,17 @@ async function handleEnquiry(s: Submission) {
     ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Enquiry' })
     : null;
 
+  await notify(
+    'New enquiry',
+    [
+      `${d.name || 'No name'} (${email})${website ? `, ${website}` : ''}`,
+      `Need: ${d.need || 'not given'} · Budget: ${d.budget || 'not given'}`,
+      d.about && `"${clip(d.about)}"`,
+      s.pageUrl && `From ${s.pageUrl}`,
+    ],
+    recordUrl(T.deals, deal.id)
+  );
+
   return {
     ok: true,
     deal: deal.id,
@@ -237,6 +253,15 @@ async function handleResource(s: Submission) {
   const mailing = d.resources
     ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Guide', guide })
     : null;
+
+  await notify(
+    'Guide download',
+    [
+      `${d.name || 'No name'} (${email})`,
+      `Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
+    ],
+    recordUrl(T.contacts, contact.id)
+  );
 
   return { ok: true, contact: contact.id, company: company?.id, mailing: mailing?.id };
 }
@@ -317,6 +342,16 @@ async function handleQuiz(q: QuizPayload) {
         { name, email, contact: contact.id, source: 'Quiz' }
       )
     : null;
+
+  await notify(
+    `Readiness quiz: ${state.replace('_', ' ')}`,
+    [
+      `${name} (${email})${c.company ? `, ${c.company.slice(0, 120)}` : ''}`,
+      `${score}, we'd start with ${engagement}`,
+      ready ? 'Deal created, reply today' : 'Contact set to Nurture',
+    ],
+    recordUrl(deal ? T.deals : T.contacts, deal?.id ?? contact.id)
+  );
 
   return {
     ok: true,
