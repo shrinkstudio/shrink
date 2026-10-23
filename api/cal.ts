@@ -7,13 +7,11 @@
  * - Rescheduled: move the Deal's Next step date (falls back to Created if no Deal matches).
  * - Cancelled: note it, Next step "Rebook call" today, Contact back to Needs follow-up.
  *
- * Every booking change also pings Slack (see _notify.ts).
+ * Every booking change also pings Slack (see the slack section at the end).
  *
  * Env (Vercel): AIRTABLE_TOKEN, CAL_WEBHOOK_SECRET (verifies x-cal-signature-256),
  * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook).
  */
-
-import { clip, londonTime, notify, recordUrl } from './_notify';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -450,4 +448,79 @@ function json(body: unknown, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+/* ---------- slack ---------- */
+// Slack ping for new leads (SLACK_LEADS_WEBHOOK). Never throws: Airtable has already
+// succeeded, and a Slack failure must not turn the response into a 500.
+const TIMEOUT_MS = 3000;
+
+/* Airtable record link for the "Open in Airtable" button */
+const recordUrl = (table: string, id?: string) =>
+  id ? `https://airtable.com/${BASE}/${table}/${id}` : undefined;
+
+/* "Tue 27 Oct, 11:00" in London time */
+const londonTime = (iso?: string) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const day = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Europe/London',
+  }).format(d);
+  const time = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Europe/London',
+  }).format(d);
+  return `${day}, ${time}`;
+};
+
+/* Slack mrkdwn escaping */
+const mrkdwn = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const clip = (s: string | undefined, n = 280) => {
+  const t = (s || '').replace(/\s+/g, ' ').trim();
+  return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+};
+
+type Line = string | false | null | undefined;
+
+async function notify(title: string, lines: Line[], link?: string): Promise<void> {
+  const url = process.env.SLACK_LEADS_WEBHOOK;
+  if (!url) return;
+
+  const body = lines
+    .filter((l): l is string => !!l)
+    .map(mrkdwn)
+    .join('\n');
+  const blocks: unknown[] = [
+    { type: 'section', text: { type: 'mrkdwn', text: `*${mrkdwn(title)}*\n${body}` } },
+  ];
+  if (link)
+    blocks.push({
+      type: 'actions',
+      elements: [
+        { type: 'button', text: { type: 'plain_text', text: 'Open in Airtable' }, url: link },
+      ],
+    });
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: `${title}: ${lines.filter(Boolean)[0] || ''}`, blocks }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) console.error('slack notify', res.status, await res.text());
+  } catch (err) {
+    console.error('slack notify failed', err);
+  } finally {
+    clearTimeout(timer);
+  }
 }
