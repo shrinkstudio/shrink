@@ -649,6 +649,17 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Cookieless PostHog (26 Oct, Ben approved)
+Done:
+- PostHog project 132694: `cookieless_server_hash_mode` 0 to 2 (Stateful; Settings > Web analytics > Cookieless tracking). `anonymize_ips` was already on.
+- consent.ts: accept = `opt_in_capturing()` + recording; refuse = stop recording + `opt_out_capturing()` (clears the ph cookie, back to cookieless). Commit 87c1441, served by jsDelivr.
+- Tested with a dummy-token named instance on the live site: before a banner answer events go out as `$posthog_cookieless` with nothing in cookies, localStorage or sessionStorage; accept writes the ph cookie; refuse clears it and keeps only the `__ph_opt_in_out_` flag; idle sends nothing.
+Blocked: Webflow MCP ("site cannot be found") and the API token (not_authorized) both lost access mid-task, so Ben pastes these two together, then publishes:
+- [ ] Site head, PostHog init: replace `persistence: 'memory',` with `cookieless_mode: 'on_reject',` and `opt_out_capturing_by_default: true,`.
+- [ ] Site footer: bundle `shrink@e9f232c` to `shrink@87c1441`.
+- [ ] Privacy policy: add the cookieless analytics paragraph (see chat, 26 Oct).
+- [ ] After publish: check PostHog web analytics shows unique visitors below pageviews again.
+
 ### Phone fixes and partner listing (26 Oct, afternoon)
 Staged for Ben's publish:
 - Burger blank on iPhone (Pri): `.mega-nav_burger-line { width: 100%; flex-shrink: 0 }` in the Mega Nav embed. Safari drew the empty spans 0px wide in the flex button; Chrome stretched them.
