@@ -649,6 +649,9 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Rich text headings capped at h4 (26 Oct, Ben: "headings don't go style wise bigger than h4")
+Articles, policies and case studies already sat inside `cc-compact` (h1 to h3 use the h4 tokens), so every live rich text heading measured at h4 size (23.5px at 1280). Rich text on other templates (services, about, guides, solutions, packages) had no headings yet, but an h2 there rendered at 32px. Added `.w-richtext :is(h1, h2, h3)` with the same h4 tokens to the rich text embed (Custom Code component, 12204a11), so it holds site-wide. Tested on /services/development: an injected h2 drops from 32px to 20.8px, equal to h4. Live on the next publish; `cc-compact` can stay, it sets identical values.
+
 ### Article FAQs (23 Oct)
 Published fixes from the sweep verified live: calculator title, contact label `for`s, "The call" aria-label, Services heading ids.
 70 FAQs written for the 14 live articles (five each; PHP2Shell already had its set, plain-english-structured-data is unpublished). Source: `docs/article-faqs.json`. Created staged and ready through the API (FAQs collection, Article reference, display-order 1 to 5). Questions are the ones a buyer asks next, beyond the article headings, so they add citable answers and feed the FAQPage schema from faq-schema.ts.
