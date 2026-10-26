@@ -649,6 +649,18 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Checklist pass (26 Oct)
+Traffic: 48 Sat, 28 Sun, 30 by 11:45 Mon (old site ~18/day). webflow.com referrals steady (35 since launch). `/services/webflow-migration` 404 (7 launch-day hits) now 301s to `/solutions/platform-migrations` (Ben).
+Done, staged for Ben's publish:
+- `data-faq-schema` on the FAQ lists on /pricing, the three /packages pages and /faq. The hand-written FAQPage JSON-LD on /faq is cleared (it covered 25 of the 37 questions); faq-schema.ts now builds it from the live list.
+- Custom Code component: Phosphor icon CSS loads via preload/onload with a 1em `.ph` box (no layout shift); MAST theme-toggle script removed (unused, render-blocking, and it set `u-mode-dark` / color-scheme dark for dark-mode visitors); `:root { color-scheme: light }`; slider, inline-video, tabs pinned `@latest` to `@b014a1b`; Swiper pinned `@11` to `@11.2.10` (same files).
+- testimonial-tabs.ts: Collection List wrapper drops `role="list"` once panels become tabpanels (Lighthouse aria-required-children, also the failing PageSpeed "agentic browsing" check). Commit e9f232c, footer bundle pinned `@e9f232c`.
+Checked: Orbit health audit re-run, score 100, Google eligible, AI reachable; sitemap, robots and llms.txt present; listed broken links all redirect now (stale occurrences). PageSpeed mobile on the live site before these fixes: 58 performance, 89 accessibility, 100 best practices, 100 SEO (Lighthouse 13.5, 11:51). Local Lighthouse 12.8: 56 / 88; render-blocking = Phosphor CSS, CookieYes (stays, consent), theme-toggle, Swiper CSS.
+Ben, Designer:
+- [ ] Custom Code component: Modal, Slider, Inline Video and Tabs props default off (visibility props, API refuses). No page uses them.
+- [ ] Contrast: `neutral--muted-dark` #8b9199 on the CTA card heading and the Founder label fails (3.2:1 white, 2.9:1 light grey). #676d75 passes both.
+- [ ] Touch targets: progress dots 18px, footer links 18px tall; need 24px.
+
 ### Rich text headings capped at h4 (26 Oct, Ben: "headings don't go style wise bigger than h4")
 Articles, policies and case studies already sat inside `cc-compact` (h1 to h3 use the h4 tokens), so every live rich text heading measured at h4 size (23.5px at 1280). Rich text on other templates (services, about, guides, solutions, packages) had no headings yet, but an h2 there rendered at 32px. Added `.w-richtext :is(h1, h2, h3)` with the same h4 tokens to the rich text embed (Custom Code component, 12204a11), so it holds site-wide. Tested on /services/development: an injected h2 drops from 32px to 20.8px, equal to h4. Live on the next publish; `cc-compact` can stay, it sets identical values.
 

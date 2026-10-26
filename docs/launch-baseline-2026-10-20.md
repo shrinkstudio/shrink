@@ -84,3 +84,6 @@ Scroll depth since launch, share of page sessions reaching each mark: home (146)
 - AI mentions on the 15 prompts after the new copy and schema have been crawled.
 - Lab LCP once field data exists, and after the hero image preload work.
 - Conversions once Orbit goals and the PostHog `contact_form_submitted` event have a month of data.
+
+## PageSpeed, 26 Oct 11:51 (home, mobile, Lighthouse 13.5, before the 26 Oct fixes)
+Performance 58, Accessibility 89, Best Practices 100, SEO 100, Agentic Browsing 2/3. FCP 7.1 s, LCP 10.7 s, TBT 60 ms, CLS 0, Speed Index 7.2 s. Render-blocking savings estimate 4.6 s. Orbit lab run the same minute: performance 63, LCP 6.9 s, CLS 0.009.
