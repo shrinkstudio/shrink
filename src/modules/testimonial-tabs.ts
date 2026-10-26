@@ -68,6 +68,9 @@ function setup(root: HTMLElement) {
     seg.setAttribute('aria-controls', panel.id);
     panel.setAttribute('aria-labelledby', seg.id);
   });
+  // panels are tabpanels now, so the Collection List wrapper stops being a list
+  const list = panels[0].parentElement;
+  if (list?.getAttribute('role') === 'list') list.setAttribute('role', 'presentation');
 
   let current = Math.max(
     0,
