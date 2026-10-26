@@ -649,6 +649,10 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Orbit board (26 Oct)
+23 open; last sweep 23 Oct. Verified passing (Orbit closes them itself): No XML sitemap, Key pages have no structured data. Closed as not true: duplicate titles (the /contact?service= URLs canonicalise to /contact). Still failing on lagging Google data: services pages not indexed (GSC read 17 Oct), Review snippet error on /services, old /projects in results (301s now).
+For Ben: count the Contact form and the about-page email click as conversions (Analytics > Conversions > Detected; the critical card), request indexing for /services/development and /services/discovery, Validate fix on Review snippets in Search Console, add the 5 rivals AI answers cite (videsigns.uk, flowhivedigital.com, flowout.com, blushush.co.uk, flowtrix.co), choose the page for "webflow agency london" (392 impressions, 0 clicks, position 3.8 to 6, /about and / both rank).
+
 ### Cookieless PostHog (26 Oct, Ben approved)
 Done:
 - PostHog project 132694: `cookieless_server_hash_mode` 0 to 2 (Stateful; Settings > Web analytics > Cookieless tracking). `anonymize_ips` was already on.
@@ -658,7 +662,7 @@ Blocked: Webflow MCP ("site cannot be found") and the API token (not_authorized)
 - [x] Site head, PostHog init: `cookieless_mode: 'on_reject'`, `opt_out_capturing_by_default: true` (Ben pasted 26 Oct, comments trimmed to short labels for the public source).
 - [x] Site footer: bundle now `shrink@master` (Ben, 26 Oct). After each push, purge `https://purge.jsdelivr.net/gh/shrinkstudio/shrink@master/dist/index.js`.
 - Verified live 26 Oct 13:30 on a fully cleared browser: before the banner is answered PostHog sends as `$posthog_cookieless`, no ph cookie, recording off, one `__ph_opt_in_out_` = "0" key (the not-consented marker, no ID); Accept gives the ph cookie + recording; Reject clears the cookie and returns to cookieless.
-- [ ] Orbit sets `_orbit_v` (cookie + localStorage visitor ID) before consent. Fix: add `&consent=required` to the Orbit script URL; it follows CookieYes's Google Consent Mode and counts everyone cookieless until a yes. Privacy policy should name `_orbit_v` too.
+- [x] Orbit `&consent=required` live (Ben, 26 Oct). Verified on a cleared browser: before an answer nothing stored and beacons still sent; Accept sets `_orbit_v`; Reject removes it (CookieYes also clears GA). Was: Orbit set `_orbit_v` (cookie + localStorage visitor ID) before consent. Fix: add `&consent=required` to the Orbit script URL; it follows CookieYes's Google Consent Mode and counts everyone cookieless until a yes. Privacy policy should name `_orbit_v` too.
 - [ ] Privacy policy: add the cookieless analytics paragraph (see chat, 26 Oct).
 - [ ] After publish: check PostHog web analytics shows unique visitors below pageviews again.
 
