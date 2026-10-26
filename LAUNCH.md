@@ -655,8 +655,10 @@ Done:
 - consent.ts: accept = `opt_in_capturing()` + recording; refuse = stop recording + `opt_out_capturing()` (clears the ph cookie, back to cookieless). Commit 87c1441, served by jsDelivr.
 - Tested with a dummy-token named instance on the live site: before a banner answer events go out as `$posthog_cookieless` with nothing in cookies, localStorage or sessionStorage; accept writes the ph cookie; refuse clears it and keeps only the `__ph_opt_in_out_` flag; idle sends nothing.
 Blocked: Webflow MCP ("site cannot be found") and the API token (not_authorized) both lost access mid-task, so Ben pastes these two together, then publishes:
-- [ ] Site head, PostHog init: replace `persistence: 'memory',` with `cookieless_mode: 'on_reject',` and `opt_out_capturing_by_default: true,`.
-- [ ] Site footer: bundle `shrink@e9f232c` to `shrink@87c1441`.
+- [x] Site head, PostHog init: `cookieless_mode: 'on_reject'`, `opt_out_capturing_by_default: true` (Ben pasted 26 Oct, comments trimmed to short labels for the public source).
+- [x] Site footer: bundle now `shrink@master` (Ben, 26 Oct). After each push, purge `https://purge.jsdelivr.net/gh/shrinkstudio/shrink@master/dist/index.js`.
+- Verified live 26 Oct 13:30 on a fully cleared browser: before the banner is answered PostHog sends as `$posthog_cookieless`, no ph cookie, recording off, one `__ph_opt_in_out_` = "0" key (the not-consented marker, no ID); Accept gives the ph cookie + recording; Reject clears the cookie and returns to cookieless.
+- [ ] Orbit sets `_orbit_v` (cookie + localStorage visitor ID) before consent. Fix: add `&consent=required` to the Orbit script URL; it follows CookieYes's Google Consent Mode and counts everyone cookieless until a yes. Privacy policy should name `_orbit_v` too.
 - [ ] Privacy policy: add the cookieless analytics paragraph (see chat, 26 Oct).
 - [ ] After publish: check PostHog web analytics shows unique visitors below pageviews again.
 
