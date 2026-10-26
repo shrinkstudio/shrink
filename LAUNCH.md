@@ -649,6 +649,15 @@ The site gets ~17 visitors a day and organic search is 5% of them, so a small pa
 - [ ] Orbit's three banked articles (cost, post-raise, choosing an agency)
 - [ ] One home for "Webflow agency London"
 
+### Phone fixes and partner listing (26 Oct, afternoon)
+Staged for Ben's publish:
+- Burger blank on iPhone (Pri): `.mega-nav_burger-line { width: 100%; flex-shrink: 0 }` in the Mega Nav embed. Safari drew the empty spans 0px wide in the flex button; Chrome stretched them.
+- Needs cards swipe row trapped vertical scrolling on iPhone (Dan Foster): removed `overscroll-behavior-x: contain`, added `touch-action: pan-x pan-y`. Retest on an iPhone after publish.
+- Progress dots 24px touch targets (padding 0.5625rem, row margin to match).
+- Contrast: `cta-card_muted` now uses Primary/Text Muted (#50565f in the Light mode the CTA card sets) instead of Neutral/Muted Dark. The variable itself stays #8b9199: it is the Accent (dark) mode muted text and the homepage needs-card art on #1b1b1d, where #676d75 would fail.
+Partner listing: `docs/partner-portal/` holds the cover GIF (960, 3.8 MB; 1200 HQ 12.6 MB), an 800px mascot logo and `listing-copy.md`. Ben pastes it in the portal.
+CMS audit: `docs/cms-field-audit-2026-10-26.md` (8 empty fields to remove, fills to do, 4 template-leftover collections to check).
+
 ### Checklist pass (26 Oct)
 Traffic: 48 Sat, 28 Sun, 30 by 11:45 Mon (old site ~18/day). webflow.com referrals steady (35 since launch). `/services/webflow-migration` 404 (7 launch-day hits) now 301s to `/solutions/platform-migrations` (Ben).
 Done, staged for Ben's publish:
