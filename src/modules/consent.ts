@@ -37,6 +37,9 @@ declare global {
 
 let granted: boolean | null = null;
 
+/** true once the visitor has accepted analytics (track.ts only stores UTMs then) */
+export const hasAnalyticsConsent = () => granted === true;
+
 const posthog = () => (window as unknown as { posthog?: PostHogLike }).posthog;
 
 const apply = (allow: boolean) => {

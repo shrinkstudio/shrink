@@ -186,6 +186,7 @@ async function handleEnquiry(s: Submission) {
     `Budget: ${d.budget || 'not given'}`,
     `Website: ${website || 'not given'}`,
     `Resources opt-in: ${d.resources ? 'yes' : 'no'}`,
+    `Source: ${sourceLine(d) || 'not tagged'}`,
     `Contact: ${d.name || ''} <${email}>`,
     ...(s.pageUrl ? [`Page: ${s.pageUrl}`] : []),
     `Webflow submission ${s.id || ''}, ${s.submittedAt || ''}`,
@@ -215,6 +216,7 @@ async function handleEnquiry(s: Submission) {
       `Need: ${d.need || 'not given'} · Budget: ${d.budget || 'not given'}`,
       d.about && `"${clip(d.about)}"`,
       s.pageUrl && `From ${s.pageUrl}`,
+      sourceLine(d) && `Source: ${sourceLine(d)}`,
     ],
     recordUrl(T.deals, deal.id)
   );
@@ -245,7 +247,7 @@ async function handleResource(s: Submission) {
     email,
     company: company?.id,
     nextAction: 'Nurture',
-    note: `${date(s)} Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
+    note: `${date(s)} Took "${guide}"${d.resources ? ', opted in to resources' : ''}${sourceLine(d) ? `, via ${sourceLine(d)}` : ''}`,
   });
 
   const mailing = d.resources
@@ -257,6 +259,7 @@ async function handleResource(s: Submission) {
     [
       `${d.name || 'No name'} (${email})`,
       `Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
+      sourceLine(d) && `Source: ${sourceLine(d)}`,
     ],
     recordUrl(T.contacts, contact.id)
   );
@@ -359,6 +362,15 @@ async function handleQuiz(q: QuizPayload) {
     deal: deal?.id,
     mailing: mailing?.id,
   };
+}
+
+/* utm_* hidden inputs (track.ts) → "linkedin / ben-post / aeo-adfin" */
+function sourceLine(d: Data) {
+  const parts = ['utm_source', 'utm_medium', 'utm_content']
+    .map((k) => d[k]?.slice(0, 80))
+    .filter(Boolean);
+  if (!parts.length) return '';
+  return `${parts.join(' / ')}${d.utm_campaign ? ` (campaign ${d.utm_campaign.slice(0, 80)})` : ''}`;
 }
 
 /* ---------- airtable ---------- */
