@@ -723,3 +723,8 @@ track.ts reads utm_* from the landing URL, adds them to every PostHog event and 
 - [x] Built, committed (code and dist only; untracked docs left out of the public repo), pushed, jsDelivr purged, Vercel API redeployed. Verified live: /contact?utm_… gets the four hidden inputs on the Enquiry form; nothing stored without consent.
 - [ ] Next real enquiry or guide from a tagged link: check the Source line in Airtable. `call_booked` untested until a real booking.
 - Note: jsDelivr sends `max-age=604800`, so a returning browser can run the old bundle for up to a week after a push; the purge only refreshes the CDN.
+
+### Empty article FAQs hidden, structured data FAQs (27 Oct, evening)
+- Rich text embed (Custom Code component, 12204a11) gains `html:not(.wf-design-mode) .faq_conditional:not(:has(.w-dyn-item)) { display: none; }`: an article with no FAQ items drops the whole block (heading, list, spacer); the Designer still shows it. The `data-hide-empty` attribute on the FAQ list is handled by nothing in the bundle, so it can go.
+- 5 FAQs written for plain-english-structured-data (the last article without them), created ready in the FAQs collection, display-order 1 to 5; source added to `docs/article-faqs.json` (15 articles now).
+- [ ] Ben: publish, then check the structured data article shows its 5 FAQs and the FAQPage JSON-LD builds.

@@ -1,100 +1,407 @@
 [
-  {"article": "6a90406b8f8b38879d28f991", "key": "post-raise", "title": "What most post-raise rebuilds miss", "faqs": [
-    ["How soon after a raise should we rebuild the website?", "Once the new positioning has settled, which is usually a few weeks after the round closes. Starting the build while the story is still moving means paying to change it twice. Use those first weeks to agree who the site is for and what it has to prove, then brief the build."],
-    ["Who should be involved in a website brief?", "The founder, whoever owns sales and whoever owns marketing, in the same room. Each of them is right about something, and the brief is where those views get reconciled. Keep the group small enough that decisions get made, then share the agreed brief with everyone else."],
-    ["How long should discovery take before a rebuild?", "About two weeks for most Seed to Series B teams. That is long enough to interview the people who matter, settle positioning and agree a sitemap, and short enough that the build still starts while the raise is fresh. Our Clarity Sprint runs on exactly that timeline."],
-    ["What does a website brief need to include?", "Who the site is for, in priority order, what each reader needs to believe, the proof that backs it up, the decision each key page helps them make, and a sitemap built around how buyers look for answers. If a designer can build from it without guessing, it is complete."],
-    ["Can we rebuild the site and refresh the brand at the same time?", "You can, as long as the brand decisions land first. A site built while the logo, type and colours are still in review ends up redesigned mid-build. Lock the brand essentials, then let the site carry them, and the two projects can overlap by a few weeks."]
-  ]},
-  {"article": "6a90406b8f8b38879d28f98d", "key": "audit", "title": "How to audit a website properly", "faqs": [
-    ["How long does a website audit take?", "A focused audit of a B2B marketing site takes one to two weeks. Most of that time goes on gathering data: analytics, recordings, heatmaps and search visibility. The writing is quick once you know which pages are losing people and why."],
-    ["What tools do you need to audit a website?", "Analytics for traffic and drop-off, session recordings and heatmaps for behaviour, Google Search Console for search visibility, and a crawler for technical health. Add a few real questions asked of ChatGPT and Perplexity to see whether the site turns up in AI answers. Most of this costs little or nothing."],
-    ["How often should we audit our website?", "Run a full audit once a year, or before any rebuild, and keep a lighter monthly check on the numbers in between. A site that is watched every month rarely needs a dramatic audit, because problems get caught while they are still small."],
-    ["Can we audit our own website?", "Yes, and the data steps are easy to do in-house. The hard part is reading the site the way a stranger would, because your team already knows what everything means. An outside view helps most on the buyer journey and on separating real problems from personal taste."],
-    ["What should we fix first after an audit?", "Fix whatever is broken on the pages with the most traffic and the closest link to revenue. A failing form on the pricing page beats a nicer homepage illustration every time. Rank each finding by the number of people it affects and how close they are to buying."]
-  ]},
-  {"article": "6a90406b8f8b38879d28f98b", "key": "aeo", "title": "What AEO actually means for a B2B SaaS site", "faqs": [
-    ["What is the difference between SEO and AEO?", "SEO earns your page a place in a list of results that people click. AEO earns your page a place in the answer an AI assistant writes, where the reader may never click at all. They share foundations, so good AEO usually starts from good SEO and adds clarity, structure and evidence."],
-    ["How do we know if AI assistants mention our company?", "Ask them. Write down the ten questions a buyer in your category would ask, run them in ChatGPT, Perplexity, Gemini and Claude, and note who gets named. Repeat monthly. Tools such as HubSpot's AEO tracking automate this, and referrals from chatgpt.com and perplexity.ai in your analytics show who is clicking through."],
-    ["How long does AEO take to show results?", "Technical fixes can be picked up within weeks, once crawlers revisit the site. Editorial changes take longer, often one to three months, because the assistants need to find, trust and start repeating the new pages. Treat it as a monthly discipline with a measurable trend."],
-    ["Do we need new content for AEO or can we improve existing pages?", "Start with the pages you already have. Rewriting your key pages to answer their question early and plainly, with evidence beside each claim, usually moves more than publishing new articles. Add new pages once there is a clear question in your category that nobody answers well."],
-    ["Is AEO worth it for an early-stage startup?", "Yes, because the technical basics are cheap and the questions in a new category are often unanswered. A Seed-stage company that becomes the clear source on its own problem can be cited alongside far bigger competitors. The earlier the groundwork is laid, the longer it has to compound."]
-  ]},
-  {"article": "6a903ff1234a749af253fb7f", "key": "one-percent", "title": "1% better every week", "faqs": [
-    ["What is conversion rate optimisation?", "Conversion rate optimisation, or CRO, is the work of increasing the share of visitors who take the action a page exists for, such as booking a call or starting a trial. It runs as a loop: find where people drop off, change one thing, measure whether it moved, and repeat."],
-    ["How much traffic do you need to run A/B tests?", "For a classic split test, roughly a few thousand visitors a month to the page being tested, or results take too long to trust. Lower-traffic B2B sites still improve, using recordings, heatmaps, user interviews and before-and-after comparisons on high-intent pages instead of formal tests."],
-    ["What should we improve first on our website?", "The page closest to revenue that the most people abandon. For most B2B sites that is pricing, a demo or contact page, or the homepage above the fold. A small lift on a page that already gets high-intent visitors is worth more than a big lift on a page few people see."],
-    ["Who should own the website after launch?", "One named person, usually in marketing, with the time and authority to change things every week. Ownership spread across a team tends to mean nobody looks. A specialist partner can run the loop, but someone inside the company still needs to care about the numbers."],
-    ["How much does ongoing website optimisation cost?", "It depends on how much is tested and built each month. At Shrink, Optimisation starts from £5,000 a month, and Compound, our CRO and AEO retainer, is £10,000 a month + VAT, starting with a free audit. Both run on a set monthly cycle so the work keeps compounding."]
-  ]},
-  {"article": "6a903f83c77c34fcb17c7971", "key": "cited", "title": "Why your site ranks but never gets cited", "faqs": [
-    ["Which sources do AI assistants cite?", "They tend to cite pages that state a clear answer, back it with specifics and show who is behind it. Well-structured pages, named authors, original data and pages corroborated elsewhere on the web all help. The exact mix differs between ChatGPT, Perplexity, Gemini and Google's AI overviews, and it shifts over time."],
-    ["Does structured data help with AI citations?", "It helps machines understand what a page is, who wrote it and when, which removes guesswork when a model decides what to trust. Treat it as one part of being legible. Clear writing and real evidence still decide whether the page is worth quoting once the model has read it."],
-    ["Can we block AI crawlers and still be cited?", "Blocking a crawler stops that company reading your pages for training or for live answers, depending on which bot you block. If you want to be cited, check robots.txt allows the search and answer bots, such as OAI-SearchBot, PerplexityBot and Google's crawlers, even if you choose to block training bots."],
-    ["How do we write a page that AI will quote?", "Answer the question in the first sentence under the heading that asks it. Use plain, specific language, put the evidence next to the claim and name who is speaking. Keep one idea per paragraph so a model can lift a clean answer without needing the surrounding context."],
-    ["Do backlinks still matter for AI search?", "Yes. Links and mentions on trusted sites remain a strong signal that you are a credible source, and many answer engines draw on search indexes that weigh them. Mentions in places your buyers read, such as industry publications and review sites, also give a model more to corroborate your claims."]
-  ]},
-  {"article": "6a903f83c77c34fcb17c7969", "key": "chatgpt", "title": "Getting quoted by ChatGPT", "faqs": [
-    ["How does ChatGPT choose which websites to quote?", "When ChatGPT searches the web, it runs queries, reads a handful of results and picks the sources it can trust and summarise cleanly. Pages that answer the question directly, show evidence and are easy to parse have a better chance. OpenAI does not publish the exact rules, so test and measure on your own questions."],
-    ["Can you pay to appear in ChatGPT answers?", "There is no way to buy a place in ChatGPT's organic answers. Being cited comes from being findable, legible and trustworthy on the questions your buyers ask. Treat any service promising guaranteed AI placement with caution."],
-    ["How do we track whether ChatGPT is citing our site?", "Keep a fixed list of questions, ask them on a regular schedule and record which sources appear. Check your analytics for referral traffic from chatgpt.com, which shows up when readers click a citation. Over a few months the trend tells you more than any single answer."],
-    ["How many pages do we need to get cited by AI?", "Fewer than most teams expect. In our own test a few clear, genuinely useful pages earned more citations than a larger set of thinner ones. Aim for one strong page per question you want to own, then improve it over time."],
-    ["Does ChatGPT read JavaScript-heavy websites?", "AI crawlers often read the raw HTML and may skip content that only appears after JavaScript runs. Webflow publishes pages as HTML, which helps. If your site is a single-page app, check that the important text is present in the page source, or render it on the server."]
-  ]},
-  {"article": "6a90406b8f8b38879d28f98f", "key": "ai-files", "title": "The five files that decide whether AI can read your site", "faqs": [
-    ["What is llms.txt?", "llms.txt is a proposed standard: a plain-text file at the root of your site that points AI models at your most important pages, with a short description of each. Support across the big assistants is still uneven, but it takes an hour to write and gives any model that reads it a clean map of your site."],
-    ["Which AI crawlers should robots.txt allow?", "If you want to be cited, allow the bots that power AI search and answers, including OAI-SearchBot and ChatGPT-User from OpenAI, Claude-SearchBot and Claude-User from Anthropic, PerplexityBot and Googlebot. Training bots such as GPTBot, ClaudeBot and Google-Extended can be allowed or blocked separately, depending on how you feel about your content being used for training."],
-    ["Does Webflow create a sitemap and robots.txt automatically?", "Yes. Webflow generates an XML sitemap automatically and lets you edit robots.txt in the site settings. Structured data and llms.txt need adding yourself, through custom code or a hosted file, and both take an afternoon at most."],
-    ["What structured data should a B2B website have?", "Organization markup on the homepage, Article or BlogPosting on articles with author and date, FAQPage on genuine question-and-answer sections, BreadcrumbList for navigation and Service or Product on offer pages. Keep the markup consistent with what is visible on the page, or engines learn to ignore it."],
-    ["How do we check whether our site is readable by AI?", "Open robots.txt and check you are not blocking answer-engine bots, confirm the sitemap lists every page that matters, and run key pages through Google's Rich Results Test. Then view the page source and make sure the important text is in the HTML itself. If all four pass, the basics are in place."]
-  ]},
-  {"article": "6a90406b8f8b38879d28f989", "key": "funding-moment", "title": "Building at the right funding moment", "faqs": [
-    ["How much should a startup spend on its website?", "Spend should track how much commercial work the site is doing. At Seed a clear, credible site is enough, and our Seed Website is a fixed £15,000 + VAT. From Series A, when the site supports enterprise sales and hiring, a fuller build and ongoing optimisation usually pay for themselves."],
-    ["Should a seed-stage startup use a website template?", "A template can work for a first site, as long as it is adapted to say exactly what you do and who it is for. The risk is a site that looks like everyone else in the category. A small custom build on a solid system costs more up front and lasts until the next raise."],
-    ["How long does a website rebuild take?", "A focused site of up to eight pages can go live in about six weeks once the brief is agreed. Larger Series A and B builds with a CMS, integrations and more stakeholders typically take eight to twelve weeks. Time spent agreeing the brief first is what keeps those timelines honest."],
-    ["Do investors look at a startup's website?", "Yes. It is often one of the first things an investor checks after a warm introduction, and it shapes their sense of how mature and focused the company is. A site that matches the deck builds confidence, while a site that tells an older story raises questions before the first meeting."],
-    ["When should we move our website to Webflow?", "When the marketing team needs to publish and change pages without waiting on developers, which usually arrives around Series A. Moving earlier is fine if the team already ships often. Moving is easiest just before a planned rebuild, so the migration and redesign happen once."]
-  ]},
-  {"article": "6a903ff1234a749af253fb7d", "key": "ai-foundation", "title": "Giving your AI tools something solid to build on", "faqs": [
-    ["What are design tokens?", "Design tokens are named values for the decisions behind a design: colours, type sizes, spacing, radii and shadows. Instead of a page using a hex code, it uses a token such as brand-primary. Change the token once and every page updates, and AI tools can choose from the same named set your designers use."],
-    ["Can AI tools edit a Webflow site safely?", "They can, when the site is built on a clear system of variables, classes and components, and the tool is pointed at that system. Without it, AI edits tend to drift off brand. With it, the tool picks from your components and styles rather than inventing new ones."],
-    ["What is an AI rules file?", "A rules file is a plain-text document that tells an AI editor how your project works: which components to use, naming conventions, brand rules and what never to change. Tools such as Claude Code and Cursor read it before making changes, so they build the way your team would."],
-    ["Do we need a design system to use AI website builders?", "You need at least a light one: defined colours, type, spacing and a set of reusable components. Without it, every AI-generated page invents its own versions and the site drifts. It does not have to be a large system, it just has to be written down where tools can read it."],
-    ["How do we stop AI-built pages drifting off brand?", "Give the tools structured rules to follow, review new pages against the component library, and fix drift at the source by updating the system instead of each page. A quick monthly check of recently built pages catches small inconsistencies before they spread."]
-  ]},
-  {"article": "6a903ff1234a749af253fb7b", "key": "ia", "title": "Information architecture for how buyers actually think", "faqs": [
-    ["What is information architecture?", "Information architecture is how a website's content is organised, labelled and connected: the sitemap, the navigation and the paths between pages. Good information architecture lets a visitor find the answer to their question without having to understand how your company is structured."],
-    ["How many items should a website's main navigation have?", "Usually five to seven top-level items, plus a clear primary call to action. Fewer choices make each one easier to scan. If you need more, group them under a few labels your buyers would recognise, and keep the rest in the footer."],
-    ["Should we organise our site by product or by customer problem?", "Lead with the problem or outcome your buyers are searching for, then let them reach the product detail behind it. Buyers arrive with a problem in their own words. Product names are something they learn once they are interested, so they work better one level down."],
-    ["What is card sorting?", "Card sorting is a research method where people group your content into categories that make sense to them. It reveals how buyers expect things to be organised and which labels they understand. A dozen participants, run online in a few days, is usually enough to spot clear patterns."],
-    ["How do we restructure a site without losing search rankings?", "Map every old URL to its new home and set up 301 redirects before launch, keep strong pages' content intact where possible, update internal links and resubmit the sitemap in Search Console. Watch rankings and crawl errors closely for the first few weeks so any gaps can be fixed quickly."]
-  ]},
-  {"article": "6a903ff1234a749af253fb77", "key": "conversion-questions", "title": "The conversion questions we ask before designing a page", "faqs": [
-    ["What makes a B2B landing page convert?", "A clear statement of who it is for and what it does, proof that backs up every claim, one obvious next step and as little friction as possible between interest and action. Above all, the content arrives in the order a buyer needs it, answering each doubt before it becomes a reason to leave."],
-    ["Should a landing page have one call to action or several?", "One primary action, repeated where it makes sense, plus at most one lower-commitment option for readers who need more time. Several equal calls to action compete for the same moment and split attention. Make the main one unmistakable."],
-    ["How long should a B2B landing page be?", "As long as the reader needs to make the decision the page asks for. A simple, low-risk action can work on a short page, while a high-value decision such as booking a sales call usually needs more proof and answers to common objections. Cut anything that doesn't move the reader forward."],
-    ["What should we know before briefing a page designer?", "Who the page is for, what they need to believe by the end, the proof you have to support it, the one action you want them to take and the order they need to see things in. With those five settled, a designer can focus on making the page clear and compelling."],
-    ["How do we find out what our buyers need to believe?", "Ask them. Talk to recent customers about what nearly stopped them buying, listen to sales calls for repeated objections and read the questions prospects send before booking. The doubts that come up again and again are the beliefs your page has to build."]
-  ]},
-  {"article": "6a903f83c77c34fcb17c796f", "key": "multilang", "title": "Globalisation as architecture", "faqs": [
-    ["Does Webflow support multiple languages?", "Yes. Webflow Localization lets you translate pages and CMS content, set language-specific URLs and add hreflang tags automatically. Each locale shares the same structure, which keeps the site consistent while letting copy, images and SEO settings vary by market."],
-    ["What is hreflang?", "hreflang is a tag that tells search engines which language and region each version of a page is for. It stops your English and German pages being treated as duplicates and helps each market see the right version in search. It needs adding to every translated page."],
-    ["Subdirectories or subdomains for a multilingual site?", "Subdirectories, such as example.com/de, are usually the better choice for a B2B site. They keep all languages on one domain, so authority builds in one place, and they are simpler to manage. Separate country domains make sense mainly when a market needs its own legal or brand identity."],
-    ["Should we use machine translation for our website?", "Machine translation is a useful first draft and fine for low-stakes pages. Key pages such as the homepage, pricing and product pages need a native speaker's review, because tone, terminology and trust signals differ between markets. Buyers notice clumsy translation quickly."],
-    ["When should a startup add a second language?", "When there is real demand from a market, such as sales conversations, inbound leads or a planned launch, and someone can keep the translated content up to date. Until then, build the site so a second language can be added cleanly, and wait to translate."]
-  ]},
-  {"article": "6a903f83c77c34fcb17c796d", "key": "cwv", "title": "Core Web Vitals without the panic", "faqs": [
-    ["What are good Core Web Vitals scores?", "Google rates a page as good when Largest Contentful Paint is 2.5 seconds or less, Interaction to Next Paint is 200 milliseconds or less and Cumulative Layout Shift is 0.1 or less. Scores are judged at the 75th percentile of real visits over 28 days, so a single slow test is no cause for alarm."],
-    ["Do Core Web Vitals affect Google rankings?", "They are part of Google's page experience signals, so they count, but relevance and content quality matter far more. A slow page with the best answer can still outrank a fast page with a weaker one. Treat good scores as a tiebreaker and a better experience for readers."],
-    ["Why are my PageSpeed scores different every time?", "PageSpeed Insights runs a lab test on simulated hardware and network, which varies from run to run. The field data at the top of the report, drawn from real Chrome users, is the number Google uses. Judge progress on the field data and use lab scores to diagnose."],
-    ["What usually slows down a Webflow site?", "Large unoptimised images, heavy third-party scripts such as chat widgets, tag managers and tracking pixels, and custom code loaded in the page head. Webflow's own hosting is fast. Most improvements come from compressing images, deferring scripts and removing tools nobody uses anymore."],
-    ["How often should we check Core Web Vitals?", "Monthly is enough for most sites, plus a check after any launch or new script is added. Google Search Console reports real-user scores across the whole site, so it shows problems on pages you might not think to test."]
-  ]},
-  {"article": "6a903f83c77c34fcb17c796b", "key": "teardown", "title": "Landing page teardown", "faqs": [
-    ["What is a landing page teardown?", "A landing page teardown is a section-by-section review of a live page, looking at what earns the reader's attention and what loses it. It covers the top of the page, how claims are backed up, where friction appears and whether the content is in the right order."],
-    ["What is the five-second test?", "The five-second test checks whether a stranger who sees a page for five seconds can say what it is, who it is for and why it matters. You can run it informally by showing the page to someone outside the company, then asking what they remember. If they can't answer, the top of the page needs work."],
-    ["How many form fields should a B2B form have?", "As few as you need to take the next step well. Name, work email and one qualifying question is enough for most enquiry forms. Every extra field adds friction, so ask anything else on the call or enrich it from the email domain afterwards."],
-    ["What proof works best on a B2B landing page?", "Specific, attributable proof: named customer logos, quotes from a named person and role, case study results with real numbers and recognisable integrations or certifications. Put each piece beside the claim it supports, so the reader meets the evidence at the moment they need it."],
-    ["Can you review our landing page?", "Yes. Our Compound retainer starts with a free audit, and a landing page review is often where it begins. Book a call and we will look at the page with you, then tell you the one or two changes we would make first."]
-  ]}
+  {
+    "article": "6a90406b8f8b38879d28f991",
+    "key": "post-raise",
+    "title": "What most post-raise rebuilds miss",
+    "faqs": [
+      [
+        "How soon after a raise should we rebuild the website?",
+        "Once the new positioning has settled, which is usually a few weeks after the round closes. Starting the build while the story is still moving means paying to change it twice. Use those first weeks to agree who the site is for and what it has to prove, then brief the build."
+      ],
+      [
+        "Who should be involved in a website brief?",
+        "The founder, whoever owns sales and whoever owns marketing, in the same room. Each of them is right about something, and the brief is where those views get reconciled. Keep the group small enough that decisions get made, then share the agreed brief with everyone else."
+      ],
+      [
+        "How long should discovery take before a rebuild?",
+        "About two weeks for most Seed to Series B teams. That is long enough to interview the people who matter, settle positioning and agree a sitemap, and short enough that the build still starts while the raise is fresh. Our Clarity Sprint runs on exactly that timeline."
+      ],
+      [
+        "What does a website brief need to include?",
+        "Who the site is for, in priority order, what each reader needs to believe, the proof that backs it up, the decision each key page helps them make, and a sitemap built around how buyers look for answers. If a designer can build from it without guessing, it is complete."
+      ],
+      [
+        "Can we rebuild the site and refresh the brand at the same time?",
+        "You can, as long as the brand decisions land first. A site built while the logo, type and colours are still in review ends up redesigned mid-build. Lock the brand essentials, then let the site carry them, and the two projects can overlap by a few weeks."
+      ]
+    ]
+  },
+  {
+    "article": "6a90406b8f8b38879d28f98d",
+    "key": "audit",
+    "title": "How to audit a website properly",
+    "faqs": [
+      [
+        "How long does a website audit take?",
+        "A focused audit of a B2B marketing site takes one to two weeks. Most of that time goes on gathering data: analytics, recordings, heatmaps and search visibility. The writing is quick once you know which pages are losing people and why."
+      ],
+      [
+        "What tools do you need to audit a website?",
+        "Analytics for traffic and drop-off, session recordings and heatmaps for behaviour, Google Search Console for search visibility, and a crawler for technical health. Add a few real questions asked of ChatGPT and Perplexity to see whether the site turns up in AI answers. Most of this costs little or nothing."
+      ],
+      [
+        "How often should we audit our website?",
+        "Run a full audit once a year, or before any rebuild, and keep a lighter monthly check on the numbers in between. A site that is watched every month rarely needs a dramatic audit, because problems get caught while they are still small."
+      ],
+      [
+        "Can we audit our own website?",
+        "Yes, and the data steps are easy to do in-house. The hard part is reading the site the way a stranger would, because your team already knows what everything means. An outside view helps most on the buyer journey and on separating real problems from personal taste."
+      ],
+      [
+        "What should we fix first after an audit?",
+        "Fix whatever is broken on the pages with the most traffic and the closest link to revenue. A failing form on the pricing page beats a nicer homepage illustration every time. Rank each finding by the number of people it affects and how close they are to buying."
+      ]
+    ]
+  },
+  {
+    "article": "6a90406b8f8b38879d28f98b",
+    "key": "aeo",
+    "title": "What AEO actually means for a B2B SaaS site",
+    "faqs": [
+      [
+        "What is the difference between SEO and AEO?",
+        "SEO earns your page a place in a list of results that people click. AEO earns your page a place in the answer an AI assistant writes, where the reader may never click at all. They share foundations, so good AEO usually starts from good SEO and adds clarity, structure and evidence."
+      ],
+      [
+        "How do we know if AI assistants mention our company?",
+        "Ask them. Write down the ten questions a buyer in your category would ask, run them in ChatGPT, Perplexity, Gemini and Claude, and note who gets named. Repeat monthly. Tools such as HubSpot's AEO tracking automate this, and referrals from chatgpt.com and perplexity.ai in your analytics show who is clicking through."
+      ],
+      [
+        "How long does AEO take to show results?",
+        "Technical fixes can be picked up within weeks, once crawlers revisit the site. Editorial changes take longer, often one to three months, because the assistants need to find, trust and start repeating the new pages. Treat it as a monthly discipline with a measurable trend."
+      ],
+      [
+        "Do we need new content for AEO or can we improve existing pages?",
+        "Start with the pages you already have. Rewriting your key pages to answer their question early and plainly, with evidence beside each claim, usually moves more than publishing new articles. Add new pages once there is a clear question in your category that nobody answers well."
+      ],
+      [
+        "Is AEO worth it for an early-stage startup?",
+        "Yes, because the technical basics are cheap and the questions in a new category are often unanswered. A Seed-stage company that becomes the clear source on its own problem can be cited alongside far bigger competitors. The earlier the groundwork is laid, the longer it has to compound."
+      ]
+    ]
+  },
+  {
+    "article": "6a903ff1234a749af253fb7f",
+    "key": "one-percent",
+    "title": "1% better every week",
+    "faqs": [
+      [
+        "What is conversion rate optimisation?",
+        "Conversion rate optimisation, or CRO, is the work of increasing the share of visitors who take the action a page exists for, such as booking a call or starting a trial. It runs as a loop: find where people drop off, change one thing, measure whether it moved, and repeat."
+      ],
+      [
+        "How much traffic do you need to run A/B tests?",
+        "For a classic split test, roughly a few thousand visitors a month to the page being tested, or results take too long to trust. Lower-traffic B2B sites still improve, using recordings, heatmaps, user interviews and before-and-after comparisons on high-intent pages instead of formal tests."
+      ],
+      [
+        "What should we improve first on our website?",
+        "The page closest to revenue that the most people abandon. For most B2B sites that is pricing, a demo or contact page, or the homepage above the fold. A small lift on a page that already gets high-intent visitors is worth more than a big lift on a page few people see."
+      ],
+      [
+        "Who should own the website after launch?",
+        "One named person, usually in marketing, with the time and authority to change things every week. Ownership spread across a team tends to mean nobody looks. A specialist partner can run the loop, but someone inside the company still needs to care about the numbers."
+      ],
+      [
+        "How much does ongoing website optimisation cost?",
+        "It depends on how much is tested and built each month. At Shrink, Optimisation starts from £5,000 a month, and Compound, our CRO and AEO retainer, is £10,000 a month + VAT, starting with a free audit. Both run on a set monthly cycle so the work keeps compounding."
+      ]
+    ]
+  },
+  {
+    "article": "6a903f83c77c34fcb17c7971",
+    "key": "cited",
+    "title": "Why your site ranks but never gets cited",
+    "faqs": [
+      [
+        "Which sources do AI assistants cite?",
+        "They tend to cite pages that state a clear answer, back it with specifics and show who is behind it. Well-structured pages, named authors, original data and pages corroborated elsewhere on the web all help. The exact mix differs between ChatGPT, Perplexity, Gemini and Google's AI overviews, and it shifts over time."
+      ],
+      [
+        "Does structured data help with AI citations?",
+        "It helps machines understand what a page is, who wrote it and when, which removes guesswork when a model decides what to trust. Treat it as one part of being legible. Clear writing and real evidence still decide whether the page is worth quoting once the model has read it."
+      ],
+      [
+        "Can we block AI crawlers and still be cited?",
+        "Blocking a crawler stops that company reading your pages for training or for live answers, depending on which bot you block. If you want to be cited, check robots.txt allows the search and answer bots, such as OAI-SearchBot, PerplexityBot and Google's crawlers, even if you choose to block training bots."
+      ],
+      [
+        "How do we write a page that AI will quote?",
+        "Answer the question in the first sentence under the heading that asks it. Use plain, specific language, put the evidence next to the claim and name who is speaking. Keep one idea per paragraph so a model can lift a clean answer without needing the surrounding context."
+      ],
+      [
+        "Do backlinks still matter for AI search?",
+        "Yes. Links and mentions on trusted sites remain a strong signal that you are a credible source, and many answer engines draw on search indexes that weigh them. Mentions in places your buyers read, such as industry publications and review sites, also give a model more to corroborate your claims."
+      ]
+    ]
+  },
+  {
+    "article": "6a903f83c77c34fcb17c7969",
+    "key": "chatgpt",
+    "title": "Getting quoted by ChatGPT",
+    "faqs": [
+      [
+        "How does ChatGPT choose which websites to quote?",
+        "When ChatGPT searches the web, it runs queries, reads a handful of results and picks the sources it can trust and summarise cleanly. Pages that answer the question directly, show evidence and are easy to parse have a better chance. OpenAI does not publish the exact rules, so test and measure on your own questions."
+      ],
+      [
+        "Can you pay to appear in ChatGPT answers?",
+        "There is no way to buy a place in ChatGPT's organic answers. Being cited comes from being findable, legible and trustworthy on the questions your buyers ask. Treat any service promising guaranteed AI placement with caution."
+      ],
+      [
+        "How do we track whether ChatGPT is citing our site?",
+        "Keep a fixed list of questions, ask them on a regular schedule and record which sources appear. Check your analytics for referral traffic from chatgpt.com, which shows up when readers click a citation. Over a few months the trend tells you more than any single answer."
+      ],
+      [
+        "How many pages do we need to get cited by AI?",
+        "Fewer than most teams expect. In our own test a few clear, genuinely useful pages earned more citations than a larger set of thinner ones. Aim for one strong page per question you want to own, then improve it over time."
+      ],
+      [
+        "Does ChatGPT read JavaScript-heavy websites?",
+        "AI crawlers often read the raw HTML and may skip content that only appears after JavaScript runs. Webflow publishes pages as HTML, which helps. If your site is a single-page app, check that the important text is present in the page source, or render it on the server."
+      ]
+    ]
+  },
+  {
+    "article": "6a90406b8f8b38879d28f98f",
+    "key": "ai-files",
+    "title": "The five files that decide whether AI can read your site",
+    "faqs": [
+      [
+        "What is llms.txt?",
+        "llms.txt is a proposed standard: a plain-text file at the root of your site that points AI models at your most important pages, with a short description of each. Support across the big assistants is still uneven, but it takes an hour to write and gives any model that reads it a clean map of your site."
+      ],
+      [
+        "Which AI crawlers should robots.txt allow?",
+        "If you want to be cited, allow the bots that power AI search and answers, including OAI-SearchBot and ChatGPT-User from OpenAI, Claude-SearchBot and Claude-User from Anthropic, PerplexityBot and Googlebot. Training bots such as GPTBot, ClaudeBot and Google-Extended can be allowed or blocked separately, depending on how you feel about your content being used for training."
+      ],
+      [
+        "Does Webflow create a sitemap and robots.txt automatically?",
+        "Yes. Webflow generates an XML sitemap automatically and lets you edit robots.txt in the site settings. Structured data and llms.txt need adding yourself, through custom code or a hosted file, and both take an afternoon at most."
+      ],
+      [
+        "What structured data should a B2B website have?",
+        "Organization markup on the homepage, Article or BlogPosting on articles with author and date, FAQPage on genuine question-and-answer sections, BreadcrumbList for navigation and Service or Product on offer pages. Keep the markup consistent with what is visible on the page, or engines learn to ignore it."
+      ],
+      [
+        "How do we check whether our site is readable by AI?",
+        "Open robots.txt and check you are not blocking answer-engine bots, confirm the sitemap lists every page that matters, and run key pages through Google's Rich Results Test. Then view the page source and make sure the important text is in the HTML itself. If all four pass, the basics are in place."
+      ]
+    ]
+  },
+  {
+    "article": "6a90406b8f8b38879d28f989",
+    "key": "funding-moment",
+    "title": "Building at the right funding moment",
+    "faqs": [
+      [
+        "How much should a startup spend on its website?",
+        "Spend should track how much commercial work the site is doing. At Seed a clear, credible site is enough, and our Seed Website is a fixed £15,000 + VAT. From Series A, when the site supports enterprise sales and hiring, a fuller build and ongoing optimisation usually pay for themselves."
+      ],
+      [
+        "Should a seed-stage startup use a website template?",
+        "A template can work for a first site, as long as it is adapted to say exactly what you do and who it is for. The risk is a site that looks like everyone else in the category. A small custom build on a solid system costs more up front and lasts until the next raise."
+      ],
+      [
+        "How long does a website rebuild take?",
+        "A focused site of up to eight pages can go live in about six weeks once the brief is agreed. Larger Series A and B builds with a CMS, integrations and more stakeholders typically take eight to twelve weeks. Time spent agreeing the brief first is what keeps those timelines honest."
+      ],
+      [
+        "Do investors look at a startup's website?",
+        "Yes. It is often one of the first things an investor checks after a warm introduction, and it shapes their sense of how mature and focused the company is. A site that matches the deck builds confidence, while a site that tells an older story raises questions before the first meeting."
+      ],
+      [
+        "When should we move our website to Webflow?",
+        "When the marketing team needs to publish and change pages without waiting on developers, which usually arrives around Series A. Moving earlier is fine if the team already ships often. Moving is easiest just before a planned rebuild, so the migration and redesign happen once."
+      ]
+    ]
+  },
+  {
+    "article": "6a903ff1234a749af253fb7d",
+    "key": "ai-foundation",
+    "title": "Giving your AI tools something solid to build on",
+    "faqs": [
+      [
+        "What are design tokens?",
+        "Design tokens are named values for the decisions behind a design: colours, type sizes, spacing, radii and shadows. Instead of a page using a hex code, it uses a token such as brand-primary. Change the token once and every page updates, and AI tools can choose from the same named set your designers use."
+      ],
+      [
+        "Can AI tools edit a Webflow site safely?",
+        "They can, when the site is built on a clear system of variables, classes and components, and the tool is pointed at that system. Without it, AI edits tend to drift off brand. With it, the tool picks from your components and styles rather than inventing new ones."
+      ],
+      [
+        "What is an AI rules file?",
+        "A rules file is a plain-text document that tells an AI editor how your project works: which components to use, naming conventions, brand rules and what never to change. Tools such as Claude Code and Cursor read it before making changes, so they build the way your team would."
+      ],
+      [
+        "Do we need a design system to use AI website builders?",
+        "You need at least a light one: defined colours, type, spacing and a set of reusable components. Without it, every AI-generated page invents its own versions and the site drifts. It does not have to be a large system, it just has to be written down where tools can read it."
+      ],
+      [
+        "How do we stop AI-built pages drifting off brand?",
+        "Give the tools structured rules to follow, review new pages against the component library, and fix drift at the source by updating the system instead of each page. A quick monthly check of recently built pages catches small inconsistencies before they spread."
+      ]
+    ]
+  },
+  {
+    "article": "6a903ff1234a749af253fb7b",
+    "key": "ia",
+    "title": "Information architecture for how buyers actually think",
+    "faqs": [
+      [
+        "What is information architecture?",
+        "Information architecture is how a website's content is organised, labelled and connected: the sitemap, the navigation and the paths between pages. Good information architecture lets a visitor find the answer to their question without having to understand how your company is structured."
+      ],
+      [
+        "How many items should a website's main navigation have?",
+        "Usually five to seven top-level items, plus a clear primary call to action. Fewer choices make each one easier to scan. If you need more, group them under a few labels your buyers would recognise, and keep the rest in the footer."
+      ],
+      [
+        "Should we organise our site by product or by customer problem?",
+        "Lead with the problem or outcome your buyers are searching for, then let them reach the product detail behind it. Buyers arrive with a problem in their own words. Product names are something they learn once they are interested, so they work better one level down."
+      ],
+      [
+        "What is card sorting?",
+        "Card sorting is a research method where people group your content into categories that make sense to them. It reveals how buyers expect things to be organised and which labels they understand. A dozen participants, run online in a few days, is usually enough to spot clear patterns."
+      ],
+      [
+        "How do we restructure a site without losing search rankings?",
+        "Map every old URL to its new home and set up 301 redirects before launch, keep strong pages' content intact where possible, update internal links and resubmit the sitemap in Search Console. Watch rankings and crawl errors closely for the first few weeks so any gaps can be fixed quickly."
+      ]
+    ]
+  },
+  {
+    "article": "6a903ff1234a749af253fb77",
+    "key": "conversion-questions",
+    "title": "The conversion questions we ask before designing a page",
+    "faqs": [
+      [
+        "What makes a B2B landing page convert?",
+        "A clear statement of who it is for and what it does, proof that backs up every claim, one obvious next step and as little friction as possible between interest and action. Above all, the content arrives in the order a buyer needs it, answering each doubt before it becomes a reason to leave."
+      ],
+      [
+        "Should a landing page have one call to action or several?",
+        "One primary action, repeated where it makes sense, plus at most one lower-commitment option for readers who need more time. Several equal calls to action compete for the same moment and split attention. Make the main one unmistakable."
+      ],
+      [
+        "How long should a B2B landing page be?",
+        "As long as the reader needs to make the decision the page asks for. A simple, low-risk action can work on a short page, while a high-value decision such as booking a sales call usually needs more proof and answers to common objections. Cut anything that doesn't move the reader forward."
+      ],
+      [
+        "What should we know before briefing a page designer?",
+        "Who the page is for, what they need to believe by the end, the proof you have to support it, the one action you want them to take and the order they need to see things in. With those five settled, a designer can focus on making the page clear and compelling."
+      ],
+      [
+        "How do we find out what our buyers need to believe?",
+        "Ask them. Talk to recent customers about what nearly stopped them buying, listen to sales calls for repeated objections and read the questions prospects send before booking. The doubts that come up again and again are the beliefs your page has to build."
+      ]
+    ]
+  },
+  {
+    "article": "6a903f83c77c34fcb17c796f",
+    "key": "multilang",
+    "title": "Globalisation as architecture",
+    "faqs": [
+      [
+        "Does Webflow support multiple languages?",
+        "Yes. Webflow Localization lets you translate pages and CMS content, set language-specific URLs and add hreflang tags automatically. Each locale shares the same structure, which keeps the site consistent while letting copy, images and SEO settings vary by market."
+      ],
+      [
+        "What is hreflang?",
+        "hreflang is a tag that tells search engines which language and region each version of a page is for. It stops your English and German pages being treated as duplicates and helps each market see the right version in search. It needs adding to every translated page."
+      ],
+      [
+        "Subdirectories or subdomains for a multilingual site?",
+        "Subdirectories, such as example.com/de, are usually the better choice for a B2B site. They keep all languages on one domain, so authority builds in one place, and they are simpler to manage. Separate country domains make sense mainly when a market needs its own legal or brand identity."
+      ],
+      [
+        "Should we use machine translation for our website?",
+        "Machine translation is a useful first draft and fine for low-stakes pages. Key pages such as the homepage, pricing and product pages need a native speaker's review, because tone, terminology and trust signals differ between markets. Buyers notice clumsy translation quickly."
+      ],
+      [
+        "When should a startup add a second language?",
+        "When there is real demand from a market, such as sales conversations, inbound leads or a planned launch, and someone can keep the translated content up to date. Until then, build the site so a second language can be added cleanly, and wait to translate."
+      ]
+    ]
+  },
+  {
+    "article": "6a903f83c77c34fcb17c796d",
+    "key": "cwv",
+    "title": "Core Web Vitals without the panic",
+    "faqs": [
+      [
+        "What are good Core Web Vitals scores?",
+        "Google rates a page as good when Largest Contentful Paint is 2.5 seconds or less, Interaction to Next Paint is 200 milliseconds or less and Cumulative Layout Shift is 0.1 or less. Scores are judged at the 75th percentile of real visits over 28 days, so a single slow test is no cause for alarm."
+      ],
+      [
+        "Do Core Web Vitals affect Google rankings?",
+        "They are part of Google's page experience signals, so they count, but relevance and content quality matter far more. A slow page with the best answer can still outrank a fast page with a weaker one. Treat good scores as a tiebreaker and a better experience for readers."
+      ],
+      [
+        "Why are my PageSpeed scores different every time?",
+        "PageSpeed Insights runs a lab test on simulated hardware and network, which varies from run to run. The field data at the top of the report, drawn from real Chrome users, is the number Google uses. Judge progress on the field data and use lab scores to diagnose."
+      ],
+      [
+        "What usually slows down a Webflow site?",
+        "Large unoptimised images, heavy third-party scripts such as chat widgets, tag managers and tracking pixels, and custom code loaded in the page head. Webflow's own hosting is fast. Most improvements come from compressing images, deferring scripts and removing tools nobody uses anymore."
+      ],
+      [
+        "How often should we check Core Web Vitals?",
+        "Monthly is enough for most sites, plus a check after any launch or new script is added. Google Search Console reports real-user scores across the whole site, so it shows problems on pages you might not think to test."
+      ]
+    ]
+  },
+  {
+    "article": "6a903f83c77c34fcb17c796b",
+    "key": "teardown",
+    "title": "Landing page teardown",
+    "faqs": [
+      [
+        "What is a landing page teardown?",
+        "A landing page teardown is a section-by-section review of a live page, looking at what earns the reader's attention and what loses it. It covers the top of the page, how claims are backed up, where friction appears and whether the content is in the right order."
+      ],
+      [
+        "What is the five-second test?",
+        "The five-second test checks whether a stranger who sees a page for five seconds can say what it is, who it is for and why it matters. You can run it informally by showing the page to someone outside the company, then asking what they remember. If they can't answer, the top of the page needs work."
+      ],
+      [
+        "How many form fields should a B2B form have?",
+        "As few as you need to take the next step well. Name, work email and one qualifying question is enough for most enquiry forms. Every extra field adds friction, so ask anything else on the call or enrich it from the email domain afterwards."
+      ],
+      [
+        "What proof works best on a B2B landing page?",
+        "Specific, attributable proof: named customer logos, quotes from a named person and role, case study results with real numbers and recognisable integrations or certifications. Put each piece beside the claim it supports, so the reader meets the evidence at the moment they need it."
+      ],
+      [
+        "Can you review our landing page?",
+        "Yes. Our Compound retainer starts with a free audit, and a landing page review is often where it begins. Book a call and we will look at the page with you, then tell you the one or two changes we would make first."
+      ]
+    ]
+  },
+  {
+    "article": "6a903ff1234a749af253fb79",
+    "key": "structured-data",
+    "title": "A plain-English guide to structured data",
+    "faqs": [
+      [
+        "Can you add structured data to a Webflow site?",
+        "Yes. Webflow has a schema markup field in page settings, and CMS template pages can pull collection fields into it, so every article or case study gets its own JSON-LD from one template. Anything more involved, such as FAQ markup built from a list of questions, can be added with a small script."
+      ],
+      [
+        "How do you check that structured data is working?",
+        "Run the page through Google's Rich Results Test to see what Google reads and whether the page qualifies for rich results, then through the Schema Markup Validator for the vocabulary as a whole. After launch, Search Console reports valid items and errors over time, so problems surface on their own."
+      ],
+      [
+        "Does structured data improve search rankings?",
+        "Indirectly. Google uses it to understand a page rather than as a ranking factor in itself, but it makes pages eligible for rich results such as FAQs and breadcrumbs, which tend to earn more clicks. The bigger gain now is being understood and quoted accurately by answer engines."
+      ],
+      [
+        "Does structured data help with ChatGPT and other AI answers?",
+        "It helps them read you accurately. Assistants that search the web work from the same pages search engines do, and labelled facts such as who wrote a piece, when, and who the organisation is are easier to extract and trust. It works best alongside clear writing and well-structured pages, as one part of answer engine optimisation."
+      ],
+      [
+        "Can Shrink set up structured data for us?",
+        "Yes. It is part of our Answer Engine Optimisation work: we audit what your site already tells machines, add accurate markup for your organisation, articles, FAQs and key pages, and check it in Search Console after launch. Book a call and we will look at your current setup with you."
+      ]
+    ]
+  }
 ]
