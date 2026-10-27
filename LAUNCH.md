@@ -737,7 +737,7 @@ At four or more articles a month the shared FAQs collection would bury the 37 si
 - [x] 80 old copies unpublished and deleted from FAQs (37 site questions left, none with an Article ref). Live counts unchanged: /faq 37, /pricing 6, articles 5 each.
 - [x] FAQs Article field deleted (27 Oct, after Ben removed the /faq filter). FAQs now holds only site questions: Service, Solution, Topic, Show On, Pricing placement.
 - [x] Live after Ben's publish: no nested listitem roles on /faq, /pricing, the packages, Services or articles; counts unchanged (37, 6, 4/4/4, 6, 5 per article).
-- [ ] Services template FAQ list had no `data-faq-schema`, so service pages emitted no FAQPage. Added to the list wrapper (b4e8c0e4); live on the next publish.
+- [x] Services template FAQ list had no `data-faq-schema`, so service pages emitted no FAQPage. Added to the list wrapper (b4e8c0e4) and verified live 27 Oct: /services/development builds FAQPage with its 6 questions matching the page (next to WebPage and Organization); discovery and optimisation carry the attribute with 6 questions each.
 - [x] Aria: every CMS FAQ accordion rendered `<details role="listitem">` inside the collection item's own `role="listitem"` (a listitem in a listitem). List Item Role prop off on all 7 instances: article template, /faq, /pricing, the three packages, Services template. Live on the next publish.
 - New article FAQs go in Article FAQs, three per article.
 - MCP limits hit: current-item list filters can't be read or written, collection template pages can't be drafted, and list writes on this template hit a multiplayer "Conflict" until the list was rebuilt.
