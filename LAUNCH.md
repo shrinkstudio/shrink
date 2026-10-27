@@ -733,6 +733,9 @@ track.ts reads utm_* from the landing URL, adds them to every PostHog event and 
 At four or more articles a month the shared FAQs collection would bury the 37 site questions under hundreds of article ones. New collection **Article FAQs** (`6ae1176cc3541b6959ab4dd8`: Name, Answer, Article ref, Display Order). The 80 article FAQs were copied via the API (every field matched), and the article template list was rebuilt on the new source (filter Article = current item, sort Display Order).
 - [x] Verified live: all 16 live articles show their own 5 questions in order; /faq still lists its 37; `/article-faqs/*` 404s.
 - [x] The rebuilt list lost `data-faq-schema`, so FAQPage JSON-LD stopped building on articles. Re-added through the MCP (wrapper d8a5c56b); live on the next publish.
-- [ ] After that publish: confirm the article FAQPage schema, then delete the 80 old copies from FAQs (backup in the session scratchpad) and drop the FAQs Article field once /faq no longer filters on it.
+- [x] Published and checked: FAQPage JSON-LD builds on articles (5 questions, in order, next to the Organization graph); the rebuild had also cleared the Accordion Group Name, restored to `article-faq`.
+- [x] 80 old copies unpublished and deleted from FAQs (37 site questions left, none with an Article ref). Live counts unchanged: /faq 37, /pricing 6, articles 5 each.
+- [ ] Drop the FAQs Article field once /faq no longer filters on it (Ben removes the filter first).
+- [x] Aria: every CMS FAQ accordion rendered `<details role="listitem">` inside the collection item's own `role="listitem"` (a listitem in a listitem). List Item Role prop off on all 7 instances: article template, /faq, /pricing, the three packages, Services template. Live on the next publish.
 - New article FAQs go in Article FAQs, three per article.
 - MCP limits hit: current-item list filters can't be read or written, collection template pages can't be drafted, and list writes on this template hit a multiplayer "Conflict" until the list was rebuilt.
