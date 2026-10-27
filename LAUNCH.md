@@ -728,3 +728,11 @@ track.ts reads utm_* from the landing URL, adds them to every PostHog event and 
 - Rich text embed (Custom Code component, 12204a11) gains `html:not(.wf-design-mode) .faq_conditional:not(:has(.w-dyn-item)) { display: none; }`: an article with no FAQ items drops the whole block (heading, list, spacer); the Designer still shows it. The `data-hide-empty` attribute on the FAQ list is handled by nothing in the bundle, so it can go.
 - 5 FAQs written for plain-english-structured-data (the last article without them), created ready in the FAQs collection, display-order 1 to 5; source added to `docs/article-faqs.json` (15 articles now).
 - [ ] Ben: publish, then check the structured data article shows its 5 FAQs and the FAQPage JSON-LD builds.
+
+### Article FAQs split into their own collection (27 Oct, night)
+At four or more articles a month the shared FAQs collection would bury the 37 site questions under hundreds of article ones. New collection **Article FAQs** (`6ae1176cc3541b6959ab4dd8`: Name, Answer, Article ref, Display Order). The 80 article FAQs were copied via the API (every field matched), and the article template list was rebuilt on the new source (filter Article = current item, sort Display Order).
+- [x] Verified live: all 16 live articles show their own 5 questions in order; /faq still lists its 37; `/article-faqs/*` 404s.
+- [x] The rebuilt list lost `data-faq-schema`, so FAQPage JSON-LD stopped building on articles. Re-added through the MCP (wrapper d8a5c56b); live on the next publish.
+- [ ] After that publish: confirm the article FAQPage schema, then delete the 80 old copies from FAQs (backup in the session scratchpad) and drop the FAQs Article field once /faq no longer filters on it.
+- New article FAQs go in Article FAQs, three per article.
+- MCP limits hit: current-item list filters can't be read or written, collection template pages can't be drafted, and list writes on this template hit a multiplayer "Conflict" until the list was rebuilt.
