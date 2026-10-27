@@ -710,3 +710,10 @@ Open, Ben's call:
 
 ### API outage, 23 Oct 13:00 to 13:42
 The Slack change (28a80e1) moved the helper into api/_notify.ts and imported it from both handlers. On Vercel (ESM, no bundling) that import failed and both /api/forms and /api/cal returned 500 on every request, so the second test booking (13:18) never landed. Fixed in 15efc2e by inlining the helper; both endpoints verified (cal signed ping 200, forms 403 wrong-site on a fake payload). Rule: files in api/ stay self-contained, no relative imports. No real form submissions or bookings came in during the window.
+
+### Enquiry webhook dead, 23 to 27 Oct
+Both Webflow `form_submission` webhooks were registered through the API with the repo's site token. That token was revoked (only "Orbit AEO" is left under API access), and the webhooks stayed listed but stopped firing after 23 Oct. Three Enquiry submits since (24 Oct 22:55, 26 Oct 15:31, 27 Oct 02:55 UTC per PostHog) never reached Airtable or Slack. Ben checked Forms: one sales email and two tests. The 26 Oct one never reached Webflow's list (probably spam-filtered), so no lead looks lost.
+- [x] Fixed 27 Oct 15:25: both API webhooks deleted, one added in Site settings > Apps & integrations (site-owned, survives token changes), its signing key set as `WEBFLOW_WEBHOOK_SECRET` in Vercel and redeployed. Test enquiry landed as a Lead deal (Service Discovery) and pinged #int-inbound-leads.
+- [ ] Ben: delete the "Ben, website enquiry" test deal and contact in Shrink OS.
+- Rule: add Webflow webhooks in the dashboard, never with a site token. Vercel Hobby keeps an hour of logs, so check them straight after a test.
+- Calculator: one person (Wimbledon, Mac) worked through /tools/project-calculator on 26 Oct 11:12 and left. Results go nowhere yet, so the download-results flow is the next decision.
