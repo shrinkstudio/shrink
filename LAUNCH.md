@@ -717,3 +717,9 @@ Both Webflow `form_submission` webhooks were registered through the API with the
 - [ ] Ben: delete the "Ben, website enquiry" test deal and contact in Shrink OS.
 - Rule: add Webflow webhooks in the dashboard, never with a site token. Vercel Hobby keeps an hour of logs, so check them straight after a test.
 - Calculator: one person (Wimbledon, Mac) worked through /tools/project-calculator on 26 Oct 11:12 and left. Results go nowhere yet, so the download-results flow is the next decision.
+
+### Lead source attribution (27 Oct, b91ba27)
+track.ts reads utm_* from the landing URL, adds them to every PostHog event and as hidden inputs to every form; api/forms.ts writes a "Source: linkedin / ben-post / aeo-adfin (campaign …)" line into the Enquiry deal notes, the Resource contact note and both Slack pings. UTMs persist across pages (sessionStorage) only after analytics consent; without it they still work on the landing page. New events: `guide_downloaded` (Resource form, guide title) and `call_booked` (Cal.com embed `bookingSuccessful*` message, once per page).
+- [x] Built, committed (code and dist only; untracked docs left out of the public repo), pushed, jsDelivr purged, Vercel API redeployed. Verified live: /contact?utm_… gets the four hidden inputs on the Enquiry form; nothing stored without consent.
+- [ ] Next real enquiry or guide from a tagged link: check the Source line in Airtable. `call_booked` untested until a real booking.
+- Note: jsDelivr sends `max-age=604800`, so a returning browser can run the old bundle for up to a week after a push; the purge only refreshes the CDN.
