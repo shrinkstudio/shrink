@@ -31,17 +31,17 @@ export const RETAINERS: Record<string, { monthly: number; label: string; body: s
   care: {
     monthly: 1500,
     label: 'Care',
-    body: 'Monitoring, fixes and suggested improvements every month, so the site keeps pace with the business.',
+    body: 'Monitoring, fixes and suggested improvements every month.',
   },
   growth: {
     monthly: 3000,
     label: 'Growth',
-    body: 'A focused CRO or AEO programme alongside ongoing development, with a clear plan for each month.',
+    body: 'A CRO or AEO programme alongside ongoing development, planned month by month.',
   },
   compound: {
     monthly: 7000,
     label: 'Compound',
-    body: 'CRO and AEO every month on one cycle, with a monthly report on what moved and what comes next.',
+    body: "CRO and AEO together every month, with a report on what changed and what's next.",
   },
 };
 
@@ -74,7 +74,7 @@ export const QUESTIONS: Question[] = [
     helper: "We'll shape the next few questions around your answer.",
     options: [
       { id: 'new-site', label: 'A new marketing website', hint: 'For a launch, a raise or a new direction' },
-      { id: 'rebuild', label: 'A rebuild of our current site', hint: 'The same company, with a site that keeps up' },
+      { id: 'rebuild', label: 'A rebuild of our current site', hint: 'Your current site, rebuilt' },
       { id: 'web-app', label: 'A web app or product', hint: "We'll talk this one through with you on a call" },
       { id: 'retainer', label: 'Ongoing support and growth', hint: 'A monthly retainer once the site is live' },
     ],
@@ -112,7 +112,7 @@ export const QUESTIONS: Question[] = [
     visibleWhen: isSite,
     options: [
       { id: 'brand', label: 'We have a brand you can apply', hint: 'Logo, colours and type are settled' },
-      { id: 'direction', label: "We'd like a fresh design direction", hint: 'A new look, shaped around your brand' },
+      { id: 'direction', label: "We'd like a fresh design direction", hint: 'A new look, designed around your brand' },
       { id: 'system', label: 'We need a full design system', hint: 'A component library your team can build with' },
     ],
   },
@@ -192,7 +192,7 @@ export const QUESTIONS: Question[] = [
     options: [
       { id: 'flexible', label: "Whenever it's ready" },
       { id: 'quarter', label: 'In the next two to three months' },
-      { id: 'fast', label: 'In under six weeks', hint: "We'll tell you honestly what fits, and what it means for the price" },
+      { id: 'fast', label: 'In under six weeks', hint: "We'll tell you what's realistic, and what it means for the price" },
     ],
   },
   // --- Retainer --------------------------------------------------------------
@@ -259,7 +259,7 @@ export function siteLines(a: Answers): Line[] {
       label: 'Seed Website base',
       choice: 'Up to 8 templates, two content types, your brand applied',
       amount: BASE,
-      note: 'Design, build, CMS and launch in about six weeks, with a site your team can run.',
+      note: 'Design, build, CMS and launch in about six weeks, on a site your team can run.',
     },
   ];
   const add = (id: string, label: string, choice: string, amount: number, note: string) => {
@@ -268,7 +268,7 @@ export function siteLines(a: Answers): Line[] {
   const t = a.templates as string;
   add('templates', 'Page templates', labelOf('templates', t), TEMPLATES[t] ?? 0, 'Each layout is designed, built and tested on every screen size.');
   const c = a.cms as string;
-  add('cms', 'Content types', labelOf('cms', c), CMS[c] ?? 0, 'Each collection gets its own template and an editing set-up your team will enjoy using.');
+  add('cms', 'Content types', labelOf('cms', c), CMS[c] ?? 0, 'Each type of content gets its own template, set up so your team can publish it.');
   const d = a.design as string;
   add(
     'design',
@@ -277,18 +277,18 @@ export function siteLines(a: Answers): Line[] {
     DESIGN[d] ?? 0,
     d === 'system'
       ? 'A design system and component library, so new pages are quick to build and always on brand.'
-      : 'A new look, shaped around your brand and the people you sell to.',
+      : 'A new look, designed around your brand and your buyers.',
   );
   const m = a.platform && a.platform !== 'none' ? (a.migration as string) : 'none';
-  add('migration', 'Content migration', labelOf('migration', m), MIGRATION[m] ?? 0, 'Moved, tidied and redirected, so the search rankings you have earned carry over.');
+  add('migration', 'Content migration', labelOf('migration', m), MIGRATION[m] ?? 0, 'Moved, tidied and redirected, so you keep your search rankings.');
   for (const id of (a.integrations as string[]) || []) {
-    add(`integration-${id}`, 'Integration', labelOf('integrations', id), INTEGRATION, 'Set up, mapped and tested, so leads and data arrive where your team works.');
+    add(`integration-${id}`, 'Integration', labelOf('integrations', id), INTEGRATION, 'Set up and tested, so leads and data go straight into the tools your team uses.');
   }
   const extras = (a.extras as string[]) || [];
   for (const id of extras) {
     if (id === 'lang-2' && extras.includes('lang-3')) continue;
     const notes: Record<string, string> = {
-      motion: 'Considered motion that helps people understand the product, built to stay fast.',
+      motion: 'Animation that helps explain the product, without slowing the site down.',
       a11y: 'An audit and the fixes it finds, so the site works for everyone who visits.',
       'lang-2': 'Localised pages, navigation and search settings for a second market.',
       'lang-3': 'Localised pages, navigation and search settings for each market you serve.',
@@ -312,7 +312,7 @@ export function computeEstimate(a: Answers): Estimate {
     return {
       kind: 'call',
       reason: 'web-app',
-      note: "Products vary too much for a fair figure from a few questions, so we'd love to hear about yours first. Thirty minutes is usually enough to shape a scope and a range.",
+      note: "It's hard to price a product from a few questions, so we'd rather hear about yours first. Thirty minutes is usually enough to agree a scope and a rough range.",
     };
   }
   if (isRetainer(a)) {
@@ -323,7 +323,7 @@ export function computeEstimate(a: Answers): Estimate {
       tier: a.tier as string,
       monthly: tier.monthly,
       label: tier.label,
-      note: 'A rolling monthly retainer with a three-month first term, and every programme starts with a free audit.',
+      note: 'A monthly retainer with a three-month first term. Every retainer starts with a free audit of your site.',
     };
   }
   if (!isComplete(a)) return null;
@@ -333,7 +333,7 @@ export function computeEstimate(a: Answers): Estimate {
       kind: 'call',
       reason: 'large',
       from: low,
-      note: "A site this size deserves a proper look at the content and the audiences first. We'll scope it with you on a call and send a fixed proposal.",
+      note: "For a site this size, we'd want to look at the content and who it's for before we quote. We'll scope it with you on a call, then send a fixed proposal.",
     };
   }
   const lines = siteLines(a);
@@ -367,13 +367,13 @@ const SPRINT = {
   name: 'Clarity Sprint',
   price: '£3,500',
   href: '/packages/clarity-sprint',
-  body: 'Two weeks to agree the brief together, so the build starts from a plan your whole team supports.',
+  body: 'Two weeks to agree the brief with your team, before the build starts.',
 };
 const COMPOUND = {
   name: 'Compound',
   price: '£7,000 a month',
   href: '/packages/compound',
-  body: 'CRO and AEO every month on one cycle, with a monthly report on what moved.',
+  body: "CRO and AEO together every month, with a report on what changed and what's next.",
 };
 
 export function computeNextStep(
@@ -388,7 +388,7 @@ export function computeNextStep(
     return {
       kind: 'call',
       title: 'Book a call',
-      body: 'Every retainer starts with a free audit of your site, so the first month already has a plan. A short call is the best place to start.',
+      body: 'Every retainer starts with a free audit of your site. A short call is the best place to start.',
       href: compound ? links.compoundCall : links.call,
       label: compound ? 'Book a Compound call' : 'Book an intro call',
       package: compound ? COMPOUND : undefined,

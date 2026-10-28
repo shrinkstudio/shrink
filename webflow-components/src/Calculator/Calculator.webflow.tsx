@@ -21,11 +21,11 @@ export default declareComponent(Calculator, {
     introBody: props.Text({
       name: 'Intro body',
       defaultValue:
-        "A few questions about the site you have in mind, priced from the same list we use to scope real projects. You'll see an estimate, every line that makes it up, and the best next step.",
+        "Answer a few questions about the site you need, and you'll see an estimate, how it adds up and what to do next. The prices are the ones we quote real projects from.",
     }),
     bullet1: props.Text({ name: 'Bullet 1', defaultValue: 'About two minutes' }),
     bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'See your estimate straight away' }),
-    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'Every line explained' }),
+    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'See how it adds up' }),
     startLabel: props.Text({ name: 'Start button label', defaultValue: 'Start the calculator' }),
 
     // Flow

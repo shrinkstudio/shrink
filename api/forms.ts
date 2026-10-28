@@ -838,7 +838,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   let top = `Here's your estimate, ${first}.`;
   let figure = `${gbp(e.low)} to ${gbp(e.high)}`;
   let body =
-    "Thanks for using the project calculator. This is an estimate for the site you described, before VAT, built from the same price list we use to scope real projects. Your final price comes in a fixed proposal once we've agreed the scope together.";
+    "Thanks for trying the project calculator. This is an estimate for the site you described, before VAT, using the prices we quote real projects from. Once we've agreed the scope together, we'll send a fixed proposal with your final price.";
   let nextLine = 'A 30-minute call is the easiest way to turn this into a fixed proposal.';
   let button = 'Book a call with Ben';
   let href = '/calls/intro';
@@ -846,7 +846,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
 
   if (amt(e.low) && e.low === e.high) figure = gbp(e.low);
   if (kind === 'range' && next.kind === 'brief') {
-    nextLine = 'A short written brief is usually all we need to scope this properly.';
+    nextLine = 'For a site this size, a short written brief is usually enough for us to scope it.';
     button = 'Send Ben a brief';
     href = '/contact?service=development';
   }
@@ -854,8 +854,8 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
     tag = 'Retainer';
     top = `Here's your retainer, ${first}.`;
     figure = `${gbp(e.monthly)} a month`;
-    body = `That's ${h(e.label || 'the retainer')}, a rolling monthly retainer with a three-month first term. Every programme starts with a free audit of your site, so the first month already has a plan.`;
-    nextLine = 'A short call is the best place to start, and the audit follows from there.';
+    body = `That's ${h(e.label || 'the retainer')}, a monthly retainer with a three-month first term. Every retainer starts with a free audit of your site, so we know what to work on from the first month.`;
+    nextLine = "A short call is the best place to start, then we'll run the audit.";
     button = compound ? 'Book a Compound call' : 'Book a call with Ben';
     href = compound ? '/calls/compound' : '/calls/intro';
     subject = 'Your retainer estimate from Shrink';
@@ -865,13 +865,13 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
     figure = e.reason === 'large' && amt(e.from) ? `From ${gbp(e.from)}` : "Let's talk it through";
     body =
       e.reason === 'web-app'
-        ? "Products vary too much for a fair figure from a few questions, so I'd love to hear about yours first. Thirty minutes is usually enough to shape a scope and a range."
-        : "A site this size deserves a proper look at the content and the audiences first. We'll scope it with you on a call and send a fixed proposal.";
-    nextLine = 'A 30-minute call is the best way to shape the scope together.';
+        ? "It's hard to price a product from a few questions, so I'd rather hear about yours first. Thirty minutes is usually enough for us to agree a scope and a rough range."
+        : "For a site this size, we'd want to look at the content and who it's for before we quote. We'll scope it with you on a call, then send a fixed proposal.";
+    nextLine = 'A 30-minute call is the best way to agree the scope together.';
     subject = 'Your project with Shrink';
   }
   const note =
-    "I'd be glad to talk it through with you, answer any questions and help you find the right scope for where you are now. You can also reply to this email, and it comes straight to me.";
+    "I'm happy to go through it with you, answer any questions and help you work out the right scope for where you are now. Or just reply to this email. It comes to me.";
 
   const rows: RowIn[] = kind === 'range' ? (q.drivers || []).slice(0, 14) : [];
   const total = amt(e.total) || rows.reduce((s, r) => s + amt(r.low), 0);
@@ -898,7 +898,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   const totalHtml = rows.length
     ? `<tr>
   <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(16, 600, C.ink)}">Total</td>
-  <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(14, 500, C.ink)}">Shown as a range while the scope settles</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(14, 500, C.ink)}">Shown as a range until we agree the scope</td>
   <td style="border-top:1px solid ${C.line};padding:12px 0 0;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${gbp(total)}</td>
 </tr>`
     : '';
@@ -913,7 +913,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
 <style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-h{font-size:26px !important}.sk-h5{font-size:20px !important}.sk-body{font-size:16px !important}.sk-lbl{width:96px !important;padding-right:12px !important}}</style>
 </head>
 <body style="margin:0;padding:0;background:${C.smoke}">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(figure)}. ${kind === 'range' ? 'Every line explained, and what happens next.' : 'And what happens next.'}</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(figure)}. ${kind === 'range' ? 'How it adds up, and what happens next.' : 'And what happens next.'}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.smoke}">
 <tr><td class="sk-outer" align="center" style="padding:40px 16px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${C.white};border-radius:12px">
@@ -935,16 +935,16 @@ ${
   rows.length
     ? `${gap(48)}
 <tr><td>
-  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">How we got to this figure</p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">How it adds up</p>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}${totalHtml}</table>
-  ${sprint ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">You mentioned the brief is still open, so we'd suggest a Clarity Sprint first (${gbp(sprint)}). It sits outside this figure and gives the build a plan your whole team supports.</p>` : ''}
+  ${sprint ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">You said the brief is still open, so we'd suggest a Clarity Sprint first (${gbp(sprint)}). It's priced separately, and it means the build starts from a brief your whole team has agreed.</p>` : ''}
 </td></tr>`
     : ''
 }
 ${gap(48)}
 <tr><td>
-  <p class="sk-h5" style="${t(24, 400, C.muted, 1.3)}">What happens next</p>
-  <p class="sk-h5" style="${t(24, 400, C.ink, 1.3)}">${nextLine}</p>
+  <p class="sk-h5" style="${t(24, 500, C.muted, 1.3, 'letter-spacing:-0.2px')}">What happens next</p>
+  <p class="sk-h5" style="${t(24, 500, C.ink, 1.3, 'letter-spacing:-0.2px')}">${nextLine}</p>
   <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${note}</p>
 </td></tr>
 ${gap(24)}
@@ -962,14 +962,14 @@ ${
   share
     ? `${gap(24)}
 <tr><td>
-  <p style="${t(14, 500, C.ink)}"><a href="${h(share)}" style="color:${C.ink};text-decoration:underline">You can reopen your estimate and adjust your answers any time &rarr;</a></p>
-  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">If you'd like to share this with your team, just forward this email. The link opens your answers exactly as you left them, so everyone starts from the same place.</p>
+  <p style="${t(14, 500, C.ink)}"><a href="${h(share)}" style="color:${C.ink};text-decoration:underline">Reopen your estimate to change any of your answers &rarr;</a></p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">To share this with your team, just forward this email. The link above opens your answers, so they'll see the same estimate.</p>
 </td></tr>`
     : ''
 }
 ${gap(48)}
 <tr><td style="border-top:1px solid ${C.line};padding-top:16px">
-  <p style="${t(14, 500, C.grey)}">You're receiving this because you asked for your estimate on shrink.studio on ${date}. We'll only send guides and updates if you chose to hear from us.</p>
+  <p style="${t(14, 500, C.grey)}">You asked for this estimate on shrink.studio on ${date}. We'll only send you guides and updates if you ticked the box to get them.</p>
   <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788) &middot; Waverley House, 9 Noel St, London</p>
 </td></tr>
 </table>
@@ -986,7 +986,7 @@ ${gap(48)}
     '',
     body.replace(/&[a-z]+;/g, ''),
     ...(rows.length
-      ? ['', 'How we got to this figure:', ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${i === 0 ? gbp(r.low) : `+${gbp(r.low)}`})`), `- Total: ${gbp(total)}`]
+      ? ['', 'How it adds up:', ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${i === 0 ? gbp(r.low) : `+${gbp(r.low)}`})`), `- Total: ${gbp(total)}`]
       : []),
     ...(sprint ? ['', `We'd suggest a Clarity Sprint first (${gbp(sprint)}), outside this figure.`] : []),
     '',
@@ -996,7 +996,7 @@ ${gap(48)}
     ...(share ? ['', `Reopen your estimate: ${share}`] : []),
     '',
     'Ben Hammond, Founder, Shrink Studio',
-    `You're receiving this because you asked for your estimate on shrink.studio on ${date}.`,
+    `You asked for this estimate on shrink.studio on ${date}.`,
   ].join('\n');
 
   return { subject, html, text };

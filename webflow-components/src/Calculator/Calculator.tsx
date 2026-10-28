@@ -75,10 +75,10 @@ export function Calculator({
   frame = 'none',
   eyebrow = 'Project calculator',
   introHeading = 'What would your site cost?',
-  introBody = "A few questions about the site you have in mind, priced from the same list we use to scope real projects. You'll see an estimate, every line that makes it up, and the best next step.",
+  introBody = "Answer a few questions about the site you need, and you'll see an estimate, how it adds up and what to do next. The prices are the ones we quote real projects from.",
   bullet1 = 'About two minutes',
   bullet2 = 'See your estimate straight away',
-  bullet3 = 'Every line explained',
+  bullet3 = 'See how it adds up',
   startLabel = 'Start the calculator',
   backLabel = 'Back',
   restartLabel = 'Start over',
@@ -344,7 +344,7 @@ export function Calculator({
 
             {estimate.kind === 'range' && (
               <div className="sk-block">
-                <p className="sk-label">How we got to this figure</p>
+                <p className="sk-label">How it adds up</p>
                 <ol className="sk-rows">
                   {estimate.lines.map((l, i) => (
                     <li className="sk-row pc-driver" key={l.id}>
@@ -363,7 +363,7 @@ export function Calculator({
                       <span className="sk-row-marker" aria-hidden="true" />
                       <span className="pc-driver-text">
                         <span className="pc-driver-label">Total</span>
-                        <span className="pc-driver-note">Shown above as a range while the scope settles.</span>
+                        <span className="pc-driver-note">Shown above as a range until we agree the scope.</span>
                       </span>
                     </span>
                     <span className="sk-row-value pc-driver-value">{fmtGBP(estimate.total)}</span>
@@ -371,8 +371,8 @@ export function Calculator({
                 </ol>
                 {estimate.sprint > 0 && (
                   <p className="sk-small" style={{ marginTop: '1rem' }}>
-                    You mentioned the brief is still open, so we'd suggest a Clarity Sprint first ({fmtGBP(estimate.sprint)}). It sits
-                    outside this figure and gives the build a plan your whole team supports.
+                    You said the brief is still open, so we'd suggest a Clarity Sprint first ({fmtGBP(estimate.sprint)}). It's priced
+                    separately, and it means the build starts from a brief your whole team has agreed.
                   </p>
                 )}
               </div>
@@ -412,7 +412,7 @@ export function Calculator({
               <form className="sk-block" onSubmit={handleSubmit} noValidate>
                 <p className="sk-label">Keep this estimate</p>
                 <p className="sk-small" style={{ marginBottom: '1rem' }}>
-                  Leave your details and we'll email you the estimate, with every line explained, so it's easy to share with your team.
+                  Leave your details and we'll email you the estimate and how it adds up, so you can share it with your team.
                 </p>
                 <div className="sk-field-row">
                   <label className="sk-field">
