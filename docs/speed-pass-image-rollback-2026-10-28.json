@@ -1,0 +1,174 @@
+[
+ {
+  "id": "6aa2cad64cca1abe1327cf54",
+  "slug": "forest-common-sense-quiz",
+  "fieldData": {
+   "card-background": {
+    "fileId": "6ad743c89b3c6a571d9704a6",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad743c89b3c6a571d9704a6_6ad74383a5ab087a7c58d428_forest-quiz-card-background.webp",
+    "alt": "Forest Common Sense Club sticker backdrop"
+   },
+   "card-foreground": {
+    "fileId": "6adb3db6b107e7154f3a30c9",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6adb3db6b107e7154f3a30c9_6adb3da1865451aea61bd82e_forest-quiz-card-foreground-v3.webp",
+    "alt": "The Common Sense Club quiz on three phones: start screen, a question and the you're banned joke"
+   },
+   "gallery-1": [
+    {
+     "fileId": "6adb364abd7da6fef4963a82",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6adb364abd7da6fef4963a82_6adb361d92f53d6aff4a514c_forest-quiz-02-three-questions.webp",
+     "alt": "The three 2026 quiz questions on phones: red lights, the zebra on a zebra crossing, and cycle lane or pavement"
+    },
+    {
+     "fileId": "6adb364abd7da6fef4963a85",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6adb364abd7da6fef4963a85_6adb361db6bbbcd30900f7d4_forest-quiz-03-right-and-wrong.webp",
+     "alt": "Answer screens: tap the tiny trumpet, the you're banned joke with confetti, and the zebra's correct and wrong reactions"
+    }
+   ],
+   "gallery-2": [
+    {
+     "fileId": "6adb364abd7da6fef4963a7c",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6adb364abd7da6fef4963a7c_6adb361e18950f59a3091327_forest-quiz-04-start-to-finish.webp",
+     "alt": "Start to finish on a phone: the sticker splash, the World's Hardest Quiz intro, and the 30 minutes free claim form"
+    },
+    {
+     "fileId": "6adb364abd7da6fef4963a7f",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6adb364abd7da6fef4963a7f_6adb361e18950f59a3091354_forest-quiz-05-on-desktop.webp",
+     "alt": "The quiz on desktop: the red light question surrounded by Forest's holographic campaign stickers"
+    }
+   ]
+  }
+ },
+ {
+  "id": "6aa2cad64cca1abe1327cf50",
+  "slug": "steamhaus",
+  "fieldData": {
+   "card-background": {
+    "fileId": "6aa2cad54cca1abe1327cf34",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6aa2cad54cca1abe1327cf34_69e894a9017ab111ed855b81_steamhaus-background.png",
+    "alt": null
+   },
+   "card-foreground": {
+    "fileId": "6aa2cad54cca1abe1327cf3a",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6aa2cad54cca1abe1327cf3a_69e8948deeeeeb74047e80e8_steamhaus-foreground.png",
+    "alt": null
+   }
+  }
+ },
+ {
+  "id": "6a8f25e903d00ea90d9c851a",
+  "slug": "cloudnc",
+  "fieldData": {
+   "card-foreground": {
+    "fileId": "6ad62f5c55fb265c57b61afb",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad62f5c55fb265c57b61afb_6ad62f461cfdf621810e6d24_cloudnc-card-foreground-02.webp",
+    "alt": null
+   },
+   "gallery-1": [
+    {
+     "fileId": "6ad50d80a4b6b261b5550f14",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f14_6ad50cef1f418b14c027fc45_cloudnc-02-form-logic.webp",
+     "alt": "CloudNC's Get started form with the routing code that runs behind it"
+    },
+    {
+     "fileId": "6ad50d80a4b6b261b5550f2c",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f2c_6ad50cefc9bbabe135ef327e_cloudnc-03-next-best-step.webp",
+     "alt": "CloudNC's next best step cards with the CMS route config that drives them"
+    }
+   ],
+   "gallery-2": [
+    {
+     "fileId": "6ad50d80a4b6b261b5550f0e",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f0e_6ad50cefe6179d5913f5c4b2_cloudnc-04-pricing-by-route.webp",
+     "alt": "CloudNC's pricing page with the code that fetches pricing for each route from the CMS"
+    },
+    {
+     "fileId": "6ad50d80a4b6b261b5550f35",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f35_6ad50cef63580d57e56387a8_cloudnc-05-cam-assist-china.webp",
+     "alt": "The CAM Assist China microsite home page in Simplified Chinese"
+    }
+   ]
+  }
+ },
+ {
+  "id": "6a8ef00c679ed4d2a4d12a2e",
+  "slug": "adfin",
+  "fieldData": {
+   "card-foreground": {
+    "fileId": "6ac3e931cf4161ab09a803f8",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ac3e931cf4161ab09a803f8_6ac3e92ef977085606ef815d_adfin-card-foreground.webp",
+    "alt": null
+   },
+   "gallery-1": [
+    {
+     "fileId": "6ad50d80a4b6b261b5550f11",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f11_6ad50cee319ffd61a06b65f9_adfin-02-one-system.webp",
+     "alt": "Adfin components from one system: mega nav, pricing calculator, Book a Demo, testimonials, verticals dropdown and stats"
+    },
+    {
+     "fileId": "6ad50d80a4b6b261b5550f1e",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f1e_6ad50ceebf9b30d59a0cff90_adfin-03-built-from-components.webp",
+     "alt": "The Webflow Designer with Adfin's Framed Section testimonial component selected and its properties open"
+    }
+   ],
+   "gallery-2": [
+    {
+     "fileId": "6ad50d80a4b6b261b5550f2f",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f2f_6ad50ceedd74f8e6f821bf03_adfin-04-one-cms.webp",
+     "alt": "Adfin's article with comparison tables next to its glossary, both run from the CMS"
+    },
+    {
+     "fileId": "6ad50d80a4b6b261b5550f29",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f29_6ad50ceedd74f8e6f821bf19_adfin-05-every-audience.webp",
+     "alt": "Adfin's pages for accountants, MSPs and small businesses, built from the same parts"
+    }
+   ]
+  }
+ },
+ {
+  "id": "6a8ef00c679ed4d2a4d12a2c",
+  "slug": "buff-motion",
+  "fieldData": {
+   "card-foreground": {
+    "fileId": "6ad743c89b3c6a571d9704b1",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad743c89b3c6a571d9704b1_6ad74383a5411c62f58b0673_buff-card-foreground.webp",
+    "alt": "Buff Motion's home page headline with the squiggle Lottie behind it"
+   }
+  }
+ },
+ {
+  "id": "6a8ef00c679ed4d2a4d12a2a",
+  "slug": "forest-bikes",
+  "fieldData": {
+   "card-foreground": {
+    "fileId": "6ac3e8c15e47ef9ceac8a153",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ac3e8c15e47ef9ceac8a153_6ac3e8b009ca6ed263659bb4_forest-card-foreground.webp",
+    "alt": ""
+   },
+   "gallery-1": [
+    {
+     "fileId": "6ad50d80a4b6b261b5550f03",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f03_6ad50cf0a3fe61b582ea7e18_forest-02-one-system.webp",
+     "alt": "Forest components from one design system: nav switch, story card, pricing, product cards and blog grid"
+    },
+    {
+     "fileId": "6ad50d80a4b6b261b5550f0b",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f0b_6ad50cf0a4b6b261b554d5a1_forest-03-built-from-components.webp",
+     "alt": "The Webflow Designer with Forest's How It Works component selected and its properties open"
+    }
+   ],
+   "gallery-2": [
+    {
+     "fileId": "6ad50d80a4b6b261b5550f23",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f23_6ad50cf0c9bbabe135ef32b0_forest-04-partner.webp",
+     "alt": "Forest's partner hero, Grow your business with Forest, over a photo of a rider"
+    },
+    {
+     "fileId": "6ad50d80a4b6b261b5550f32",
+     "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6ad50d80a4b6b261b5550f32_6ad50cf0e6179d5913f5c4e9_forest-05-two-audiences.webp",
+     "alt": "Forest's ride and partner home pages side by side, one site for two audiences"
+    }
+   ]
+  }
+ }
+]
