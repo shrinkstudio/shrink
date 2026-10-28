@@ -406,13 +406,13 @@ export function Calculator({
             {submit.status === 'sent' ? (
               <div className="sk-block" role="status">
                 <p className="sk-label">Keep this estimate</p>
-                <p className="sk-small sk-success">Thank you. Your estimate is saved with us, and Ben will be in touch to talk through the next step.</p>
+                <p className="sk-small sk-success">Thank you. Your estimate is on its way to your inbox, and Ben will be in touch to talk through the next step. If you can't see it in a few minutes, it may be in your spam folder.</p>
               </div>
             ) : (
               <form className="sk-block" onSubmit={handleSubmit} noValidate>
                 <p className="sk-label">Keep this estimate</p>
                 <p className="sk-small" style={{ marginBottom: '1rem' }}>
-                  Leave your details and we'll keep this estimate on file, with every line explained, ready to talk through with you.
+                  Leave your details and we'll email you the estimate, with every line explained, so it's easy to share with your team.
                 </p>
                 <div className="sk-field-row">
                   <label className="sk-field">
@@ -438,7 +438,7 @@ export function Calculator({
                 {submit.status === 'error' && <p className="sk-error" role="alert">{submit.message}</p>}
                 <div className="sk-actions" style={{ marginTop: 0 }}>
                   <button type="submit" className="sk-btn" disabled={submit.status === 'sending'}>
-                    {submit.status === 'sending' ? 'Saving' : 'Save my estimate'}
+                    {submit.status === 'sending' ? 'Sending' : 'Email me the estimate'}
                   </button>
                 </div>
               </form>
