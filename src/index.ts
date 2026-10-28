@@ -5,7 +5,6 @@
 // initialise them inside the Webflow.push callback below.
 //
 // GSAP + Flip are expected as globals from the CDN (see utils/gsap.ts).
-import { initFinsweetList } from './list';
 import { initAskAI } from './modules/ask-ai';
 import { initConsent } from './modules/consent';
 import { initCopyClip } from './modules/copy-clip';
@@ -28,9 +27,21 @@ import { initToc } from './modules/toc';
 import { initTrack } from './modules/track';
 
 // Capture our own <script> tag now: document.currentScript is only valid during
-// initial execution, not inside the deferred Webflow.push callback. The list
-// setup reads it for site-wide fs-list-* settings.
+// initial execution, not inside the deferred Webflow.push callback.
 const currentScript = document.currentScript as HTMLScriptElement | null;
+
+// The vendored Finsweet list ships as dist/list.js next to this file and loads
+// only on pages that have a list. Requested now (the DOM is parsed, this script
+// is deferred) so it downloads alongside Webflow's own scripts; it initialises
+// itself in Webflow.push. Site-wide fs-list-* settings move across from our tag.
+if (currentScript?.src && document.querySelector('[fs-list-element="list"]')) {
+  const list = document.createElement('script');
+  list.src = new URL('list.js', currentScript.src).href;
+  for (const { name, value } of Array.from(currentScript.attributes)) {
+    if (name.startsWith('fs-list')) list.setAttribute(name, value);
+  }
+  document.body.append(list);
+}
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
@@ -54,10 +65,4 @@ window.Webflow.push(() => {
   initTestimonialTabs();
   initTrack();
   initFaqSchema();
-
-  // The vendored Finsweet list is ~100KB of the bundle; only stand it up on
-  // pages that actually have a list to filter.
-  if (document.querySelector('[fs-list-element="list"]')) {
-    initFinsweetList(currentScript);
-  }
 });

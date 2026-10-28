@@ -11,11 +11,18 @@
 // current page so the new session has it; a refusal opts out again, which
 // clears the PostHog cookie and goes back to cookieless.
 //
+// GA4 loads only after an analytics yes (Google consent mode basic): nothing
+// from Google downloads or runs before that, so CookieYes can load async. On a
+// yes this sets consent (ad storage follows the advertisement category), then
+// config, then injects gtag.js. While the old head snippet still loads gtag.js
+// itself, only the consent update is sent.
+//
 // CookieYes API used: window.getCkyConsent() for the stored choice on load,
 // and the `cookieyes_consent_update` document event when the banner is
-// answered or the choice changes. GA4 needs none of this: CookieYes sets
-// Google consent mode itself.
+// answered or the choice changes.
 // -----------------------------------------
+
+const GA_ID = 'G-G2Y3LBQPRZ';
 
 interface CkyConsent {
   isUserActionCompleted?: boolean;
@@ -35,6 +42,8 @@ interface PostHogLike {
 declare global {
   interface Window {
     getCkyConsent?: () => CkyConsent;
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -45,9 +54,42 @@ export const hasAnalyticsConsent = () => granted === true;
 
 const posthog = () => (window as unknown as { posthog?: PostHogLike }).posthog;
 
-const apply = (allow: boolean) => {
+const googleConsent = (analytics: boolean, ads: boolean) => {
+  const ad = ads ? 'granted' : 'denied';
+  return {
+    analytics_storage: analytics ? 'granted' : 'denied',
+    ad_storage: ad,
+    ad_user_data: ad,
+    ad_personalization: ad,
+  };
+};
+
+const startGoogle = (ads: boolean) => {
+  window.dataLayer ||= [];
+  // gtag.js only reads commands pushed as `arguments` objects, never arrays
+  window.gtag ||= function gtag() {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer?.push(arguments);
+  };
+  window.gtag('consent', 'update', googleConsent(true, ads));
+  if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
+  window.gtag('js', new Date());
+  window.gtag('config', GA_ID);
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.append(script);
+};
+
+const apply = (allow: boolean, ads = false) => {
   if (allow === granted) return;
   granted = allow;
+  try {
+    if (allow) startGoogle(ads);
+    else window.gtag?.('consent', 'update', googleConsent(false, false));
+  } catch {
+    // consent must never break the page
+  }
   const ph = posthog();
   if (!ph) return;
   try {
@@ -72,7 +114,7 @@ const readStored = () => {
   try {
     const consent = window.getCkyConsent?.();
     if (!consent?.isUserActionCompleted) return;
-    apply(!!consent.categories?.analytics);
+    apply(!!consent.categories?.analytics, !!consent.categories?.advertisement);
   } catch {
     // CookieYes not ready yet; the update event covers it
   }
@@ -81,7 +123,8 @@ const readStored = () => {
 const onUpdate = (e: Event) => {
   const detail = (e as CustomEvent<{ accepted?: string[]; rejected?: string[] }>).detail;
   if (!detail) return readStored();
-  apply((detail.accepted ?? []).includes('analytics'));
+  const accepted = detail.accepted ?? [];
+  apply(accepted.includes('analytics'), accepted.includes('advertisement'));
 };
 
 export function initConsent(): void {

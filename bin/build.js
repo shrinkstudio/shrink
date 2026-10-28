@@ -8,9 +8,12 @@ import { inlineWorkerPlugin } from './inline-worker-plugin.js';
 const BUILD_DIRECTORY = 'dist';
 const PRODUCTION = process.env.NODE_ENV === 'production';
 
-// Config entrypoint files. Single bundle: the Finsweet list is imported by
-// index.ts (guarded), not built as its own entry.
-const ENTRY_POINTS = ['src/index.ts'];
+// Config entrypoint files. index.ts is the one footer tag; it injects
+// dist/list.js (the Finsweet list) only on pages with a list.
+const ENTRY_POINTS = [
+  { in: 'src/index.ts', out: 'index' },
+  { in: 'src/list-entry.ts', out: 'list' },
+];
 
 // Config dev serving
 const LIVE_RELOAD = !PRODUCTION;
