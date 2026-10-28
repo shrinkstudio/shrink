@@ -126,3 +126,6 @@ Mobile best of two runs (run 1 on home hit a cold connection, TTFB 2.8 s simulat
 | /tools/project-calculator | 96 (was 64) | 2.4 s (was 9.5) | 0.000 | 99 (was 88) | 0.8 s | 0.000 | 0.82 MiB (was 1.39) |
 
 Mobile scores still move 5 to 15 points between runs on the same build; read LCP and weight first. Field data (CrUX) needs about 28 days of traffic.
+
+## PageSpeed Insights, 28 Oct 15:32 (home, mobile, Lighthouse 13.5), Ben
+Performance 86 (58 on 26 Oct), Accessibility 97 (89), Best Practices 100, SEO 100, Agentic Browsing 3/3 (2/3). FCP 1.8 s (7.1), LCP 4.1 s (10.7), TBT 10 ms, CLS 0.007, Speed Index 2.3 s (7.2). Desktop: Ben, "flying". [Report](https://pagespeed.web.dev/analysis/https-shrink-studio/ux1yu19adq?form_factor=mobile). The filmstrip ends on the CookieYes banner over the hero, so on a first visit the banner is likely the mobile LCP.
