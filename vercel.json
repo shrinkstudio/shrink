@@ -3,5 +3,9 @@
   "framework": null,
   "installCommand": "",
   "buildCommand": "",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "functions": {
+    "api/forms.ts": { "maxDuration": 120 },
+    "api/scan.ts": { "maxDuration": 60 }
+  }
 }

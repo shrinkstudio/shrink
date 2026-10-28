@@ -15,10 +15,17 @@
  * Contact (+ Company), and always a Deal at Stage "Lead" carrying the range, what moved
  * it and the answers (someone who leaves an email after seeing a price is a lead).
  *
+ * The AI Search Check code component POSTs `form: "scan"` when someone asks for the
+ * emailed report: we re-run the scan ourselves (api/scan.ts), upsert Contact + Company,
+ * add a Scan request, then (after replying) ask ChatGPT, Claude and Perplexity three
+ * questions about them and email the report. No Deal: that comes when they reply or book.
+ *
  * Every new lead also pings Slack (see the slack section at the end).
  *
  * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature),
- * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook).
+ * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook), ANTHROPIC_API_KEY, OPENAI_API_KEY,
+ * PERPLEXITY_API_KEY (each optional: a missing key leaves that model out of the report),
+ * OPENAI_MODEL / PERPLEXITY_MODEL (optional overrides), SCAN_ENDPOINT (optional).
  */
 
 declare const process: { env: Record<string, string | undefined> };
@@ -31,6 +38,7 @@ const T = {
   contacts: 'tblXiE8Absty3l4HW',
   deals: 'tbl5TAoijwcEctsso',
   mailing: 'tblCy7RBJ1r86aWvo',
+  scans: 'tbl6u4rEWZfje5INW',
 };
 
 /* Need chip → Deals.Service */
@@ -166,6 +174,18 @@ type CalculatorPayload = {
   answers?: { question?: string; answer?: string }[];
 };
 
+type ScanPayload = {
+  form: 'scan';
+  id?: string;
+  /** honeypot: a hidden field people never fill */
+  hp?: string;
+  /** ms from seeing the result to sending the form */
+  elapsed?: number;
+  pageUrl?: string;
+  site?: string;
+  contact?: { name?: string; email?: string; competitor?: string; resources?: boolean };
+};
+
 export function OPTIONS(request: Request): Response {
   return new Response(null, { status: 204, headers: cors(request) });
 }
@@ -184,6 +204,21 @@ export async function POST(request: Request): Promise<Response> {
       return json(out, out.ok ? 200 : 400, headers);
     } catch (err) {
       console.error('forms error quiz', quiz.id, err);
+      return json({ ok: false, error: 'airtable failed' }, 500, headers);
+    }
+  }
+
+  // AI search check: the emailed report
+  const scanReq = parseScan(raw);
+  if (scanReq) {
+    const headers = cors(request);
+    if (!headers['Access-Control-Allow-Origin']) return json({ ok: false, error: 'origin' }, 403);
+    if (tooMany(request)) return json({ ok: false, error: 'slow down' }, 429, headers);
+    try {
+      const out = await handleScan(scanReq, request);
+      return json(out, out.ok ? 200 : 400, headers);
+    } catch (err) {
+      console.error('forms error scan', scanReq.id, err);
       return json({ ok: false, error: 'airtable failed' }, 500, headers);
     }
   }
@@ -630,6 +665,171 @@ async function handleCalculator(q: CalculatorPayload) {
   return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id, emailed, updated: !!open };
 }
 
+/* the scan result we use here (api/scan.ts returns more) */
+type ScanResult = {
+  ok: true;
+  host: string;
+  brand: string;
+  description: string;
+  score: { site: { got: number; of: number }; agent: { got: number; of: number } };
+  summary: { headline: string; body: string };
+  top: { title: string; body: string; effort: string }[];
+  checks: { id: string; label: string; pass: boolean; detail: string; bonus?: boolean }[];
+};
+
+async function handleScan(q: ScanPayload, request: Request) {
+  // bots: filled the hidden field, or sent the form faster than anyone can type. Say ok, store nothing
+  if (q.hp) return { ok: true };
+  if (typeof q.elapsed === 'number' && q.elapsed < 2500) return { ok: true };
+  const c = q.contact || {};
+  const email = c.email?.trim().toLowerCase() || '';
+  const name = c.name?.trim().slice(0, 200) || '';
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return { ok: false, error: 'name and email' };
+  const cleaned = cleanUrl(q.site?.slice(0, 300));
+  const host = cleaned ? domainName(cleaned) : '';
+  if (!host || !host.includes('.')) return { ok: false, error: 'site' };
+  const competitor = c.competitor?.trim().replace(/\s+/g, ' ').slice(0, 80) || '';
+  const id = q.id?.slice(0, 64);
+
+  // browser retries: skip if this request already landed
+  if (id) {
+    const dupe = await find(T.scans, `FIND("Scan ${esc(id)}", {Notes})`);
+    if (dupe) return { ok: true, duplicate: dupe.id };
+  }
+
+  // our own scan, so the email never carries text the browser sent
+  const result = await runScan(host, request);
+  const site = result?.host || host;
+  const core = result ? result.checks.filter((x) => !x.bonus) : [];
+  const passed = core.filter((x) => x.pass).length;
+  // few gaps: a light touch now and a fresh scan in a quarter; more gaps: Ben replies
+  const fewGaps = !!result && passed / core.length >= 0.85;
+  const scores = result
+    ? `site readiness ${result.score.site.got}/${result.score.site.of}, agent readiness ${result.score.agent.got}/${result.score.agent.of}`
+    : 'scan failed';
+  const gaps = core.filter((x) => !x.pass).map((x) => `- ${x.label}: ${x.detail}`);
+
+  const company = await upsertCompany(result?.brand || site, `https://${site}`);
+  const contact = await upsertContact({
+    name,
+    email,
+    company: company.id,
+    nextAction: fewGaps ? 'Nurture' : 'Needs follow-up',
+    note: `${today()} AI search check: ${site}, ${scores}${competitor ? `, competitor ${competitor}` : ''}${c.resources ? ', opted in to resources' : ''}`,
+  });
+  if (fewGaps) {
+    const recheck = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await patch(T.contacts, contact.id, { 'Recheck date': recheck }).catch((err) => console.error('recheck date', err));
+  }
+
+  const notes = [
+    `${today()} ${scores}${result ? `: ${result.summary.headline}` : ''}`,
+    ...(gaps.length ? ['', 'To improve:', ...gaps] : []),
+    '',
+    `Contact: ${name} <${email}>`,
+    ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
+    `Scan ${id || ''}`,
+  ].join('\n');
+  const [rec] = await create(T.scans, [
+    {
+      Name: `${site}, AI search check`,
+      'Work email': email,
+      'Company website': `https://${site}`,
+      ...(competitor ? { 'Main competitor': competitor } : {}),
+      Status: 'Scanned',
+      Company: [company.id],
+      Contact: [contact.id],
+      Notes: notes,
+    },
+  ]);
+
+  const mailing = c.resources
+    ? await upsertMailing(
+        { name: 'AI search check', siteId: SITE_ID, data: {}, pageUrl: q.pageUrl },
+        { name, email, contact: contact.id, source: 'AI search check' }
+      )
+    : null;
+
+  // the slow part (nine AI answers, then the email) runs after we reply
+  const job = finishScan({ rec, result, site, name, email, competitor, fewGaps, scores, id }).catch((err) =>
+    console.error('scan report', site, err)
+  );
+  if (!defer(job)) await job;
+
+  return { ok: true, scan: rec.id, contact: contact.id, company: company.id, mailing: mailing?.id };
+}
+
+async function finishScan(x: {
+  rec: AirtableRecord;
+  result: ScanResult | null;
+  site: string;
+  name: string;
+  email: string;
+  competitor: string;
+  fewGaps: boolean;
+  scores: string;
+  id?: string;
+}) {
+  const asked = x.result ? await recognise(x.result, x.competitor) : [];
+  const held = await holdScanEmail(x.email, x.rec.id);
+  const emailed = !x.result
+    ? 'not sent: the scan failed'
+    : held || (await sendResultsEmail(x.email, scanEmail(x.result, asked, x.name, x.competitor), `scan-${x.id || x.email}`, 'ai-search-check', 'none'));
+
+  const tally = MODELS.map((m) => {
+    const got = asked.flatMap((a) => a.answers).filter((a) => a.model === m);
+    const live = got.filter((a) => a.status !== 'Unavailable');
+    return live.length ? `${m} ${live.filter((a) => a.status !== 'Not yet').length}/${live.length}` : '';
+  }).filter(Boolean);
+  const answerNotes = asked.flatMap((a) => [`Q: ${a.question}`, ...a.answers.map((r) => `- ${r.model}: ${r.status}${r.excerpt ? `, "${clip(r.excerpt, 160)}"` : ''}`)]);
+
+  await patch(T.scans, x.rec.id, {
+    ...(emailed.startsWith('sent') ? { Status: 'Sent' } : {}),
+    Notes: `${String(x.rec.fields.Notes || '')}\n\nAI answers${tally.length ? ` (${tally.join(', ')})` : ': no model keys set'}\n${answerNotes.join('\n')}\n\nReport email: ${emailed}`.slice(0, 90000),
+  }).catch((err) => console.error('scan notes', err));
+
+  await notify(
+    `AI search check: ${x.site}`,
+    [
+      `${x.name} (${x.email})${x.competitor ? `, competitor ${x.competitor}` : ''}`,
+      `${x.scores}${x.result ? `: ${x.result.summary.headline}` : ''}`,
+      tally.length ? `Mentioned by AI tools: ${tally.join(', ')}` : 'AI answers: no model keys set',
+      `Report email: ${emailed}`,
+      x.fewGaps ? 'Contact set to Nurture, recheck in 90 days' : 'Reply within a working day',
+    ],
+    recordUrl(T.scans, x.rec.id)
+  );
+}
+
+/** api/scan.ts, called server to server. Null when it can't scan the site. */
+async function runScan(host: string, request: Request): Promise<ScanResult | null> {
+  const url = process.env.SCAN_ENDPOINT || new URL('/api/scan', request.url).toString();
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ site: host }),
+      signal: AbortSignal.timeout(40000),
+    });
+    const data = (await res.json().catch(() => null)) as ScanResult | null;
+    return res.ok && data?.ok ? data : null;
+  } catch (err) {
+    console.error('scan fetch', host, err);
+    return null;
+  }
+}
+
+/** Keeps a job running after the response (Vercel's waitUntil). False when there's no request context, eg. locally. */
+function defer(job: Promise<unknown>): boolean {
+  const ctx = (globalThis as Record<symbol, { get?: () => { waitUntil?: (p: Promise<unknown>) => void } } | undefined>)[
+    Symbol.for('@vercel/request-context')
+  ]?.get?.();
+  if (!ctx?.waitUntil) return false;
+  ctx.waitUntil(job);
+  return true;
+}
+
 /** Someone opened a calculator or quiz share link that carries a lead id ("Calculator <id>" or "Quiz <id>"). */
 async function handleReopen(ref: string) {
   const deal = await find(T.deals, `FIND("${esc(ref)}", {Notes})`);
@@ -713,7 +913,7 @@ async function upsertMailing(
     name?: string;
     email: string;
     contact: string;
-    source: 'Enquiry' | 'Guide' | 'Quiz' | 'Calculator';
+    source: 'Enquiry' | 'Guide' | 'Quiz' | 'Calculator' | 'AI search check';
     guide?: string;
   }
 ) {
@@ -899,6 +1099,15 @@ function gbp(v: unknown) {
   return typeof v === 'number' && Number.isFinite(v) ? '£' + Math.round(v).toLocaleString('en-GB') : '£?';
 }
 
+function parseScan(raw: string): ScanPayload | null {
+  try {
+    const body = JSON.parse(raw);
+    return body?.form === 'scan' ? body : null;
+  } catch {
+    return null;
+  }
+}
+
 function parseQuiz(raw: string): QuizPayload | null {
   try {
     const body = JSON.parse(raw);
@@ -961,6 +1170,24 @@ async function holdEmail(open: AirtableRecord | null): Promise<string> {
     return '';
   } catch (err) {
     console.error('email guard', err);
+    return 'held: guard check failed';
+  }
+}
+
+/** Like holdEmail, for AI search reports: one per address a day, and the same daily cap. */
+async function holdScanEmail(email: string, self: string): Promise<string> {
+  try {
+    const sameAddress = await count(
+      T.scans,
+      `AND(LOWER({Work email}) = "${esc(email)}", {Status} = "Sent", IS_AFTER(LAST_MODIFIED_TIME(), DATEADD(NOW(), -1, 'days')), RECORD_ID() != "${esc(self)}")`
+    );
+    if (sameAddress) return 'held: this address already had one today';
+    const cap = Number(process.env.RESULTS_EMAIL_DAILY_CAP) || 40;
+    const today = await count(T.scans, `AND({Status} = "Sent", IS_SAME(LAST_MODIFIED_TIME(), TODAY(), 'day'))`);
+    if (today >= cap) return `held: daily cap of ${cap} reached`;
+    return '';
+  } catch (err) {
+    console.error('scan email guard', err);
     return 'held: guard check failed';
   }
 }
@@ -1046,6 +1273,9 @@ type EmailParts = {
   button: string;
   cta: string;
   share: string;
+  /** the reopen link and the line under it, when the default answers wording doesn't fit */
+  shareLabel?: string;
+  shareNote?: string;
   /** "estimate" or "result", used in the reopen line and the footer */
   thing: string;
   campaign: string;
@@ -1104,8 +1334,8 @@ ${
   p.share
     ? `${gap(24)}
 <tr><td>
-  <p style="${t(14, 500, C.ink)}"><a href="${h(p.share)}" style="color:${C.ink};text-decoration:underline">Reopen your ${p.thing} to change any of your answers &rarr;</a></p>
-  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">To share this with your team, just forward this email. The link above opens your answers, so they'll see the same ${p.thing}.</p>
+  <p style="${t(14, 500, C.ink)}"><a href="${h(p.share)}" style="color:${C.ink};text-decoration:underline">${h(p.shareLabel || `Reopen your ${p.thing} to change any of your answers`)} &rarr;</a></p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">${h(p.shareNote || `To share this with your team, just forward this email. The link above opens your answers, so they'll see the same ${p.thing}.`)}</p>
 </td></tr>`
     : ''
 }
@@ -1132,7 +1362,7 @@ ${gap(48)}
     `What happens next: ${p.nextLine}`,
     p.note,
     `${p.button}: ${p.cta}`,
-    ...(p.share ? ['', `Reopen your ${p.thing}: ${p.share}`] : []),
+    ...(p.share ? ['', `${p.shareLabel || `Reopen your ${p.thing}`}: ${p.share}`] : []),
     '',
     'Ben Hammond, Founder, Shrink Studio',
     `You asked for this ${p.thing} on shrink.studio on ${date}.`,
@@ -1306,6 +1536,271 @@ ${
     thing: 'result',
     campaign,
   });
+}
+
+export function scanEmail(r: ScanResult, asked: Asked[], name: string, competitor: string): CalculatorEmail {
+  const first = firstName(name);
+  const campaign = 'ai-search-check';
+  const great = /great shape/i.test(r.summary.headline);
+  const answered = asked.filter((a) => a.answers.some((x) => x.status !== 'Unavailable'));
+
+  const scoreRows =
+    lineRow('Site readiness', 'How easily AI tools can reach, read and understand your pages', `${r.score.site.got} / ${r.score.site.of}`) +
+    lineRow('Agent readiness', 'How easily an AI agent could find your pricing or get in touch for someone', `${r.score.agent.got} / ${r.score.agent.of}`);
+  const askedHtml = answered
+    .map(
+      (a) => `${gap(24)}
+<tr><td>
+  <p style="${t(16, 500, C.ink, 1.4, 'margin-bottom:8px')}">&ldquo;${h(a.question)}&rdquo;</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${a.answers
+    .filter((x) => x.status !== 'Unavailable')
+    .map((x) => lineRow(x.model, clip(x.excerpt, 220) || 'No answer came back.', x.status))
+    .join('')}</table>
+</td></tr>`
+    )
+    .join('');
+  const fixes = r.top.slice(0, 3);
+
+  const sectionHtml = `${gap(48)}
+<tr><td>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">Your scores</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${scoreRows}</table>
+</td></tr>
+${
+  answered.length
+    ? `${gap(32)}
+<tr><td><p style="${t(14, 500, C.grey, 1.5)}">What AI tools said when we asked about ${h(r.brand)}</p></td></tr>${askedHtml}`
+    : ''
+}
+${
+  fixes.length
+    ? `${gap(32)}
+<tr><td>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">${fixes.length === 1 ? 'The change that would help most' : `${fixes.length === 2 ? 'Two' : 'Three'} changes that would help most`}</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${fixes
+    .map((f, i) => lineRow(String(i + 1).padStart(2, '0'), `${f.title}. ${f.body}`, f.effort))
+    .join('')}</table>
+</td></tr>`
+    : ''
+}`;
+  const sectionText = [
+    '',
+    `Site readiness: ${r.score.site.got} / ${r.score.site.of}`,
+    `Agent readiness: ${r.score.agent.got} / ${r.score.agent.of}`,
+    ...(answered.length
+      ? ['', `What AI tools said when we asked about ${r.brand}:`, ...answered.flatMap((a) => [`"${a.question}"`, ...a.answers.filter((x) => x.status !== 'Unavailable').map((x) => `- ${x.model}: ${x.status}. ${clip(x.excerpt, 220)}`)])]
+      : []),
+    ...(fixes.length ? ['', 'Changes that would help most:', ...fixes.map((f, i) => `${i + 1}. ${f.title} (${f.effort}). ${f.body}`)] : []),
+  ];
+
+  return renderEmail({
+    subject: `Your AI search report for ${r.host}`,
+    preheader: `${r.summary.headline}. Your scores, what AI tools said about you and the changes that would help most.`,
+    tag: 'AI search check',
+    top: `Here's your AI search report, ${first}.`,
+    figure: r.summary.headline,
+    body: h(r.summary.body),
+    sectionHtml,
+    sectionText,
+    nextLine: great
+      ? "If you'd like a second pair of eyes, we're always happy to talk."
+      : 'A 30-minute call is the easiest way to plan the changes together.',
+    note: "I'm happy to go through your report with you and show you what we'd change first. Or just reply to this email. It comes to me.",
+    button: 'Book a call with Ben',
+    cta: withUtm(SITE + '/calls/intro', campaign),
+    share: shareLink(`${SITE}/tools/ai-search-check?site=${encodeURIComponent(r.host)}`, campaign),
+    shareLabel: 'Run the check again to see your latest scores',
+    shareNote: "To share this with your team, just forward this email. The link above runs a fresh check of your site, so it's handy after you've made a change.",
+    thing: 'report',
+    campaign,
+  });
+}
+
+/* ---------- what AI tools say (the emailed part of the AI search check) ---------- */
+// Three questions to ChatGPT, Claude and Perplexity, each with web search on, so the
+// answers look like what a buyer would see. A model without a key is left out.
+
+const MODELS = ['ChatGPT', 'Claude', 'Perplexity'] as const;
+type Model = (typeof MODELS)[number];
+type Answer = { model: Model; status: 'Cited' | 'Mentioned' | 'Not yet' | 'Unavailable'; excerpt: string };
+type Asked = { question: string; answers: Answer[] };
+type Reply = { text: string; urls: string[] } | null;
+const AI_MS = 60000;
+
+async function recognise(r: ScanResult, competitor: string): Promise<Asked[]> {
+  const about = await describe(r);
+  const questions = [
+    `What is ${r.brand}, and what do they do?`,
+    about ? `What are the best ${about.category} for ${about.audience}?` : `Who are the leading companies like ${r.brand}?`,
+    competitor ? `${r.brand} or ${competitor}: which should I choose?` : `What are the best alternatives to ${r.brand}?`,
+  ];
+  const ask: Record<Model, (q: string) => Promise<Reply>> = { ChatGPT: askOpenAI, Claude: askClaude, Perplexity: askPerplexity };
+  const keys: Record<Model, string | undefined> = {
+    ChatGPT: process.env.OPENAI_API_KEY,
+    Claude: process.env.ANTHROPIC_API_KEY,
+    Perplexity: process.env.PERPLEXITY_API_KEY,
+  };
+  const live = MODELS.filter((m) => keys[m]);
+  return Promise.all(
+    questions.map(async (question) => ({
+      question,
+      answers: await Promise.all(
+        live.map(async (model): Promise<Answer> => {
+          const reply = await ask[model](question).catch((err) => {
+            console.error('ai answer', model, err);
+            return null;
+          });
+          if (!reply) return { model, status: 'Unavailable', excerpt: '' };
+          return { model, ...judge(reply, r) };
+        })
+      ),
+    }))
+  );
+}
+
+/** Mentioned when the answer names them, Cited when it also links to their site. */
+function judge(reply: { text: string; urls: string[] }, r: ScanResult): Omit<Answer, 'model'> {
+  const text = plain(reply.text);
+  const root = r.host.replace(/^www\./, '');
+  const brand = r.brand.toLowerCase();
+  const linked = reply.urls.some((u) => {
+    try {
+      const h = new URL(u).hostname.replace(/^www\./, '');
+      return h === root || h.endsWith(`.${root}`);
+    } catch {
+      return false;
+    }
+  });
+  const named = text.toLowerCase().includes(brand) || text.toLowerCase().includes(root);
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const excerpt = (named ? sentences.find((x) => x.toLowerCase().includes(brand) || x.toLowerCase().includes(root)) : sentences[0]) || '';
+  return { status: linked && named ? 'Cited' : named ? 'Mentioned' : 'Not yet', excerpt: clip(excerpt, 240) };
+}
+
+/* markdown and citation marks out, for excerpts */
+function plain(s: string) {
+  return s
+    .replace(/\s*\[(\d+)\]/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_#`>]+/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .trim();
+}
+
+/** What they sell and who to, for the "best X for Y" question. Claude, from the homepage description. */
+async function describe(r: ScanResult): Promise<{ category: string; audience: string } | null> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key || !r.description) return null;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-opus-5-5',
+        max_tokens: 2000,
+        output_config: {
+          effort: 'low',
+          format: {
+            type: 'json_schema',
+            schema: {
+              type: 'object',
+              properties: {
+                category: { type: 'string', description: 'plural, lower case, eg. "payment tools" or "Webflow agencies"' },
+                audience: { type: 'string', description: 'who buys it, lower case, eg. "accountancy firms"' },
+              },
+              required: ['category', 'audience'],
+              additionalProperties: false,
+            },
+          },
+        },
+        messages: [
+          {
+            role: 'user',
+            content: `A company's website describes it like this:\n\n${r.brand}: ${r.description}\n\nName the category of product or service it sells and who buys it, in a few words each, the way a buyer would phrase a search.`,
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const raw = data.content?.find((b) => b.type === 'text')?.text || '';
+    const out = JSON.parse(raw) as { category?: string; audience?: string };
+    return out.category && out.audience ? { category: out.category.slice(0, 60), audience: out.audience.slice(0, 60) } : null;
+  } catch (err) {
+    console.error('describe', err);
+    return null;
+  }
+}
+
+async function askClaude(question: string): Promise<Reply> {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'server-side-fallback-2026-07-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-5-5',
+      max_tokens: 4000,
+      output_config: { effort: 'low' },
+      fallbacks: 'default',
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 3 }],
+      messages: [{ role: 'user', content: question }],
+    }),
+    signal: AbortSignal.timeout(AI_MS),
+  });
+  if (!res.ok) throw new Error(`Claude ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as {
+    stop_reason?: string;
+    content?: { type: string; text?: string; citations?: { url?: string }[]; content?: { url?: string }[] | object }[];
+  };
+  if (data.stop_reason === 'refusal') return null;
+  const blocks = data.content || [];
+  const text = blocks.filter((b) => b.type === 'text').map((b) => b.text || '').join('');
+  const urls = [
+    ...blocks.flatMap((b) => (b.citations || []).map((c) => c.url || '')),
+    ...blocks.filter((b) => b.type === 'web_search_tool_result' && Array.isArray(b.content)).flatMap((b) => (b.content as { url?: string }[]).map((c) => c.url || '')),
+  ].filter(Boolean);
+  return text ? { text, urls } : null;
+}
+
+async function askOpenAI(question: string): Promise<Reply> {
+  const res = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: process.env.OPENAI_MODEL || 'gpt-5-mini', input: question, tools: [{ type: 'web_search' }] }),
+    signal: AbortSignal.timeout(AI_MS),
+  });
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as {
+    output_text?: string;
+    output?: { type: string; content?: { type: string; text?: string; annotations?: { url?: string }[] }[] }[];
+  };
+  const parts = (data.output || []).filter((o) => o.type === 'message').flatMap((o) => o.content || []).filter((c) => c.type === 'output_text');
+  const text = data.output_text || parts.map((p) => p.text || '').join('');
+  const urls = parts.flatMap((p) => (p.annotations || []).map((a) => a.url || '')).filter(Boolean);
+  return text ? { text, urls } : null;
+}
+
+async function askPerplexity(question: string): Promise<Reply> {
+  const res = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: process.env.PERPLEXITY_MODEL || 'sonar', messages: [{ role: 'user', content: question }] }),
+    signal: AbortSignal.timeout(AI_MS),
+  });
+  if (!res.ok) throw new Error(`Perplexity ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+    citations?: string[];
+    search_results?: { url?: string }[];
+  };
+  const text = data.choices?.[0]?.message?.content || '';
+  const urls = [...(data.citations || []), ...(data.search_results || []).map((x) => x.url || '')].filter(Boolean);
+  return text ? { text, urls } : null;
 }
 
 /** Sends through Resend. Returns the email id, or why it wasn't sent. */
