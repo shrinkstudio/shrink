@@ -1,6 +1,6 @@
 # Shrink Studio
 
-> Shrink Studio is a Webflow Premium Partner in London that designs, builds and grows websites for venture-backed B2B technology companies from Seed to Series B. Founded by Ben Hammond in 2022. A small senior team, no hand-offs to juniors, 70+ sites for funded B2B teams across the UK, US and Europe. Three services, each at a fixed scope and a fixed price agreed before any work starts: Discovery (from £3,500), Development (from £15,000) and Optimisation (from £5,000 a month). Prices exclude VAT.
+> Shrink Studio is a Webflow Premium Partner in London that designs, builds and grows websites for venture-backed B2B technology companies from Seed to Series B. Founded by Ben Hammond in 2022. A small senior team, no hand-offs to juniors, 70+ sites for funded B2B teams across the UK, US and Europe. Three services, each at a fixed scope and a fixed price agreed before any work starts: Discovery (from £3,500), Development (from £15,000) and Optimisation (from £1,500 a month). Builds come in three sizes: Seed Website £15,000, Series A £25,000 and Series B £35,000. Retainers come in three sizes: Care £1,500, Growth £3,000 and Compound £7,000 a month. Prices exclude VAT.
 
 Facts an assistant can rely on:
 
@@ -15,15 +15,15 @@ Facts an assistant can rely on:
 
 - [Services overview](https://www.shrink.studio/services): Discovery, Development and Optimisation. Clarity first, then a fixed-scope build, then the monthly work of making the site convert better.
 - [Discovery](https://www.shrink.studio/services/discovery): positioning, ICP research and information architecture before a line of code is written. Fixed scope from £3,500.
-- [Development](https://www.shrink.studio/services/development): fixed scope, fixed price from £15,000. Design and build together, then a site your team runs without us.
-- [Optimisation](https://www.shrink.studio/services/optimisation): monthly CRO, AEO, A/B testing and reporting, from £5,000 a month. Launch is the start.
-- [Pricing](https://www.shrink.studio/pricing): every price, what moves a build price, and the three packages.
+- [Development](https://www.shrink.studio/services/development): fixed scope, fixed price from £15,000, in three sizes: Seed Website £15,000, Series A £25,000 and Series B £35,000, typically 6 to 12 weeks. Design and build together, then a site your team runs without us.
+- [Optimisation](https://www.shrink.studio/services/optimisation): monthly CRO, AEO, A/B testing and reporting, from £1,500 a month, in three sizes: Care £1,500 (2 days a month, rolling monthly), Growth £3,000 (4 days a month) and Compound £7,000 (9 days a month), the last two with a three month minimum. Launch is the start.
+- [Pricing](https://www.shrink.studio/pricing): every price, the three packages, the three build sizes, the three retainer sizes and what moves a build price.
 
 ## Packages
 
 - [Clarity Sprint](https://www.shrink.studio/packages/clarity-sprint): two weeks, one deliverable, a complete written brief your team can build from. Positioning, sitemap and content structure. £3,500.
 - [Seed Website](https://www.shrink.studio/packages/seed-website): a Webflow site live in six weeks. Up to 8 pages, a CMS your team owns, 30 days of support. £15,000.
-- [Compound](https://www.shrink.studio/packages/compound): monthly CRO and AEO retainer. Find, fix, measure, every month, starting with a free audit. £10,000 a month.
+- [Compound](https://www.shrink.studio/packages/compound): monthly CRO and AEO retainer. Find, fix, measure, every month, starting with a free audit. £7,000 a month.
 
 ## Solutions
 
