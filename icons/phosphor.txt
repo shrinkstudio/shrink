@@ -1,0 +1,51 @@
+# Phosphor regular icons the site uses (one name per line, without "ph-").
+# Run bin/phosphor-subset.sh after adding one, then paste dist/icons/phosphor-embed.html
+# into the Icons embed in the Custom Code component.
+# In use on the live site (28 Oct 2026)
+arrow-right
+copy
+arrow-up-right
+check
+caret-down
+file-text
+list-checks
+trend-up
+question
+plant
+calculator
+article
+arrow-left
+tree-structure
+handshake
+arrow-counter-clockwise
+x
+users-three
+magnifying-glass
+git-branch
+eye
+clipboard-text
+chart-line-up
+calendar-check
+browsers
+book-open
+# Spares, so common additions work without a rebuild
+arrow-down
+arrow-up
+arrow-down-right
+caret-up
+caret-left
+caret-right
+plus
+minus
+info
+warning
+check-circle
+x-circle
+envelope-simple
+phone
+map-pin
+linkedin-logo
+arrow-square-out
+download-simple
+play
+pause
