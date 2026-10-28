@@ -582,7 +582,7 @@ Mobile: Performance 70, Accessibility 89, Best Practices 100, SEO 100, Agentic B
     4. [x] **C** Share link that reopens the answers and carries the lead id
     5. [x] **C** Deal value set to the middle of the range
     6. [x] **C** PostHog funnel per tool: started, completed, email requested, booked
-    7. [ ] **C then B** (code ready 28 Oct: 20 tests pass, flow and share link checked in the local preview; awaiting Ben's OK to push and import) Republish the library (`npm run import`), Ben accepts the update in the Designer, live check
+    7. [~] **C then B** Pushed and library imported 28 Oct (API healthy: forms 400 on an empty post, cal 401 unsigned). **Ben**: accept the Shrink Tools update in the Designer, publish, then C runs the live check. Republish the library (`npm run import`), Ben accepts the update in the Designer, live check
   - Results email
     8. [x] **B** Sender: Resend (28 Oct). Account on hey@shrink.studio, `RESEND_API_KEY` in Vercel, domain `send.shrink.studio` added. Postmark noted (Dan, MakeBuild); sequencing is unnecessary because follow-ups are personal
     9. [ ] **B+C** DNS in GoDaddy for Resend. shrink.studio has DMARC `p=reject` with strict alignment (`adkim=s; aspf=s`), so the From address must sit on the domain Resend signs: with `send.shrink.studio` the From is `…@send.shrink.studio` (reply-to hey@shrink.studio); verifying the root `shrink.studio` in Resend instead allows From hey@shrink.studio. Resend's SPF and MX go on its own return-path host, so the root SPF and Google Workspace stay untouched. No Resend records live yet (checked 28 Oct)
