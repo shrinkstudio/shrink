@@ -1,22 +1,23 @@
 /**
  * Pricing sanity checks for the Project Calculator. Run: npm test
- * Reference points come from the retired tools.shrink.studio calculator
- * (marketing site, medium, full design, CMS, extras, focused discovery:
- * £34k to £60k) and the published Pricing page floors.
+ * Reference points are real 2026 deals: Isla Health (about 185 URLs, design
+ * system, HubSpot and GA4, WCAG: quoted £25k to £28k) and BuildStore (Craft to
+ * Webflow migration and redesign: quoted £20k, a little low).
  */
 import assert from 'node:assert/strict';
 import {
-  APP_FLOOR,
+  BASE,
   CALL_THRESHOLD,
   QUESTIONS,
-  SITE_FLOOR,
-  computeDrivers,
   computeEstimate,
   computeNextStep,
-  dayRate,
+  decodeAnswers,
   describeAnswers,
+  encodeAnswers,
   fmtRange,
   isComplete,
+  shareUrl,
+  siteLines,
   visibleQuestions,
   type Answers,
 } from '../src/Calculator/model.ts';
@@ -30,124 +31,141 @@ const it = (name: string, fn: () => void) => {
 
 const LINKS = { call: '/calls/intro', brief: '/contact?service=development', compoundCall: '/calls/compound' };
 
-const site: Answers = {
-  type: 'marketing-site',
-  pages: 'medium',
-  design: 'full',
-  cms: 'yes',
-  extras: ['interactions', 'integrations'],
-  discovery: 'focused',
+const seed: Answers = {
+  type: 'new-site',
+  templates: 'up-to-8',
+  cms: 'up-to-2',
+  design: 'brand',
+  platform: 'none',
+  integrations: [],
+  extras: [],
+  brief: 'agreed',
   timing: 'quarter',
 };
+const isla: Answers = {
+  type: 'rebuild',
+  templates: '9-15',
+  cms: 'up-to-2',
+  design: 'system',
+  platform: 'wordpress',
+  migration: '50-200',
+  integrations: ['crm', 'analytics'],
+  extras: ['a11y'],
+  brief: 'agreed',
+  timing: 'quarter',
+};
+const buildstore: Answers = {
+  type: 'rebuild',
+  templates: 'up-to-8',
+  cms: 'up-to-2',
+  design: 'direction',
+  platform: 'other',
+  migration: '50-200',
+  integrations: [],
+  extras: [],
+  brief: 'agreed',
+  timing: 'flexible',
+};
 
-it('rate card matches the internal scoping tool', () => {
-  assert.equal(Math.round(dayRate('founder')), 991);
-  assert.equal(Math.round(dayRate('senior-dev')), 801);
-  assert.equal(Math.round(dayRate('pm')), 501);
-  assert.equal(dayRate('nobody'), 0);
-});
-
-it('branching: a site asks pages/design/cms, an app asks size/modules, a retainer asks intensity', () => {
+it('branching: a site asks the scope, a retainer asks the tier, a web app asks nothing more', () => {
   const ids = (a: Answers) => visibleQuestions(a).map((q) => q.id);
-  assert.deepEqual(ids({ type: 'marketing-site' }), ['type', 'pages', 'design', 'cms', 'extras', 'discovery', 'timing']);
-  assert.deepEqual(ids({ type: 'web-app' }), ['type', 'appSize', 'appModules', 'extras', 'discovery', 'timing']);
-  assert.deepEqual(ids({ type: 'optimisation' }), ['type', 'optIntensity']);
-  assert.equal(ids({}).length, 1);
+  assert.deepEqual(ids({ type: 'new-site' }), ['type', 'templates', 'cms', 'design', 'platform', 'integrations', 'extras', 'brief', 'timing']);
+  assert.deepEqual(ids({ type: 'rebuild', platform: 'webflow' }), ['type', 'templates', 'cms', 'design', 'platform', 'migration', 'integrations', 'extras', 'brief', 'timing']);
+  assert.deepEqual(ids({ type: 'retainer' }), ['type', 'tier']);
+  assert.deepEqual(ids({ type: 'web-app' }), ['type']);
   assert.ok(QUESTIONS.every((q) => q.options.length >= 2));
 });
 
-it('isComplete respects optional multis', () => {
-  assert.equal(isComplete({ type: 'marketing-site', pages: 'small', design: 'none', cms: 'no', discovery: 'none', timing: 'flexible' }), true);
-  assert.equal(isComplete({ type: 'marketing-site', pages: 'small' }), false);
-  assert.equal(isComplete({ type: 'optimisation', optIntensity: 'compound' }), true);
-});
-
-it('reference site lands in the old tool\'s range (about £34k to £60k)', () => {
-  const e = computeEstimate(site);
+it('the Seed Website scope lands on the package price', () => {
+  const e = computeEstimate(seed);
   assert.ok(e && e.kind === 'range');
-  if (e && e.kind === 'range') {
-    assert.ok(e.low >= 30000 && e.low <= 40000, `low ${e.low}`);
-    assert.ok(e.high >= 55000 && e.high <= 68000, `high ${e.high}`);
-    assert.ok(e.low % 500 === 0 && e.high % 500 === 0);
-    assert.ok(e.lines.some((l) => l.area === 'Discovery'));
-    assert.ok(e.lines.every((l) => l.min <= l.max));
+  assert.equal(e.total, BASE);
+  assert.equal(fmtRange(e.low, e.high), '£15,000');
+  const small = computeEstimate({ ...seed, integrations: ['crm'] });
+  assert.ok(small && small.kind === 'range' && small.low === BASE);
+  const n = computeNextStep(seed, e, LINKS)!;
+  assert.equal(n.kind, 'brief');
+  assert.equal(n.package?.name, 'Seed Website');
+});
+
+it('an Isla Health sized scope lands in the pitch zone and books a call', () => {
+  const e = computeEstimate(isla);
+  assert.ok(e && e.kind === 'range');
+  assert.equal(e.total, 28500);
+  assert.equal(fmtRange(e.low, e.high), '£26,500 to £30,500');
+  assert.equal(computeNextStep(isla, e, LINKS)!.kind, 'call');
+});
+
+it('a BuildStore sized scope lands around £20k', () => {
+  const e = computeEstimate(buildstore);
+  assert.ok(e && e.kind === 'range');
+  assert.equal(e.total, 20500);
+});
+
+it('one band, applied once: the high figure is at most 1.15x the low', () => {
+  for (const a of [seed, isla, buildstore]) {
+    const e = computeEstimate(a);
+    assert.ok(e && e.kind === 'range');
+    assert.ok(e.high / e.low <= 1.15 + 0.01, `${e.low} to ${e.high}`);
+    assert.equal(e.lines.reduce((s, l) => s + l.amount, 0), e.total);
   }
 });
 
-it('floors follow the Pricing page: sites from £15,000, apps from £30,000', () => {
-  const tiny = computeEstimate({ type: 'redesign', pages: 'small', design: 'none', cms: 'no', discovery: 'none', timing: 'flexible' });
-  assert.ok(tiny && tiny.kind === 'range' && tiny.low === SITE_FLOOR);
-  const app = computeEstimate({ type: 'web-app', appSize: 'mvp', discovery: 'none', timing: 'flexible' });
-  assert.ok(app && app.kind === 'range' && app.low >= APP_FLOOR && app.high > app.low);
+it('lines: base first, zero lines left out, three languages replaces two, migration needs a platform', () => {
+  const lines = siteLines({ ...isla, extras: ['lang-2', 'lang-3'] });
+  assert.equal(lines[0].id, 'base');
+  assert.ok(lines.every((l) => l.amount > 0));
+  assert.ok(lines.some((l) => l.id === 'extra-lang-3'));
+  assert.ok(!lines.some((l) => l.id === 'extra-lang-2'));
+  assert.ok(!siteLines({ ...isla, platform: 'none' }).some((l) => l.id === 'migration'));
 });
 
-it('retainers: £5,000 a month focused, £10,000 Compound, nothing until the tier is picked', () => {
-  assert.equal(computeEstimate({ type: 'optimisation' }), null);
-  const s = computeEstimate({ type: 'optimisation', optIntensity: 'standard' });
-  const c = computeEstimate({ type: 'optimisation', optIntensity: 'compound' });
-  assert.ok(s && s.kind === 'recurring' && s.monthly === 5000);
-  assert.ok(c && c.kind === 'recurring' && c.monthly === 10000 && c.label === 'Compound');
+it('web apps and very large sites go straight to a call', () => {
+  const app = computeEstimate({ type: 'web-app' });
+  assert.ok(app && app.kind === 'call' && app.reason === 'web-app' && !app.from);
+  const big = computeEstimate({ ...isla, templates: '25-plus' });
+  assert.ok(big && big.kind === 'call' && big.reason === 'large' && (big.from ?? 0) > CALL_THRESHOLD - 5000);
+  assert.equal(computeNextStep({ type: 'web-app' }, app, LINKS)!.href, LINKS.call);
 });
 
-it('fast turnaround adds roughly 15% and shows up as a line', () => {
-  const slow = computeEstimate({ ...site, timing: 'flexible' });
-  const fast = computeEstimate({ ...site, timing: 'fast' });
-  assert.ok(slow && fast && slow.kind === 'range' && fast.kind === 'range');
-  if (slow && fast && slow.kind === 'range' && fast.kind === 'range') {
-    assert.ok(fast.high > slow.high * 1.12 && fast.high < slow.high * 1.18, `${slow.high} -> ${fast.high}`);
-    assert.ok(fast.lines.some((l) => l.area === 'Fast turnaround'));
-    assert.ok(!slow.lines.some((l) => l.area === 'Fast turnaround'));
-  }
+it('retainers are Care, Growth and Compound, and Compound books a Compound call', () => {
+  const m = (tier: string) => {
+    const e = computeEstimate({ type: 'retainer', tier });
+    return e && e.kind === 'recurring' ? e.monthly : 0;
+  };
+  assert.deepEqual([m('care'), m('growth'), m('compound')], [1500, 3000, 7000]);
+  const e = computeEstimate({ type: 'retainer', tier: 'compound' });
+  const n = computeNextStep({ type: 'retainer', tier: 'compound' }, e, LINKS)!;
+  assert.equal(n.href, LINKS.compoundCall);
+  assert.equal(n.package?.price, '£7,000 a month');
 });
 
-it('drivers: pages, integrations and timing always lead, amounts never negative', () => {
-  const d = computeDrivers(site);
-  assert.deepEqual(d.slice(0, 3).map((x) => x.id), ['pages', 'integrations', 'timing']);
-  assert.ok(d.every((x) => x.low >= 0 && x.high >= 0 && x.low <= x.high));
-  assert.ok(d[0].high > 0, 'medium pages cost more than small');
-  assert.ok(d[1].high > 0, 'integrations picked add cost');
-  assert.equal(d[2].low, 0, 'standard timing adds nothing');
-  const fast = computeDrivers({ ...site, timing: 'fast' });
-  assert.ok(fast[2].low > 0);
-  const app = computeDrivers({ type: 'web-app', appSize: 'standard', appModules: ['auth', 'integrations'], discovery: 'none', timing: 'flexible' });
-  assert.deepEqual(app.slice(0, 3).map((x) => x.id), ['size', 'integrations', 'timing']);
-  assert.ok(app.some((x) => x.id === 'modules'));
-  assert.deepEqual(computeDrivers({ type: 'optimisation', optIntensity: 'compound' }), []);
+it('an open brief adds a Clarity Sprint outside the figure', () => {
+  const e = computeEstimate({ ...isla, brief: 'open' });
+  assert.ok(e && e.kind === 'range');
+  assert.equal(e.sprint, 3500);
+  assert.equal(e.total, 28500);
+  assert.equal(computeNextStep({ ...isla, brief: 'open' }, e, LINKS)!.package?.name, 'Clarity Sprint');
 });
 
-it('next step: a brief for small sites, a call above the threshold, apps and deep discovery', () => {
-  const small: Answers = { type: 'marketing-site', pages: 'small', design: 'partial', cms: 'no', discovery: 'none', timing: 'flexible' };
-  const n1 = computeNextStep(small, computeEstimate(small), LINKS);
-  assert.ok(n1 && n1.kind === 'brief' && n1.href === LINKS.brief);
-  assert.equal(n1?.package?.name, 'Seed Website');
-
-  const n2 = computeNextStep(site, computeEstimate(site), LINKS);
-  assert.ok(n2 && n2.kind === 'call' && n2.href === LINKS.call);
-  const e2 = computeEstimate(site);
-  assert.ok(e2 && e2.kind === 'range' && e2.low >= CALL_THRESHOLD);
-
-  const app: Answers = { type: 'web-app', appSize: 'mvp', discovery: 'none', timing: 'flexible' };
-  assert.equal(computeNextStep(app, computeEstimate(app), LINKS)?.kind, 'call');
-
-  const sprint: Answers = { ...small, pages: 'large', discovery: 'focused' };
-  assert.equal(computeNextStep(sprint, computeEstimate(sprint), LINKS)?.package?.name, 'Clarity Sprint');
-
-  const compound: Answers = { type: 'optimisation', optIntensity: 'compound' };
-  const n3 = computeNextStep(compound, computeEstimate(compound), LINKS);
-  assert.ok(n3 && n3.kind === 'call' && n3.href === LINKS.compoundCall && n3.package?.name === 'Compound');
+it('the share link round-trips and rejects junk', () => {
+  const url = shareUrl('https://www.shrink.studio/tools/project-calculator', isla, 'abc');
+  const params = new URL(url).searchParams;
+  assert.equal(params.get('ref'), 'abc');
+  assert.deepEqual(decodeAnswers(params.get('estimate')!), isla);
+  assert.equal(decodeAnswers(encodeAnswers({ type: 'new-site' })), null);
+  assert.equal(decodeAnswers('not-base64!'), null);
+  assert.equal(isComplete(isla), true);
 });
 
-it('formatting and lead notes', () => {
-  assert.equal(fmtRange(34000, 60000), '£34,000 to £60,000');
-  assert.equal(fmtRange(15000, 15000), '£15,000');
-  const notes = describeAnswers(site);
-  assert.equal(notes.length, 7);
-  assert.equal(notes[0].answer, 'A new marketing website');
-  assert.ok(notes.every((n) => n.question && n.answer));
+it('lead notes read cleanly', () => {
+  const d = describeAnswers(isla);
+  assert.equal(d[0].answer, 'A rebuild of our current site');
+  assert.ok(d.every((x) => x.answer.length > 0));
 });
 
 it('copy: no em dashes anywhere in the model', () => {
-  const text = JSON.stringify(QUESTIONS);
+  const text = JSON.stringify(QUESTIONS) + JSON.stringify(computeEstimate(isla)) + JSON.stringify(computeNextStep(isla, computeEstimate(isla), LINKS));
   assert.ok(!text.includes('—'));
 });
 

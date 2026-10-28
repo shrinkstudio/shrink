@@ -1,24 +1,24 @@
 /**
- * Project Calculator: intro -> a short branching question flow -> a price
- * range for the build, what moved the figure (pages, integrations, timing and
- * the rest), where the money goes, and the next step (a call or a brief) with
- * a package pointer where one fits. A lead form posts the estimate to the
- * site's forms handler.
+ * Project Calculator: intro -> a short branching question flow -> an estimate
+ * for the build, every line that makes it up, and the next step (a call or a
+ * brief) with a package pointer where one fits. Web apps and very large sites
+ * go straight to a call; retainers show their tier. A lead form posts the
+ * estimate to the site's forms handler, and a share link reopens the answers.
  * Shadow-DOM component; styles are scoped and read the site's MAST variables.
  * Questions, pricing and copy live in model.ts.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from './styles';
 import {
-  computeDrivers,
   computeEstimate,
   computeNextStep,
+  decodeAnswers,
   describeAnswers,
   fmtGBP,
   fmtRange,
+  shareUrl,
   visibleQuestions,
   type Answers,
-  type Driver,
 } from './model';
 
 export interface CalculatorProps {
@@ -55,6 +55,8 @@ type SubmitState =
   | { status: 'sent' }
   | { status: 'error'; message: string };
 
+type Props = Record<string, string | number | boolean | undefined>;
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function newId(): string {
@@ -62,9 +64,10 @@ function newId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function driverValue(d: Driver): string {
-  if (d.low === 0 && d.high === 0) return 'No extra';
-  return `+${fmtRange(d.low, d.high)}`;
+/** PostHog when the site has it (consent is handled by the site's own set-up). */
+function track(name: string, props: Props = {}) {
+  const w = window as unknown as { posthog?: { capture?: (n: string, p?: Props) => void } };
+  w.posthog?.capture?.(name, { tool: 'calculator', ...props });
 }
 
 export function Calculator({
@@ -72,10 +75,10 @@ export function Calculator({
   frame = 'none',
   eyebrow = 'Project calculator',
   introHeading = 'What would your site cost?',
-  introBody = 'A few plain questions, priced against the same rate card we scope real builds with. You get a range, what moved it, and the next step.',
+  introBody = "A few questions about the site you have in mind, priced from the same list we use to scope real projects. You'll see an estimate, every line that makes it up, and the best next step.",
   bullet1 = 'About two minutes',
-  bullet2 = 'No email to see the figure',
-  bullet3 = 'A range, with the levers that move it',
+  bullet2 = 'See your estimate straight away',
+  bullet3 = 'Every line explained',
   startLabel = 'Start the calculator',
   backLabel = 'Back',
   restartLabel = 'Start over',
@@ -85,13 +88,15 @@ export function Calculator({
   briefLink = '/contact?service=development',
   optInLabel = 'Send me guides and resources from Shrink',
   submitEndpoint = 'https://shrink-site-api.vercel.app/api/forms',
-  disclaimer = 'An indicative range from our standard rate card, excluding VAT. The price is fixed once the scope is agreed.',
+  disclaimer = 'An estimate from our standard price list, before VAT. The price is fixed once we agree the scope together.',
 }: CalculatorProps) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [contact, setContact] = useState({ name: '', email: '', company: '', resources: false });
   const [submit, setSubmit] = useState<SubmitState>({ status: 'idle' });
+  const [leadId, setLeadId] = useState(newId);
+  const [copied, setCopied] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const flow = useMemo(() => visibleQuestions(answers), [answers]);
@@ -99,11 +104,27 @@ export function Calculator({
   const isLast = step >= flow.length - 1;
 
   const estimate = useMemo(() => (phase === 'results' ? computeEstimate(answers) : null), [phase, answers]);
-  const drivers = useMemo(() => (phase === 'results' ? computeDrivers(answers) : []), [phase, answers]);
   const nextStep = useMemo(
     () => (phase === 'results' ? computeNextStep(answers, estimate, { call: callLink, brief: briefLink, compoundCall: compoundCallLink }) : null),
     [phase, answers, estimate, callLink, briefLink, compoundCallLink],
   );
+  const link = useMemo(
+    () => (phase === 'results' && typeof window !== 'undefined' ? shareUrl(window.location.origin + window.location.pathname, answers, leadId) : ''),
+    [phase, answers, leadId],
+  );
+
+  // a shared link (?estimate=) opens straight on the results
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get('estimate');
+    const shared = data ? decodeAnswers(data) : null;
+    if (!shared) return;
+    setAnswers(shared);
+    const ref = params.get('ref');
+    if (ref) setLeadId(ref);
+    setPhase('results');
+    track('calculator_reopened', { ref: ref || '' });
+  }, []);
 
   // keep the top of the card in view as the phase changes
   const firstRender = useRef(true);
@@ -133,10 +154,20 @@ export function Calculator({
     });
   }
 
+  function showResults() {
+    const est = computeEstimate(answers);
+    setPhase('results');
+    track('calculator_completed', {
+      type: String(answers.type || ''),
+      kind: est?.kind || '',
+      low: est?.kind === 'range' ? est.low : est?.kind === 'recurring' ? est.monthly : 0,
+      high: est?.kind === 'range' ? est.high : est?.kind === 'recurring' ? est.monthly : 0,
+    });
+  }
   function next() {
     // branching can change the flow after this answer
     const updated = visibleQuestions(answers);
-    if (step >= updated.length - 1) setPhase('results');
+    if (step >= updated.length - 1) showResults();
     else setStep(step + 1);
   }
   function back() {
@@ -151,30 +182,46 @@ export function Calculator({
     setAnswers({});
     setContact({ name: '', email: '', company: '', resources: false });
     setSubmit({ status: 'idle' });
+    setLeadId(newId());
     setStep(0);
     setPhase('intro');
+  }
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      track('calculator_link_copied');
+    } catch {
+      setCopied(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!contact.name.trim() || !EMAIL_RE.test(contact.email)) {
-      setSubmit({ status: 'error', message: 'Add your name and a valid email address.' });
+      setSubmit({ status: 'error', message: 'Please add your name and a valid email address.' });
       return;
     }
     setSubmit({ status: 'sending' });
+    const est = estimate;
     try {
       const res = await fetch(submitEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           form: 'calculator',
-          id: newId(),
+          id: leadId,
           pageUrl: window.location.href,
+          shareUrl: link,
           contact,
-          estimate: estimate && (estimate.kind === 'range'
-            ? { kind: 'range', low: estimate.low, high: estimate.high, type: answers.type }
-            : { kind: 'recurring', monthly: estimate.monthly, label: estimate.label, type: answers.type }),
-          drivers: drivers.map((d) => ({ label: d.label, choice: d.choice, low: d.low, high: d.high })),
+          estimate: !est
+            ? null
+            : est.kind === 'range'
+              ? { kind: 'range', low: est.low, high: est.high, total: est.total, sprint: est.sprint, type: answers.type }
+              : est.kind === 'recurring'
+                ? { kind: 'recurring', monthly: est.monthly, label: est.label, type: answers.type }
+                : { kind: 'call', reason: est.reason, from: est.from, type: answers.type },
+          drivers: est?.kind === 'range' ? est.lines.map((l) => ({ label: l.label, choice: l.choice, low: l.amount, high: l.amount })) : [],
           nextStep: nextStep && { kind: nextStep.kind, label: nextStep.label, package: nextStep.package?.name },
           answers: describeAnswers(answers),
         }),
@@ -182,8 +229,9 @@ export function Calculator({
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error || 'Submit failed');
       setSubmit({ status: 'sent' });
+      track('calculator_email_requested', { kind: est?.kind || '' });
     } catch {
-      setSubmit({ status: 'error', message: 'Something went wrong. Please try again, or email hey@shrink.studio.' });
+      setSubmit({ status: 'error', message: 'Something went wrong on our side. Please try again, or email hey@shrink.studio.' });
     }
   }
 
@@ -206,7 +254,11 @@ export function Calculator({
               </ul>
             )}
             <div className="sk-actions">
-              <button type="button" className="sk-btn" onClick={() => { setPhase('questions'); setStep(0); }}>
+              <button
+                type="button"
+                className="sk-btn"
+                onClick={() => { setPhase('questions'); setStep(0); track('calculator_started'); }}
+              >
                 {startLabel}
               </button>
             </div>
@@ -257,7 +309,7 @@ export function Calculator({
             <div className="sk-actions sk-actions--between">
               <button type="button" className="sk-btn sk-btn--secondary" onClick={back}>{backLabel}</button>
               <button type="button" className="sk-btn" onClick={next} disabled={!answered}>
-                {isLast ? 'See my range' : 'Next'}
+                {isLast || answers.type === 'web-app' ? 'See my estimate' : 'Next'}
               </button>
             </div>
           </div>
@@ -265,55 +317,62 @@ export function Calculator({
 
         {phase === 'results' && estimate && nextStep && (
           <div className="sk-step" key="results">
-            <p className="sk-eyebrow">{estimate.kind === 'range' ? 'Your range' : 'Your retainer'}</p>
-            {estimate.kind === 'range' ? (
+            {estimate.kind === 'range' && (
               <>
+                <p className="sk-eyebrow">Your estimate</p>
                 <h3 className="pc-figure">{fmtRange(estimate.low, estimate.high)}</h3>
-                <p className="sk-body pc-figure-sub">
-                  {estimate.note || 'For the build as you described it, before VAT. The scope is fixed first, then the price.'}
-                </p>
+                <p className="sk-body pc-figure-sub">{estimate.note}</p>
               </>
-            ) : (
+            )}
+            {estimate.kind === 'recurring' && (
               <>
+                <p className="sk-eyebrow">Your retainer</p>
                 <h3 className="pc-figure">
                   {fmtGBP(estimate.monthly)} <span className="pc-figure-unit">a month</span>
                 </h3>
                 <p className="sk-body pc-figure-sub">{estimate.label}. {estimate.note}</p>
               </>
             )}
+            {estimate.kind === 'call' && (
+              <>
+                <p className="sk-eyebrow">{estimate.reason === 'web-app' ? 'Your product' : 'Your site'}</p>
+                <h3 className="pc-figure">{estimate.from ? `From ${fmtGBP(estimate.from)}` : "Let's talk it through"}</h3>
+                <p className="sk-body pc-figure-sub">{estimate.note}</p>
+              </>
+            )}
 
-            {drivers.length > 0 && (
+            {estimate.kind === 'range' && (
               <div className="sk-block">
-                <p className="sk-label">What moved the figure</p>
+                <p className="sk-label">How we got to this figure</p>
                 <ol className="sk-rows">
-                  {drivers.map((d, i) => {
-                    const zero = d.low === 0 && d.high === 0;
-                    return (
-                      <li className="sk-row pc-driver" key={d.id}>
-                        <span className="pc-driver-main">
-                          <span className="sk-row-marker" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-                          <span className="pc-driver-text">
-                            <span className="pc-driver-label">{d.label}: {d.choice}</span>
-                            <span className="pc-driver-note">{d.note}</span>
-                          </span>
+                  {estimate.lines.map((l, i) => (
+                    <li className="sk-row pc-driver" key={l.id}>
+                      <span className="pc-driver-main">
+                        <span className="sk-row-marker" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="pc-driver-text">
+                          <span className="pc-driver-label">{l.label}: {l.choice}</span>
+                          <span className="pc-driver-note">{l.note}</span>
                         </span>
-                        <span className={'sk-row-value pc-driver-value' + (zero ? ' is-zero' : '')}>{driverValue(d)}</span>
-                      </li>
-                    );
-                  })}
+                      </span>
+                      <span className="sk-row-value pc-driver-value">{l.id === 'base' ? fmtGBP(l.amount) : `+${fmtGBP(l.amount)}`}</span>
+                    </li>
+                  ))}
+                  <li className="sk-row pc-driver">
+                    <span className="pc-driver-main">
+                      <span className="sk-row-marker" aria-hidden="true" />
+                      <span className="pc-driver-text">
+                        <span className="pc-driver-label">Total</span>
+                        <span className="pc-driver-note">Shown above as a range while the scope settles.</span>
+                      </span>
+                    </span>
+                    <span className="sk-row-value pc-driver-value">{fmtGBP(estimate.total)}</span>
+                  </li>
                 </ol>
-                {estimate.kind === 'range' && (
-                  <details className="pc-details">
-                    <summary>Where the money goes <span aria-hidden="true">&darr;</span></summary>
-                    <ul className="sk-rows">
-                      {estimate.lines.map((l) => (
-                        <li className="sk-row" key={l.area}>
-                          <span>{l.area}</span>
-                          <span className="sk-row-value">{fmtRange(l.min, l.max)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
+                {estimate.sprint > 0 && (
+                  <p className="sk-small" style={{ marginTop: '1rem' }}>
+                    You mentioned the brief is still open, so we'd suggest a Clarity Sprint first ({fmtGBP(estimate.sprint)}). It sits
+                    outside this figure and gives the build a plan your whole team supports.
+                  </p>
                 )}
               </div>
             )}
@@ -346,12 +405,14 @@ export function Calculator({
             {submit.status === 'sent' ? (
               <div className="sk-block" role="status">
                 <p className="sk-label">Keep this estimate</p>
-                <p className="sk-small sk-success">Thanks. The estimate is on its way to your inbox.</p>
+                <p className="sk-small sk-success">Thank you. Ben will send your estimate over personally within a working day.</p>
               </div>
             ) : (
               <form className="sk-block" onSubmit={handleSubmit} noValidate>
                 <p className="sk-label">Keep this estimate</p>
-                <p className="sk-small" style={{ marginBottom: '1rem' }}>We'll email you the range and the breakdown, so you can share it with your team.</p>
+                <p className="sk-small" style={{ marginBottom: '1rem' }}>
+                  Leave your details and we'll send the estimate over, with every line explained, so it's easy to share with your team.
+                </p>
                 <div className="sk-field-row">
                   <label className="sk-field">
                     <span className="sk-field-label">Name</span>
@@ -376,11 +437,23 @@ export function Calculator({
                 {submit.status === 'error' && <p className="sk-error" role="alert">{submit.message}</p>}
                 <div className="sk-actions" style={{ marginTop: 0 }}>
                   <button type="submit" className="sk-btn" disabled={submit.status === 'sending'}>
-                    {submit.status === 'sending' ? 'Sending' : 'Email me the estimate'}
+                    {submit.status === 'sending' ? 'Sending' : 'Send me the estimate'}
                   </button>
                 </div>
               </form>
             )}
+
+            <div className="sk-block">
+              <p className="sk-label">Share this estimate</p>
+              <p className="sk-small" style={{ marginBottom: '1rem' }}>
+                This link opens your answers exactly as you left them, so your team starts from the same place.
+              </p>
+              <div className="sk-actions" style={{ marginTop: 0 }}>
+                <button type="button" className="sk-btn sk-btn--secondary" onClick={copyLink}>
+                  {copied ? 'Link copied' : 'Copy the link'}
+                </button>
+              </div>
+            </div>
 
             <div className="sk-actions">
               <button type="button" className="sk-btn sk-btn--secondary" onClick={changeAnswers}>Change an answer</button>

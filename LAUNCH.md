@@ -576,13 +576,13 @@ Mobile: Performance 70, Accessibility 89, Best Practices 100, SEO 100, Agentic B
 - [ ] **B+C** Lead tools plan (28 Oct, Ben): results email = hand-built HTML in the repo, sent by Resend from `hey@shrink.studio` (SPF and DKIM in GoDaddy first); calculator moves from day rates to a package-anchored price book with one band (high at most 1.15x low); web apps go straight to a call; retainers tiered to what sells (Compound £7,000 a month); site-wide prices realigned in the same sprint (benchmark: Code and Wander, projects from £25k, partnerships £2.4k / £4.7k / £6.9k a month). Audiences: founders, marketing leads, growth managers, product designers. Figma: swimlane deck "Lead tools" (5 pages, Process page row 7, `4850:2` to `4850:482`) and the results email template on Playground > Updates (`4859:22726`, Email 600 `4859:22730`): text styles, Swatch colours, Sizes spacing and radius all bound, Tag + Button components, Ben card from the CTA Card, mascot pill; copy in the house voice. AI search checker = one component for the home page, designed in Figma first
 - **Lead tools checklist (28 Oct, Ben: "let's go one by one").** Rule: only the results email is automatic and templated; everything after it is a personal email from Ben, drafted by the Sales Agent and sent by Ben.
   - Calculator
-    1. [ ] **B+C** Agree the price book: Seed Website base plus fixed add-ons, one band (high at most 1.15x low), rounded to £500
-    2. [ ] **C** Rewrite the questions around how Shrink scopes: page templates, CMS collections, URLs to migrate, integrations, design direction, languages, brief agreed, current platform. Audience copy for founders, marketing leads, growth managers and product designers
-    3. [ ] **C** Rebuild `model.ts` on the price book: web apps straight to a call, retainers as Care £1,500 / Growth £3,000 / Compound £7,000, Seed Website card to £15,000, drivers shown per line item; update the tests
-    4. [ ] **C** Share link that reopens the answers and carries the lead id
-    5. [ ] **C** Deal value set to the middle of the range
-    6. [ ] **C** PostHog funnel per tool: started, completed, email requested, booked
-    7. [ ] **C then B** Republish the library (`npm run import`), Ben accepts the update in the Designer, live check
+    1. [x] **B+C** Agree the price book: Seed Website base plus fixed add-ons, one band (high at most 1.15x low), rounded to £500
+    2. [x] **C** Rewrite the questions around how Shrink scopes: page templates, CMS collections, URLs to migrate, integrations, design direction, languages, brief agreed, current platform. Audience copy for founders, marketing leads, growth managers and product designers
+    3. [x] **C** Rebuild `model.ts` on the price book: web apps straight to a call, retainers as Care £1,500 / Growth £3,000 / Compound £7,000, Seed Website card to £15,000, drivers shown per line item; update the tests
+    4. [x] **C** Share link that reopens the answers and carries the lead id
+    5. [x] **C** Deal value set to the middle of the range
+    6. [x] **C** PostHog funnel per tool: started, completed, email requested, booked
+    7. [ ] **C then B** (code ready 28 Oct: 20 tests pass, flow and share link checked in the local preview; awaiting Ben's OK to push and import) Republish the library (`npm run import`), Ben accepts the update in the Designer, live check
   - Results email
     8. [ ] **B** Choose the sender: Resend or Postmark
     9. [ ] **B+C** Sending subdomain and DNS in GoDaddy: SPF merged with the Google Workspace record, DKIM, DMARC; replies to hey@shrink.studio

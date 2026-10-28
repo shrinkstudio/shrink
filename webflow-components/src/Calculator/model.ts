@@ -1,40 +1,49 @@
 /**
  * Project Calculator: question model + pricing. Pure, framework-free.
  *
- * Ported from the tools.shrink.studio calculator (shrink-tools
- * src/lib/calculator/model.ts, retired at launch). Plain-language questions map
- * to effort in role-days, priced off the Shrink rate card the internal scoping
- * tool uses (shrink-tools src/lib/estimator-data/config.json). Floors follow
- * the published Pricing page: Development from £15,000, Optimisation from
- * £5,000 a month, Compound £10,000 a month.
+ * Priced from a price book anchored on the packages (agreed with Ben, 28 Oct
+ * 2026): the Seed Website is the base, every scope item adds a fixed amount,
+ * and one band of 7% either side is applied once at the end, rounded to £500.
+ * Web apps and very large sites go straight to a call. Retainers are the three
+ * tiers: Care, Growth and Compound.
  *
- * Output: a low to high range, what moved the figure (pages, integrations,
- * timing, plus the rest), where the money goes, and the next step (a call or a
- * brief) with a package pointer where one fits.
+ * Output: an estimate, every line that makes it up, and the next step (a call
+ * or a brief) with a package pointer where one fits.
  *
- * Tune questions and effort weights here; the component renders generically.
+ * Tune prices and copy here; the component renders generically.
  */
 
-// --- Rate card ---------------------------------------------------------------
+// --- Price book (ex VAT) -------------------------------------------------------
 
-const OVERHEAD_PER_DAY = 107.6;
+export const BASE = 15000;
+export const BAND = 0.07;
+export const CALL_THRESHOLD = 25000;
+export const CLARITY_SPRINT = 3500;
 
-const ROLES: Record<string, { baseCostDay: number; markupPct: number }> = {
-  founder: { baseCostDay: 600, markupPct: 0.4 },
-  'senior-dev': { baseCostDay: 560, markupPct: 0.2 },
-  'mid-dev': { baseCostDay: 400, markupPct: 0.3 },
-  'senior-designer': { baseCostDay: 500, markupPct: 0.3 },
-  'mid-designer': { baseCostDay: 350, markupPct: 0.3 },
-  pm: { baseCostDay: 250, markupPct: 0.4 },
+const TEMPLATES: Record<string, number> = { 'up-to-8': 0, '9-15': 3000, '16-25': 6000 };
+const CMS: Record<string, number> = { 'up-to-2': 0, '3-4': 1500, '5-plus': 2250 };
+const DESIGN: Record<string, number> = { brand: 0, direction: 3500, system: 5000 };
+const MIGRATION: Record<string, number> = { none: 0, 'up-to-50': 1000, '50-200': 2000, '200-plus': 4000 };
+const INTEGRATION = 1000;
+const EXTRAS: Record<string, number> = { motion: 2000, a11y: 1500, 'lang-2': 2500, 'lang-3': 5000 };
+
+export const RETAINERS: Record<string, { monthly: number; label: string; body: string }> = {
+  care: {
+    monthly: 1500,
+    label: 'Care',
+    body: 'Monitoring, fixes and suggested improvements every month, so the site keeps pace with the business.',
+  },
+  growth: {
+    monthly: 3000,
+    label: 'Growth',
+    body: 'A focused CRO or AEO programme alongside ongoing development, with a clear plan for each month.',
+  },
+  compound: {
+    monthly: 7000,
+    label: 'Compound',
+    body: 'CRO and AEO every month on one cycle, with a monthly report on what moved and what comes next.',
+  },
 };
-
-/** clientDayRate = (baseCostDay + overheadPerDay) × (1 + markupPct) */
-export function dayRate(roleId: string): number {
-  const r = ROLES[roleId];
-  if (!r) return 0;
-  const total = r.baseCostDay + OVERHEAD_PER_DAY;
-  return total + total * r.markupPct;
-}
 
 // --- Question model ----------------------------------------------------------
 
@@ -54,138 +63,149 @@ export type Question = {
 
 export type Answers = Record<string, string | string[]>;
 
-const isSite = (a: Answers) => a.type === 'marketing-site' || a.type === 'redesign';
-const isApp = (a: Answers) => a.type === 'web-app';
-const isRetainer = (a: Answers) => a.type === 'optimisation';
-const isProject = (a: Answers) => isSite(a) || isApp(a);
+const isSite = (a: Answers) => a.type === 'new-site' || a.type === 'rebuild';
+const isRetainer = (a: Answers) => a.type === 'retainer';
 
 export const QUESTIONS: Question[] = [
   {
     id: 'type',
     type: 'single',
-    prompt: 'What are you looking to build?',
-    helper: "We'll tailor the questions from here.",
+    prompt: 'What are you planning?',
+    helper: "We'll shape the next few questions around your answer.",
     options: [
-      { id: 'marketing-site', label: 'A new marketing website', hint: 'Brochure or product site' },
-      { id: 'redesign', label: 'A redesign of our existing site', hint: 'Rebuild, same content shape' },
-      { id: 'web-app', label: 'A web app or product', hint: 'Logins, data, custom logic' },
-      { id: 'optimisation', label: 'Ongoing growth and optimisation', hint: 'A monthly retainer' },
+      { id: 'new-site', label: 'A new marketing website', hint: 'For a launch, a raise or a new direction' },
+      { id: 'rebuild', label: 'A rebuild of our current site', hint: 'The same company, with a site that keeps up' },
+      { id: 'web-app', label: 'A web app or product', hint: "We'll talk this one through with you on a call" },
+      { id: 'retainer', label: 'Ongoing support and growth', hint: 'A monthly retainer once the site is live' },
     ],
   },
-  // --- Website branch --------------------------------------------------------
+  // --- Website ---------------------------------------------------------------
   {
-    id: 'pages',
+    id: 'templates',
     type: 'single',
-    prompt: 'Roughly how big is the site?',
-    helper: 'A rough count of unique page designs, so a blog counts once.',
+    prompt: 'How many different page layouts will you need?',
+    helper: 'Count each layout once. A blog or a set of case studies is one template, however many posts it holds.',
     visibleWhen: isSite,
     options: [
-      { id: 'small', label: '1 to 5 pages', hint: 'Landing or compact site' },
-      { id: 'medium', label: '6 to 12 pages', hint: 'Typical company site' },
-      { id: 'large', label: '13 to 25 pages', hint: 'Content-rich' },
-      { id: 'xl', label: '25 pages or more', hint: 'Large or multi-section' },
-    ],
-  },
-  {
-    id: 'design',
-    type: 'single',
-    prompt: 'How much design do you need?',
-    visibleWhen: isSite,
-    options: [
-      { id: 'full', label: 'Design it from scratch', hint: 'New look, built around your brand' },
-      { id: 'partial', label: 'We have a brand, apply it', hint: 'Style guide exists, no UI yet' },
-      { id: 'none', label: "We'll provide finished designs", hint: 'Build only' },
+      { id: 'up-to-8', label: 'Up to 8', hint: 'Home, product, pricing, about and a few more' },
+      { id: '9-15', label: '9 to 15', hint: 'A fuller site with several product or solution pages' },
+      { id: '16-25', label: '16 to 25', hint: 'A large site for several audiences or products' },
+      { id: '25-plus', label: 'More than 25', hint: "We'll scope a site this size with you on a call" },
     ],
   },
   {
     id: 'cms',
     type: 'single',
-    prompt: 'Will it have content you update regularly?',
-    helper: 'Blog, case studies, careers, resources: anything CMS-driven.',
+    prompt: 'How many kinds of content will your team publish?',
+    helper: 'Blog posts, case studies, careers and resources each count as one.',
     visibleWhen: isSite,
     options: [
-      { id: 'yes', label: "Yes, we'll publish often", hint: 'CMS collections and templates' },
-      { id: 'no', label: 'Mostly static', hint: 'Fixed pages' },
+      { id: 'up-to-2', label: 'One or two', hint: 'Included in the base' },
+      { id: '3-4', label: 'Three or four' },
+      { id: '5-plus', label: 'Five or more' },
     ],
   },
-  // --- Web app branch --------------------------------------------------------
   {
-    id: 'appSize',
+    id: 'design',
     type: 'single',
-    prompt: 'How big is the product?',
-    helper: 'Roughly how much there is to design and build.',
-    visibleWhen: isApp,
+    prompt: 'Where are you with design?',
+    visibleWhen: isSite,
     options: [
-      { id: 'mvp', label: 'An MVP or first version', hint: 'Prove the core idea' },
-      { id: 'standard', label: 'A full v1 product', hint: 'Several connected features' },
-      { id: 'large', label: 'A large platform', hint: 'Many roles and workflows' },
+      { id: 'brand', label: 'We have a brand you can apply', hint: 'Logo, colours and type are settled' },
+      { id: 'direction', label: "We'd like a fresh design direction", hint: 'A new look, shaped around your brand' },
+      { id: 'system', label: 'We need a full design system', hint: 'A component library your team can build with' },
     ],
   },
   {
-    id: 'appModules',
+    id: 'platform',
+    type: 'single',
+    prompt: 'What is your site built on today?',
+    helper: 'This helps us plan the move.',
+    visibleWhen: isSite,
+    options: [
+      { id: 'none', label: "We're starting fresh" },
+      { id: 'webflow', label: 'Webflow' },
+      { id: 'wordpress', label: 'WordPress' },
+      { id: 'other', label: 'Something else' },
+    ],
+  },
+  {
+    id: 'migration',
+    type: 'single',
+    prompt: 'How much content are we bringing across?',
+    helper: 'Pages, posts and case studies we move, tidy and redirect.',
+    visibleWhen: (a) => isSite(a) && !!a.platform && a.platform !== 'none',
+    options: [
+      { id: 'none', label: "Very little, we'll start afresh" },
+      { id: 'up-to-50', label: 'Up to 50 pages and posts' },
+      { id: '50-200', label: '50 to 200' },
+      { id: '200-plus', label: 'More than 200' },
+    ],
+  },
+  {
+    id: 'integrations',
     type: 'multi',
-    prompt: 'Which of these does it need?',
-    helper: 'Pick all that apply.',
+    prompt: 'Which tools should the site connect to?',
+    helper: 'Pick any that apply. We set each one up, map it and test it.',
     optional: true,
-    visibleWhen: isApp,
+    visibleWhen: isSite,
     options: [
-      { id: 'auth', label: 'User accounts and logins' },
-      { id: 'payments', label: 'Payments or billing' },
-      { id: 'dashboard', label: 'Dashboards and data views' },
-      { id: 'integrations', label: 'Third-party integrations' },
-      { id: 'admin', label: 'Admin or back-office tools' },
+      { id: 'crm', label: 'A CRM, such as HubSpot or Salesforce' },
+      { id: 'analytics', label: 'Analytics and tag management, such as GA4' },
+      { id: 'booking', label: 'Booking or scheduling, such as Cal.com' },
+      { id: 'product', label: 'Sign-up or login for your product' },
+      { id: 'other', label: 'Other marketing tools' },
     ],
   },
-  // --- Optimisation branch ---------------------------------------------------
-  {
-    id: 'optIntensity',
-    type: 'single',
-    prompt: 'How hands-on should we be?',
-    visibleWhen: isRetainer,
-    options: [
-      { id: 'standard', label: 'A focused programme', hint: 'CRO, AEO and ongoing development, one stream at a time' },
-      { id: 'compound', label: 'Compound', hint: 'CRO and AEO every month, on one cycle' },
-    ],
-  },
-  // --- Shared extras (websites + apps) ---------------------------------------
   {
     id: 'extras',
     type: 'multi',
-    prompt: 'Anything else to factor in?',
+    prompt: 'Is there anything else to plan for?',
     helper: 'Optional. Pick any that apply.',
     optional: true,
-    visibleWhen: isProject,
+    visibleWhen: isSite,
     options: [
-      { id: 'interactions', label: 'Rich animation and interaction' },
-      { id: 'integrations', label: 'CRM, forms and marketing integrations' },
-      { id: 'migration', label: 'Migrate existing content' },
-      { id: 'copywriting', label: 'Copywriting help' },
-      { id: 'a11y', label: 'Accessibility audit (WCAG)' },
+      { id: 'motion', label: 'Rich motion and interaction' },
+      { id: 'a11y', label: 'An accessibility audit to WCAG 2.2 AA' },
+      { id: 'lang-2', label: 'A second language' },
+      { id: 'lang-3', label: 'Three or more languages' },
     ],
   },
   {
-    id: 'discovery',
+    id: 'brief',
     type: 'single',
-    prompt: 'Do you want a discovery phase first?',
-    helper: 'Where we pin down positioning, structure and goals before building.',
-    visibleWhen: isProject,
+    prompt: 'How settled is the brief?',
+    helper: 'What the site needs to say, who it is for and what it should help people do.',
+    visibleWhen: isSite,
     options: [
-      { id: 'none', label: 'We know what we want', hint: 'Straight to the build' },
-      { id: 'focused', label: 'A focused discovery', hint: 'Two weeks, one brief: the Clarity Sprint' },
-      { id: 'deep', label: 'Full discovery and research', hint: 'Research-led' },
+      { id: 'agreed', label: 'Agreed across the team' },
+      { id: 'mostly', label: 'Mostly there, with a few open questions' },
+      { id: 'open', label: "Still open, and we'd value some help" },
     ],
   },
   {
     id: 'timing',
     type: 'single',
-    prompt: 'When does it need to be live?',
-    helper: 'A Development build takes 6 to 10 weeks once the scope is fixed.',
-    visibleWhen: isProject,
+    prompt: 'When would you like to launch?',
+    helper: 'This helps us plan the team. It leaves the price as it is.',
+    visibleWhen: isSite,
     options: [
-      { id: 'flexible', label: 'No fixed date', hint: 'We plan it into the next open slot' },
-      { id: 'quarter', label: 'In the next 2 to 3 months', hint: 'The usual run' },
-      { id: 'fast', label: 'In under 6 weeks', hint: 'A compressed schedule, priced for it' },
+      { id: 'flexible', label: "Whenever it's ready" },
+      { id: 'quarter', label: 'In the next two to three months' },
+      { id: 'fast', label: 'In under six weeks', hint: "We'll tell you honestly what fits" },
     ],
+  },
+  // --- Retainer --------------------------------------------------------------
+  {
+    id: 'tier',
+    type: 'single',
+    prompt: 'Which kind of support sounds right?',
+    visibleWhen: isRetainer,
+    options: Object.entries(RETAINERS).map(([id, r]) => ({
+      id,
+      label: `${r.label}, ${fmtGBP(r.monthly)} a month`,
+      hint: r.body,
+    })),
   },
 ];
 
@@ -203,341 +223,126 @@ export function isComplete(a: Answers): boolean {
   });
 }
 
-// --- Effort -> cost ----------------------------------------------------------
+// --- Estimate ----------------------------------------------------------------
 
-export type Line = { area: string; min: number; max: number };
-
-const PAGE_FACTOR: Record<string, number> = { small: 1, medium: 1.8, large: 3, xl: 4.5 };
-const APP_FACTOR: Record<string, number> = { mvp: 1, standard: 2.1, large: 3.4 };
-const TIMING_FACTOR: Record<string, number> = { flexible: 1, quarter: 1, fast: 1.15 };
-
-export const SITE_FLOOR = 15000;
-export const APP_FLOOR = 30000;
-export const RETAINERS: Record<string, { monthly: number; label: string }> = {
-  standard: { monthly: 5000, label: 'Optimisation retainer' },
-  compound: { monthly: 10000, label: 'Compound' },
+export type Line = {
+  id: string;
+  /** What the line is, in the user's words. */
+  label: string;
+  /** What they chose. */
+  choice: string;
+  amount: number;
+  /** One helpful sentence on what it covers. */
+  note: string;
 };
 
-type Alloc = { roleId: string; min: number; max: number };
-
-function pushLine(acc: Line[], area: string, alloc: Alloc[]) {
-  const min = alloc.reduce((s, x) => s + dayRate(x.roleId) * x.min, 0);
-  const max = alloc.reduce((s, x) => s + dayRate(x.roleId) * x.max, 0);
-  const existing = acc.find((l) => l.area === area);
-  if (existing) {
-    existing.min += min;
-    existing.max += max;
-  } else {
-    acc.push({ area, min, max });
-  }
-}
+export type Estimate =
+  | { kind: 'range'; low: number; high: number; total: number; lines: Line[]; sprint: number; note: string }
+  | { kind: 'recurring'; tier: string; monthly: number; label: string; note: string }
+  | { kind: 'call'; reason: 'web-app' | 'large'; from?: number; note: string }
+  | null;
 
 export function roundTo(n: number, step = 500): number {
   return Math.round(n / step) * step;
 }
-
-export type Estimate =
-  | { kind: 'range'; low: number; high: number; lines: Line[]; note?: string }
-  | { kind: 'recurring'; monthly: number; label: string; note: string }
-  | null;
-
-function rawRange(a: Answers): { low: number; high: number; lines: Line[]; note?: string } | null {
-  const type = a.type as string | undefined;
-  if (!type || type === 'optimisation') return null;
-
-  const lines: Line[] = [];
-  const timing = TIMING_FACTOR[(a.timing as string) || 'flexible'] ?? 1;
-
-  if (type === 'web-app') {
-    const size = a.appSize as string | undefined;
-    if (!size) return null;
-    const f = APP_FACTOR[size] ?? 2.1;
-    const modules = (a.appModules as string[]) || [];
-
-    pushLine(lines, 'Discovery and UX', [
-      { roleId: 'founder', min: 2 * f, max: 3 * f },
-      { roleId: 'senior-designer', min: 3 * f, max: 5 * f },
-    ]);
-    pushLine(lines, 'Product design', [
-      { roleId: 'senior-designer', min: 5 * f, max: 9 * f },
-      { roleId: 'mid-designer', min: 2 * f, max: 5 * f },
-    ]);
-    pushLine(lines, 'Front-end build', [
-      { roleId: 'senior-dev', min: 6 * f, max: 12 * f },
-      { roleId: 'mid-dev', min: 5 * f, max: 12 * f },
-    ]);
-    pushLine(lines, 'Backend and infrastructure', [{ roleId: 'senior-dev', min: 4 * f, max: 10 * f }]);
-    if (modules.includes('auth')) pushLine(lines, 'Accounts and auth', [{ roleId: 'senior-dev', min: 3, max: 6 }]);
-    if (modules.includes('payments')) pushLine(lines, 'Payments and billing', [{ roleId: 'senior-dev', min: 4, max: 8 }]);
-    if (modules.includes('dashboard')) {
-      pushLine(lines, 'Dashboards and data', [
-        { roleId: 'senior-dev', min: 4, max: 9 },
-        { roleId: 'mid-dev', min: 2, max: 5 },
-      ]);
-    }
-    if (modules.includes('integrations')) pushLine(lines, 'Integrations', [{ roleId: 'senior-dev', min: 3, max: 8 }]);
-    if (modules.includes('admin')) pushLine(lines, 'Admin tools', [{ roleId: 'mid-dev', min: 3, max: 7 }]);
-    pushLine(lines, 'QA and project management', [
-      { roleId: 'senior-dev', min: 3 * f, max: 5 * f },
-      { roleId: 'pm', min: 5 * f, max: 9 * f },
-      { roleId: 'founder', min: 2, max: 3 },
-    ]);
-    addDiscovery(lines, a);
-    addExtras(lines, a);
-    return finish(lines, APP_FLOOR, timing, "Products vary a lot, so treat this as a starting range. We'll firm it up on a call.");
-  }
-
-  const pages = a.pages as string | undefined;
-  const design = a.design as string | undefined;
-  const cms = a.cms as string | undefined;
-  if (!pages || !design || !cms) return null;
-  const pf = PAGE_FACTOR[pages] ?? 1.8;
-
-  if (design === 'full') {
-    pushLine(lines, 'Design', [
-      { roleId: 'senior-designer', min: 3, max: 5 }, // design system
-      { roleId: 'senior-designer', min: 2.5 * pf, max: 4.5 * pf }, // wireframes + UI
-      { roleId: 'mid-designer', min: 1 * pf, max: 2 * pf },
-      { roleId: 'senior-designer', min: 2, max: 4 }, // revisions
-    ]);
-  } else if (design === 'partial') {
-    pushLine(lines, 'Design', [
-      { roleId: 'senior-designer', min: 1.5 * pf, max: 2.5 * pf },
-      { roleId: 'mid-designer', min: 1 * pf, max: 2 * pf },
-    ]);
-  }
-
-  pushLine(lines, 'Build', [
-    { roleId: 'senior-dev', min: 1, max: 2 }, // setup
-    { roleId: 'senior-dev', min: 3 * pf, max: 5 * pf }, // front-end
-    { roleId: 'mid-dev', min: 2 * pf, max: 4 * pf },
-    { roleId: 'senior-dev', min: 1.5, max: 3 }, // responsive
-  ]);
-
-  if (cms === 'yes') pushLine(lines, 'CMS', [{ roleId: 'senior-dev', min: 2.5 + pf, max: 4 + 1.5 * pf }]);
-
-  pushLine(lines, 'QA, launch and project management', [
-    { roleId: 'senior-dev', min: 2, max: 3 },
-    { roleId: 'pm', min: 3 + pf, max: 5 + 1.5 * pf },
-    { roleId: 'founder', min: 1, max: 2 },
-  ]);
-
-  addDiscovery(lines, a);
-  addExtras(lines, a);
-  return finish(lines, SITE_FLOOR, timing);
-}
-
-function finish(lines: Line[], floor: number, timing: number, note?: string) {
-  if (timing !== 1) {
-    const base = lines.reduce((s, l) => ({ min: s.min + l.min, max: s.max + l.max }), { min: 0, max: 0 });
-    lines.push({ area: 'Fast turnaround', min: base.min * (timing - 1), max: base.max * (timing - 1) });
-  }
-  const low = Math.max(roundTo(lines.reduce((s, l) => s + l.min, 0)), floor);
-  const high = Math.max(roundTo(lines.reduce((s, l) => s + l.max, 0)), low);
-  return {
-    low,
-    high,
-    lines: lines.map((l) => ({ ...l, min: roundTo(l.min), max: roundTo(l.max) })),
-    note,
-  };
-}
-
-function addDiscovery(lines: Line[], a: Answers) {
-  const d = a.discovery as string | undefined;
-  if (d === 'focused') {
-    pushLine(lines, 'Discovery', [
-      { roleId: 'founder', min: 3, max: 4 },
-      { roleId: 'senior-designer', min: 1.5, max: 2 },
-      { roleId: 'pm', min: 1.5, max: 2 },
-    ]);
-  } else if (d === 'deep') {
-    pushLine(lines, 'Discovery', [
-      { roleId: 'founder', min: 8, max: 10 },
-      { roleId: 'senior-designer', min: 6, max: 8 },
-      { roleId: 'pm', min: 5, max: 6 },
-    ]);
-  }
-}
-
-function addExtras(lines: Line[], a: Answers) {
-  const extras = (a.extras as string[]) || [];
-  if (extras.includes('interactions')) pushLine(lines, 'Animation and interaction', [{ roleId: 'senior-dev', min: 3, max: 6 }]);
-  if (extras.includes('integrations')) pushLine(lines, 'Integrations', [{ roleId: 'senior-dev', min: 2, max: 6 }]);
-  if (extras.includes('migration')) {
-    pushLine(lines, 'Content migration', [
-      { roleId: 'pm', min: 1, max: 2 },
-      { roleId: 'mid-dev', min: 1, max: 4 },
-    ]);
-  }
-  if (extras.includes('copywriting')) {
-    pushLine(lines, 'Copywriting', [
-      { roleId: 'founder', min: 2, max: 3 },
-      { roleId: 'pm', min: 1, max: 4 },
-    ]);
-  }
-  if (extras.includes('a11y')) pushLine(lines, 'Accessibility audit', [{ roleId: 'senior-dev', min: 2, max: 3 }]);
-}
-
-export function computeEstimate(a: Answers): Estimate {
-  if (a.type === 'optimisation') {
-    const tier = RETAINERS[(a.optIntensity as string) || ''];
-    if (!tier) return null;
-    return {
-      kind: 'recurring',
-      monthly: tier.monthly,
-      label: tier.label,
-      note: 'A rolling monthly retainer with a three-month initial term. Every programme starts with a free audit.',
-    };
-  }
-  const r = rawRange(a);
-  return r ? { kind: 'range', ...r } : null;
-}
-
-// --- What moved the figure ---------------------------------------------------
-
-export type Driver = {
-  id: 'pages' | 'integrations' | 'timing' | 'design' | 'cms' | 'discovery' | 'extras' | 'size' | 'modules';
-  label: string;
-  /** What was chosen, in the user's words. */
-  choice: string;
-  /** Added to the low / high figure versus the lightest option. */
-  low: number;
-  high: number;
-  /** One line on why it matters. */
-  note: string;
-};
 
 function labelOf(qid: string, id: string | undefined): string {
   const q = QUESTIONS.find((x) => x.id === qid);
   return q?.options.find((o) => o.id === id)?.label || 'Not set';
 }
 
-function delta(a: Answers, patch: Answers): { low: number; high: number } {
-  const here = rawRange(a);
-  const there = rawRange({ ...a, ...patch });
-  if (!here || !there) return { low: 0, high: 0 };
-  return { low: Math.max(0, here.low - there.low), high: Math.max(0, here.high - there.high) };
+/** Every priced line for a site, base first. */
+export function siteLines(a: Answers): Line[] {
+  const lines: Line[] = [
+    {
+      id: 'base',
+      label: 'Seed Website base',
+      choice: 'Up to 8 templates, two content types, your brand applied',
+      amount: BASE,
+      note: 'Design, build, CMS and launch in about six weeks, with a site your team can run.',
+    },
+  ];
+  const add = (id: string, label: string, choice: string, amount: number, note: string) => {
+    if (amount > 0) lines.push({ id, label, choice, amount, note });
+  };
+  const t = a.templates as string;
+  add('templates', 'Page templates', labelOf('templates', t), TEMPLATES[t] ?? 0, 'Each layout is designed, built and tested on every screen size.');
+  const c = a.cms as string;
+  add('cms', 'Content types', labelOf('cms', c), CMS[c] ?? 0, 'Each collection gets its own template and an editing set-up your team will enjoy using.');
+  const d = a.design as string;
+  add(
+    'design',
+    'Design direction',
+    labelOf('design', d),
+    DESIGN[d] ?? 0,
+    d === 'system'
+      ? 'A design system and component library, so new pages are quick to build and always on brand.'
+      : 'A new look, shaped around your brand and the people you sell to.',
+  );
+  const m = a.platform && a.platform !== 'none' ? (a.migration as string) : 'none';
+  add('migration', 'Content migration', labelOf('migration', m), MIGRATION[m] ?? 0, 'Moved, tidied and redirected, so the search rankings you have earned carry over.');
+  for (const id of (a.integrations as string[]) || []) {
+    add(`integration-${id}`, 'Integration', labelOf('integrations', id), INTEGRATION, 'Set up, mapped and tested, so leads and data arrive where your team works.');
+  }
+  const extras = (a.extras as string[]) || [];
+  for (const id of extras) {
+    if (id === 'lang-2' && extras.includes('lang-3')) continue;
+    const notes: Record<string, string> = {
+      motion: 'Considered motion that helps people understand the product, built to stay fast.',
+      a11y: 'An audit and the fixes it finds, so the site works for everyone who visits.',
+      'lang-2': 'Localised pages, navigation and search settings for a second market.',
+      'lang-3': 'Localised pages, navigation and search settings for each market you serve.',
+    };
+    const labels: Record<string, string> = { motion: 'Motion', a11y: 'Accessibility', 'lang-2': 'Languages', 'lang-3': 'Languages' };
+    add(`extra-${id}`, labels[id] || 'Extra', labelOf('extras', id), EXTRAS[id] ?? 0, notes[id] || '');
+  }
+  return lines;
 }
 
-/**
- * The three promised levers first (pages, integrations, timing), then the rest
- * of what the answers added. Each is the cost above the lightest option.
- */
-export function computeDrivers(a: Answers): Driver[] {
-  if (!a.type || a.type === 'optimisation') return [];
-  const out: Driver[] = [];
-  const extras = (a.extras as string[]) || [];
-  const modules = (a.appModules as string[]) || [];
+/** The band, applied once. Never below the Seed Website price; the bare Seed scope is its fixed price. */
+function range(lines: Line[]) {
+  const total = lines.reduce((s, l) => s + l.amount, 0);
+  if (total <= BASE) return { total, low: BASE, high: BASE };
+  return { total, low: Math.max(BASE, roundTo(total * (1 - BAND))), high: roundTo(total * (1 + BAND)) };
+}
 
-  if (isSite(a)) {
-    const d = delta(a, { pages: 'small' });
-    out.push({
-      id: 'pages',
-      label: 'Pages',
-      choice: labelOf('pages', a.pages as string),
-      ...d,
-      note: a.pages === 'small'
-        ? 'The smallest count. Every unique page design adds design, build and QA time.'
-        : 'The biggest lever. Design, build and QA all scale with unique page designs.',
-    });
-  } else {
-    const d = delta(a, { appSize: 'mvp' });
-    out.push({
-      id: 'size',
-      label: 'Product size',
-      choice: labelOf('appSize', a.appSize as string),
-      ...d,
-      note: 'Screens, flows and states scale every phase, from UX to QA.',
-    });
-  }
-
-  {
-    const hasIntegrations = extras.includes('integrations') || modules.includes('integrations');
-    const patch: Answers = {
-      extras: extras.filter((x) => x !== 'integrations'),
-      appModules: modules.filter((x) => x !== 'integrations'),
+export function computeEstimate(a: Answers): Estimate {
+  if (!a.type) return null;
+  if (a.type === 'web-app') {
+    return {
+      kind: 'call',
+      reason: 'web-app',
+      note: "Products vary too much for a fair figure from a few questions, so we'd love to hear about yours first. Thirty minutes is usually enough to shape a scope and a range.",
     };
-    const d = hasIntegrations ? delta(a, patch) : { low: 0, high: 0 };
-    out.push({
-      id: 'integrations',
-      label: 'Integrations',
-      choice: hasIntegrations ? 'CRM, forms and third-party tools' : 'None added',
-      ...d,
-      note: hasIntegrations
-        ? 'Each system the site talks to needs mapping, testing and a fallback.'
-        : 'Add CRM, forms or analytics tools and this line grows.',
-    });
   }
-
-  {
-    const d = delta(a, { timing: 'flexible' });
-    out.push({
-      id: 'timing',
-      label: 'Timing',
-      choice: labelOf('timing', a.timing as string),
-      ...d,
-      note: a.timing === 'fast'
-        ? 'Under six weeks means the team clears the deck, so it carries a premium.'
-        : 'A standard schedule, so no premium. Under six weeks would add about 15%.',
-    });
+  if (isRetainer(a)) {
+    const tier = RETAINERS[(a.tier as string) || ''];
+    if (!tier) return null;
+    return {
+      kind: 'recurring',
+      tier: a.tier as string,
+      monthly: tier.monthly,
+      label: tier.label,
+      note: 'A rolling monthly retainer with a three-month first term, and every programme starts with a free audit.',
+    };
   }
-
-  if (isSite(a)) {
-    if (a.design && a.design !== 'none') {
-      out.push({
-        id: 'design',
-        label: 'Design',
-        choice: labelOf('design', a.design as string),
-        ...delta(a, { design: 'none' }),
-        note: a.design === 'full'
-          ? 'A design system, wireframes, UI and revisions, built around your brand.'
-          : 'Applying your existing brand to new page designs.',
-      });
-    }
-    if (a.cms === 'yes') {
-      out.push({
-        id: 'cms',
-        label: 'CMS',
-        choice: labelOf('cms', a.cms as string),
-        ...delta(a, { cms: 'no' }),
-        note: 'Collections, templates and the editing experience your team will use.',
-      });
-    }
-  } else if (modules.filter((m) => m !== 'integrations').length) {
-    out.push({
-      id: 'modules',
-      label: 'Product modules',
-      choice: modules
-        .filter((m) => m !== 'integrations')
-        .map((m) => labelOf('appModules', m))
-        .join(', '),
-      ...delta(a, { appModules: modules.filter((m) => m === 'integrations') }),
-      note: 'Accounts, payments, dashboards and admin tools are each a build in their own right.',
-    });
+  if (!isComplete(a)) return null;
+  if (a.templates === '25-plus') {
+    const { low } = range(siteLines({ ...a, templates: '16-25' }));
+    return {
+      kind: 'call',
+      reason: 'large',
+      from: low,
+      note: "A site this size deserves a proper look at the content and the audiences first. We'll scope it with you on a call and send a fixed proposal.",
+    };
   }
-
-  if (a.discovery && a.discovery !== 'none') {
-    out.push({
-      id: 'discovery',
-      label: 'Discovery',
-      choice: labelOf('discovery', a.discovery as string),
-      ...delta(a, { discovery: 'none' }),
-      note: 'Positioning, structure and goals agreed before anything is designed.',
-    });
-  }
-
-  const otherExtras = extras.filter((x) => x !== 'integrations');
-  if (otherExtras.length) {
-    out.push({
-      id: 'extras',
-      label: 'Extras',
-      choice: otherExtras.map((x) => labelOf('extras', x)).join(', '),
-      ...delta(a, { extras: extras.filter((x) => x === 'integrations') }),
-      note: 'Animation, migration, copy and audits, priced as their own lines.',
-    });
-  }
-
-  return out;
+  const lines = siteLines(a);
+  const { total, low, high } = range(lines);
+  const note =
+    a.timing === 'fast'
+      ? "For the site as you described it, before VAT. Under six weeks is possible for smaller sites, and we'll tell you honestly what fits."
+      : 'For the site as you described it, before VAT. Once we agree the scope together, the price is fixed.';
+  return { kind: 'range', low, high, total, lines, sprint: a.brief === 'open' ? CLARITY_SPRINT : 0, note };
 }
 
 // --- Next step ---------------------------------------------------------------
@@ -552,7 +357,24 @@ export type NextStep = {
   package?: { name: string; price: string; href: string; body: string };
 };
 
-export const CALL_THRESHOLD = 25000;
+const SEED = {
+  name: 'Seed Website',
+  price: '£15,000, fixed',
+  href: '/packages/seed-website',
+  body: 'Up to eight page templates, a CMS your team owns and launch in six weeks, at a fixed price.',
+};
+const SPRINT = {
+  name: 'Clarity Sprint',
+  price: '£3,500',
+  href: '/packages/clarity-sprint',
+  body: 'Two weeks to agree the brief together, so the build starts from a plan your whole team supports.',
+};
+const COMPOUND = {
+  name: 'Compound',
+  price: '£7,000 a month',
+  href: '/packages/compound',
+  body: 'CRO and AEO every month on one cycle, with a monthly report on what moved.',
+};
 
 export function computeNextStep(
   a: Answers,
@@ -562,54 +384,39 @@ export function computeNextStep(
   if (!est) return null;
 
   if (est.kind === 'recurring') {
-    const compound = a.optIntensity === 'compound';
+    const compound = est.tier === 'compound';
     return {
       kind: 'call',
       title: 'Book a call',
-      body: compound
-        ? 'Compound starts with a free audit of your site, so the first month already has a plan.'
-        : 'Every retainer starts with a free audit, so the first month already has a plan.',
+      body: 'Every retainer starts with a free audit of your site, so the first month already has a plan. A short call is the best place to start.',
       href: compound ? links.compoundCall : links.call,
       label: compound ? 'Book a Compound call' : 'Book an intro call',
-      package: compound
-        ? {
-            name: 'Compound',
-            price: '£10,000 a month',
-            href: '/packages/compound',
-            body: 'CRO and AEO every month, on one cycle, with a monthly report.',
-          }
-        : undefined,
+      package: compound ? COMPOUND : undefined,
     };
   }
 
-  const site = isSite(a);
-  const seedFit = site && (a.pages === 'small' || a.pages === 'medium') && a.design !== 'none';
-  const sprintFit = site && a.discovery === 'focused';
-
-  const pkg = seedFit
-    ? {
-        name: 'Seed Website',
-        price: '£20,000, fixed',
-        href: '/packages/seed-website',
-        body: 'Up to eight pages, a CMS your team owns, live in six weeks. If the site fits in eight pages, this is the fixed-price route.',
-      }
-    : sprintFit
-      ? {
-          name: 'Clarity Sprint',
-          price: '£3,500',
-          href: '/packages/clarity-sprint',
-          body: 'Two weeks, one brief your team can build from. The discovery you picked, as a fixed package.',
-        }
-      : undefined;
-
-  const needsCall = !site || est.low >= CALL_THRESHOLD || a.discovery === 'deep';
-  if (needsCall) {
+  if (est.kind === 'call') {
     return {
       kind: 'call',
-      title: 'Book a call',
-      body: !site
-        ? 'Products need a conversation before a number means much. Thirty minutes is enough to turn this into a proper scope.'
-        : 'At this size the scope decides the price. A 30-minute call turns this range into a fixed proposal, usually within a few days.',
+      title: "Let's talk it through",
+      body: est.note,
+      href: links.call,
+      label: 'Book an intro call',
+    };
+  }
+
+  const seedFit =
+    a.templates === 'up-to-8' &&
+    a.design === 'brand' &&
+    !((a.extras as string[]) || []).some((x) => x.startsWith('lang'));
+  const sprintFit = a.brief === 'open' || a.brief === 'mostly';
+  const pkg = sprintFit ? SPRINT : seedFit ? SEED : undefined;
+
+  if (est.total >= CALL_THRESHOLD) {
+    return {
+      kind: 'call',
+      title: 'Book a 30-minute call',
+      body: "At this size, a short conversation is the quickest way to a fixed proposal. We'll go through the scope together, and you'll usually have the proposal within a few days.",
       href: links.call,
       label: 'Book an intro call',
       package: pkg,
@@ -617,19 +424,57 @@ export function computeNextStep(
   }
   return {
     kind: 'brief',
-    title: 'Send a brief',
-    body: 'A site this size we can scope from a written brief. Tell us what it has to do and you will hear back within a working day.',
+    title: 'Send us a brief',
+    body: "A site this size we can usually scope from a written brief. Tell us what it needs to do, and we'll come back to you within a working day.",
     href: links.brief,
     label: 'Send a brief',
     package: pkg,
   };
 }
 
+// --- Share link ----------------------------------------------------------------
+
+function toBase64Url(s: string): string {
+  return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function encodeAnswers(a: Answers): string {
+  return toBase64Url(JSON.stringify(a));
+}
+
+/** Reverse of encodeAnswers; null unless it decodes to a complete, valid answer set. */
+export function decodeAnswers(data: string): Answers | null {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(data.replace(/-/g, '+').replace(/_/g, '/')))));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const out: Answers = {};
+    for (const q of QUESTIONS) {
+      const ids = new Set(q.options.map((o) => o.id));
+      const v = parsed[q.id];
+      if (q.type === 'single' && typeof v === 'string' && ids.has(v)) out[q.id] = v;
+      if (q.type === 'multi' && Array.isArray(v)) out[q.id] = v.filter((x) => typeof x === 'string' && ids.has(x));
+    }
+    return out.type && isComplete(out) ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/** `<base>?estimate=<answers>&ref=<lead id>`; ref ties a reopen back to the lead. */
+export function shareUrl(base: string, a: Answers, ref?: string): string {
+  const q = new URLSearchParams({ estimate: encodeAnswers(a) });
+  if (ref) q.set('ref', ref);
+  return `${base}?${q.toString()}`;
+}
+
 // --- Formatting + lead notes -------------------------------------------------
 
-export const fmtGBP = (n: number): string => '£' + Math.round(n).toLocaleString('en-GB');
+// a declaration, so QUESTIONS can use it at module load
+export function fmtGBP(n: number): string {
+  return '£' + Math.round(n).toLocaleString('en-GB');
+}
 
-/** "£34,000 to £60,000", or a single figure when the range collapses. */
+/** "£26,500 to £30,500", or a single figure when the range collapses. */
 export function fmtRange(low: number, high: number): string {
   return low === high ? fmtGBP(low) : `${fmtGBP(low)} to ${fmtGBP(high)}`;
 }

@@ -5,7 +5,7 @@ import { Calculator } from './Calculator';
 export default declareComponent(Calculator, {
   name: 'Project Calculator',
   description:
-    'Price range for a build in about two minutes. A short branching question flow, priced off the Shrink rate card: the range, what moved the figure (pages, integrations, timing), where the money goes, and the next step (a call or a brief) with a package pointer. Lead form posts to the site forms handler. Questions and pricing live in code; copy and links below are editable. Styles read the site variables.',
+    'An estimate for a build in about two minutes. A short branching question flow priced from the Shrink price book: the estimate, every line that makes it up, and the next step (a call or a brief) with a package pointer. Web apps and very large sites go to a call; retainers show their tier. Lead form posts to the site forms handler; a share link reopens the answers. Questions and pricing live in code; copy and links below are editable. Styles read the site variables.',
   group: 'Shrink',
   props: {
     theme: props.Variant({ name: 'Theme', options: ['light', 'dark'], defaultValue: 'light' }),
@@ -21,11 +21,11 @@ export default declareComponent(Calculator, {
     introBody: props.Text({
       name: 'Intro body',
       defaultValue:
-        'A few plain questions, priced against the same rate card we scope real builds with. You get a range, what moved it, and the next step.',
+        "A few questions about the site you have in mind, priced from the same list we use to scope real projects. You'll see an estimate, every line that makes it up, and the best next step.",
     }),
     bullet1: props.Text({ name: 'Bullet 1', defaultValue: 'About two minutes' }),
-    bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'No email to see the figure' }),
-    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'A range, with the levers that move it' }),
+    bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'See your estimate straight away' }),
+    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'Every line explained' }),
     startLabel: props.Text({ name: 'Start button label', defaultValue: 'Start the calculator' }),
 
     // Flow
@@ -50,7 +50,7 @@ export default declareComponent(Calculator, {
     disclaimer: props.Text({
       name: 'Small print',
       defaultValue:
-        'An indicative range from our standard rate card, excluding VAT. The price is fixed once the scope is agreed.',
+        'An estimate from our standard price list, before VAT. The price is fixed once we agree the scope together.',
     }),
   },
 });

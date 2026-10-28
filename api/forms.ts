@@ -49,11 +49,14 @@ const QUIZ_SERVICES: Record<string, string> = {
 
 /* calculator project type → Deals.Service */
 const CALCULATOR_SERVICES: Record<string, string> = {
-  'marketing-site': 'Development',
-  redesign: 'Development',
+  'new-site': 'Development',
+  rebuild: 'Development',
   'web-app': 'Development',
-  optimisation: 'Optimisation retainer',
+  retainer: 'Optimisation retainer',
 };
+
+/* Deals currency field */
+const DEAL_VALUE = 'Value (GBP)';
 
 /* browsers allowed to post the quiz and calculator */
 const ORIGIN_RE = /^https:\/\/((www\.)?shrink\.studio|[a-z0-9-]+\.webflow\.io)$/;
@@ -124,12 +127,17 @@ type CalculatorPayload = {
   id?: string;
   pageUrl?: string;
   contact?: { name?: string; email?: string; company?: string; resources?: boolean };
+  shareUrl?: string;
   estimate?: {
-    kind?: 'range' | 'recurring';
+    kind?: 'range' | 'recurring' | 'call';
     low?: number;
     high?: number;
+    total?: number;
+    sprint?: number;
     monthly?: number;
     label?: string;
+    reason?: string;
+    from?: number;
     type?: string;
   };
   drivers?: { label?: string; choice?: string; low?: number; high?: number }[];
@@ -419,7 +427,15 @@ async function handleCalculator(q: CalculatorPayload) {
   const figure =
     e.kind === 'recurring'
       ? `${gbp(e.monthly)} a month (${e.label?.slice(0, 60) || 'retainer'})`
-      : `${gbp(e.low)} to ${gbp(e.high)}`;
+      : e.kind === 'call'
+        ? e.reason === 'web-app'
+          ? 'web app, no figure, call to scope'
+          : `from ${gbp(e.from)}, call to scope`
+        : `${gbp(e.low)} to ${gbp(e.high)}${amt(e.sprint) ? `, plus a Clarity Sprint ${gbp(e.sprint)}` : ''}`;
+  // deal value: the middle of the range, or the three-month first term of a retainer
+  const value =
+    e.kind === 'recurring' ? amt(e.monthly) * 3 : e.kind === 'range' ? amt(e.total) || (amt(e.low) + amt(e.high)) / 2 : amt(e.from);
+  const share = /^https:\/\/(www\.)?shrink\.studio\//.test(q.shareUrl || '') ? q.shareUrl!.slice(0, 1500) : '';
   const id = q.id?.slice(0, 64);
 
   // browser retries: skip if this submission already landed
@@ -463,8 +479,10 @@ async function handleCalculator(q: CalculatorPayload) {
       Stage: 'Lead',
       ...(service ? { Service: service } : {}),
       ...(company ? { Company: [company.id] } : {}),
+      ...(value > 0 ? { [DEAL_VALUE]: value } : {}),
       Notes: [
         `Project calculator: ${figure}`,
+        ...(share ? [`Their estimate: ${share}`] : []),
         `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
         '',
         'What moved the figure:',
@@ -749,6 +767,10 @@ function parseQuiz(raw: string): QuizPayload | null {
 
 function num(v: unknown) {
   return typeof v === 'number' && Number.isFinite(v) ? v : '?';
+}
+
+function amt(v: unknown) {
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.min(v, 1e6) : 0;
 }
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
