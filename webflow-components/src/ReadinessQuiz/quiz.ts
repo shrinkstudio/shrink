@@ -1,11 +1,11 @@
 /**
- * "Ready to brief a build?" — readiness quiz logic. Pure + framework-free.
+ * "Ready to brief a build?" readiness quiz logic. Pure + framework-free.
  * Ported from the old tools.shrink.studio quiz (src/lib/quiz) so the embedded
  * Webflow component matches the proven tool: two-axis scoring (Readiness / 9 +
  * Urgency / 6), a jobs-to-be-done list, a recommended engagement, and a
  * shareable-result link.
  *
- * Keep questions, scoring, and copy here — the component reads it, Ben refines it.
+ * Keep questions, scoring, and copy here: the component reads it, Ben refines it.
  */
 
 export type Dimension =
@@ -45,7 +45,7 @@ export const QUESTIONS: Question[] = [
     prompt: 'Where are you in the funding journey?',
     helper: 'We work with venture-backed teams. This helps us tell you if now is the moment.',
     options: [
-      { id: 'pre-raise', label: "Pre-seed, or haven't raised yet", score: 0 },
+      { id: 'pre-raise', label: 'Pre-seed, or yet to raise', score: 0 },
       { id: 'recent-seed', label: 'Recently raised seed (within 6 months)', score: 3 },
       { id: 'mid-cycle', label: 'Raised seed or Series A 6–18 months ago', score: 3 },
       { id: 'post-cycle', label: 'Raised over 18 months ago', score: 2 },
@@ -56,13 +56,13 @@ export const QUESTIONS: Question[] = [
     id: 'clarity',
     dimension: 'clarity',
     type: 'single',
-    prompt: "Whose homepage are you writing — yours, or your customer's?",
+    prompt: "Whose homepage are you writing: yours, or your customer's?",
     helper: "The sharpest sites are written from the customer's point of view, not the product's.",
     options: [
-      { id: 'customer', label: "Our customer's — their problems, their world", score: 3 },
+      { id: 'customer', label: "Our customer's: their problems, their world", score: 3 },
       { id: 'mixed', label: 'A mix, depending where you look', score: 2 },
-      { id: 'ours', label: 'Ours — our product, our story', score: 1 },
-      { id: 'unclear', label: "Honestly, we haven't worked that out yet", score: 0 },
+      { id: 'ours', label: 'Ours: our product, our story', score: 1 },
+      { id: 'unclear', label: 'Honestly, that is still open', score: 0 },
     ],
   },
   {
@@ -71,7 +71,7 @@ export const QUESTIONS: Question[] = [
     type: 'single',
     prompt: 'When an investor or enterprise prospect Googles you, does the site hold up?',
     options: [
-      { id: 'confident', label: "Confidently — we'd point them straight at it", score: 0 },
+      { id: 'confident', label: "Confidently, we'd point them straight at it", score: 0 },
       { id: 'does-job', label: 'It does the job', score: 1 },
       { id: 'rather-not', label: "We'd rather they didn't look too hard", score: 2 },
       { id: 'hurts', label: 'It actively hurts us', score: 3 },
@@ -83,10 +83,10 @@ export const QUESTIONS: Question[] = [
     type: 'single',
     prompt: 'Does your marketing team have somewhere to point campaigns?',
     options: [
-      { id: 'yes-kit', label: 'Yes — landing pages, sector pages, the full kit', score: 0 },
-      { id: 'sort-of', label: 'Sort of — they make it work', score: 1 },
+      { id: 'yes-kit', label: 'Yes: landing pages, sector pages, the full kit', score: 0 },
+      { id: 'sort-of', label: 'Sort of, they make it work', score: 1 },
       { id: 'work-around', label: 'They mostly work around the site', score: 2 },
-      { id: 'no-team', label: "There isn't really a marketing team yet", score: 3 },
+      { id: 'no-team', label: 'The marketing team is still to come', score: 3 },
     ],
   },
   {
@@ -110,12 +110,12 @@ export const QUESTIONS: Question[] = [
     id: 'team',
     dimension: 'team',
     type: 'single',
-    prompt: 'Who owns this internally — and have they got the time?',
+    prompt: 'Who owns this internally, and have they got the time?',
     options: [
       { id: 'named-time', label: 'Named owner with time carved out', score: 3 },
       { id: 'named-no-time', label: 'Named owner, but no real time', score: 2 },
       { id: 'whoever', label: "Whoever's free that week", score: 1 },
-      { id: 'no-one', label: 'No one yet', score: 0 },
+      { id: 'no-one', label: 'Nobody, so far', score: 0 },
     ],
   },
   {
@@ -128,7 +128,7 @@ export const QUESTIONS: Question[] = [
       { id: 'rebuild', label: 'A full rebuild' },
       { id: 'sprint', label: 'A targeted sprint on specific gaps' },
       { id: 'discovery', label: 'Discovery first, build later' },
-      { id: 'unsure', label: 'Honestly, not sure' },
+      { id: 'unsure', label: 'Still working that out' },
     ],
   },
 ];
@@ -156,6 +156,9 @@ export interface RecommendedEngagement {
   label: string;
   blurb: string;
   cta: string;
+  /** Package or service page for the recommendation. */
+  href: string;
+  linkLabel: string;
 }
 
 export interface QuizResult {
@@ -213,8 +216,8 @@ function deriveState(s: ScoreBreakdown): ResultState {
 
 function buildHeadline(state: ResultState): string {
   if (state === 'ready') return "You're at the moment.";
-  if (state === 'close') return "Close — but the brief isn't there yet.";
-  return 'Not the moment yet — but worth laying the groundwork.';
+  if (state === 'close') return 'Close, but the brief is still forming.';
+  return 'Not the moment yet, but worth laying the groundwork.';
 }
 
 function buildDiagnosis(state: ResultState, s: ScoreBreakdown, urgent: boolean): string {
@@ -228,10 +231,10 @@ function buildDiagnosis(state: ResultState, s: ScoreBreakdown, urgent: boolean):
     const weakClarity = s.clarity < 2;
     const weakTeam = s.team < 2;
     if (weakClarity && weakTeam) {
-      return "The funding's there, but the brief isn't yet. Positioning and team ownership need to land before a build is worth briefing.";
+      return "The funding's there, but the brief is still forming. Positioning and team ownership need to land before a build is worth briefing.";
     }
     if (weakClarity) {
-      return "The timing and team are there. What's missing is the clarity — whose homepage you're writing and what it has to say.";
+      return "The timing and team are there. What's missing is the clarity: whose homepage you're writing and what it has to say.";
     }
     return 'The thinking is there. What is missing is someone inside the company who owns the build with real time to give it.';
   }
@@ -247,7 +250,7 @@ function readinessNote(readiness: number): string {
 function urgencyNote(urgency: number): string {
   if (urgency >= 4) return 'The window is open now.';
   if (urgency >= 2) return 'A gap worth closing.';
-  return 'No pressing gap yet.';
+  return 'No pressing gap so far.';
 }
 
 function recommendEngagement(
@@ -262,6 +265,8 @@ function recommendEngagement(
         label: 'Clarity Sprint',
         blurb: 'A focused sprint on the specific gaps holding the site back.',
         cta: 'Send us the brief',
+        href: '/packages/clarity-sprint',
+        linkLabel: 'See the Clarity Sprint',
       };
     }
     if (shape === 'discovery') {
@@ -270,6 +275,8 @@ function recommendEngagement(
         label: 'Discovery',
         blurb: 'Get the thinking right first, then build with a clear plan.',
         cta: 'Send us the brief',
+        href: '/services/discovery',
+        linkLabel: 'See Discovery',
       };
     }
     return {
@@ -277,6 +284,8 @@ function recommendEngagement(
       label: 'Seed Website',
       blurb: 'Fixed scope, fixed price, six weeks. The productised route for a Seed-stage build.',
       cta: 'Send us the brief',
+      href: '/packages/seed-website',
+      linkLabel: 'See the Seed Website',
     };
   }
   if (state === 'close') {
@@ -286,6 +295,8 @@ function recommendEngagement(
         label: 'Clarity Sprint',
         blurb: 'Nail whose homepage you are writing and what it has to say, before you build.',
         cta: 'Book a free audit',
+        href: '/packages/clarity-sprint',
+        linkLabel: 'See the Clarity Sprint',
       };
     }
     return {
@@ -293,6 +304,8 @@ function recommendEngagement(
       label: 'Discovery',
       blurb: 'A short piece of discovery to line up ownership and scope before a build.',
       cta: 'Book a free audit',
+      href: '/services/discovery',
+      linkLabel: 'See Discovery',
     };
   }
   return {
@@ -300,6 +313,8 @@ function recommendEngagement(
     label: 'The funding moment',
     blurb: 'Groundwork worth doing now, so you are ready to brief when the moment comes.',
     cta: 'Book a free audit',
+    href: '/resources',
+    linkLabel: 'Browse the resources',
   };
 }
 

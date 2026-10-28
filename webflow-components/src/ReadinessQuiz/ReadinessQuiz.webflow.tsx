@@ -5,10 +5,15 @@ import { ReadinessQuiz } from './ReadinessQuiz';
 export default declareComponent(ReadinessQuiz, {
   name: 'Readiness Quiz',
   description:
-    "'Ready to brief a build?' — 7-question readiness quiz. Two-axis score (Readiness / Urgency), what the next site needs, where we'd start, a lead form, and a shareable link. Questions + scoring live in code; copy + endpoints below are editable.",
+    "'Ready to brief a build?' Seven-question readiness quiz: two-axis score (Readiness / Urgency), what the next site needs, where we'd start, a lead form and a shareable link. Questions and scoring live in code; copy and endpoints below are editable. Styles read the site variables.",
   group: 'Shrink',
   props: {
     theme: props.Variant({ name: 'Theme', options: ['light', 'dark'], defaultValue: 'light' }),
+    frame: props.Variant({
+      name: 'Frame (none = inside a page Card)',
+      options: ['none', 'card'],
+      defaultValue: 'none',
+    }),
 
     // Intro
     eyebrow: props.Text({ name: 'Eyebrow', defaultValue: 'Readiness quiz' }),
@@ -20,7 +25,7 @@ export default declareComponent(ReadinessQuiz, {
     }),
     bullet1: props.Text({ name: 'Bullet 1', defaultValue: 'About two minutes' }),
     bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'No email to start' }),
-    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'Honest read, not a sales pitch' }),
+    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'An honest read, with no sales pitch attached' }),
     startLabel: props.Text({ name: 'Start button label', defaultValue: 'Start the quiz' }),
 
     // In-quiz
