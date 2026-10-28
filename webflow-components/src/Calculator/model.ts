@@ -187,12 +187,12 @@ export const QUESTIONS: Question[] = [
     id: 'timing',
     type: 'single',
     prompt: 'When would you like to launch?',
-    helper: 'This helps us plan the team. It leaves the price as it is.',
+    helper: "This helps us plan the team. A faster launch can change the price, and we'll always talk it through with you first.",
     visibleWhen: isSite,
     options: [
       { id: 'flexible', label: "Whenever it's ready" },
       { id: 'quarter', label: 'In the next two to three months' },
-      { id: 'fast', label: 'In under six weeks', hint: "We'll tell you honestly what fits" },
+      { id: 'fast', label: 'In under six weeks', hint: "We'll tell you honestly what fits, and what it means for the price" },
     ],
   },
   // --- Retainer --------------------------------------------------------------
@@ -340,8 +340,8 @@ export function computeEstimate(a: Answers): Estimate {
   const { total, low, high } = range(lines);
   const note =
     a.timing === 'fast'
-      ? "For the site as you described it, before VAT. Under six weeks is possible for smaller sites, and we'll tell you honestly what fits."
-      : 'For the site as you described it, before VAT. Once we agree the scope together, the price is fixed.';
+      ? "An estimate for the site as you described it, before VAT. Under six weeks is possible for smaller sites, though a faster launch can change the price, so we'll talk it through with you."
+      : 'An estimate for the site as you described it, before VAT. Your final price comes in a fixed proposal, once we have agreed the scope together.';
   return { kind: 'range', low, high, total, lines, sprint: a.brief === 'open' ? CLARITY_SPRINT : 0, note };
 }
 

@@ -50,7 +50,7 @@ export default declareComponent(Calculator, {
     disclaimer: props.Text({
       name: 'Small print',
       defaultValue:
-        'An estimate from our standard price list, before VAT. The price is fixed once we agree the scope together.',
+        'An estimate from our standard price list, before VAT, to help you plan. Your final price comes in a fixed proposal once we have agreed the scope together.',
     }),
   },
 });

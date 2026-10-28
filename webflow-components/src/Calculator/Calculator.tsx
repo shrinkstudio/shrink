@@ -88,7 +88,7 @@ export function Calculator({
   briefLink = '/contact?service=development',
   optInLabel = 'Send me guides and resources from Shrink',
   submitEndpoint = 'https://shrink-site-api.vercel.app/api/forms',
-  disclaimer = 'An estimate from our standard price list, before VAT. The price is fixed once we agree the scope together.',
+  disclaimer = 'An estimate from our standard price list, before VAT, to help you plan. Your final price comes in a fixed proposal once we have agreed the scope together.',
 }: CalculatorProps) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [step, setStep] = useState(0);
