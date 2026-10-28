@@ -129,6 +129,15 @@ export function Calculator({
     setPhase('results');
     shownAt.current = Date.now();
     track('calculator_reopened', { ref: ref || '' });
+    // tell Shrink OS the lead came back to their estimate
+    if (ref) {
+      fetch(submitEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form: 'calculator-reopen', ref }),
+      }).catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // keep the top of the card in view as the phase changes

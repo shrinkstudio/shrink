@@ -170,6 +170,20 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // calculator share link reopened: note it on their Deal
+  const reopen = parseReopen(raw);
+  if (reopen) {
+    const headers = cors(request);
+    if (!headers['Access-Control-Allow-Origin']) return json({ ok: false, error: 'origin' }, 403);
+    if (tooMany(request)) return json({ ok: false, error: 'slow down' }, 429, headers);
+    try {
+      return json(await handleReopen(reopen), 200, headers);
+    } catch (err) {
+      console.error('forms error reopen', err);
+      return json({ ok: false }, 500, headers);
+    }
+  }
+
   // calculator: same browser path as the quiz
   const calc = parseCalculator(raw);
   if (calc) {
@@ -480,32 +494,49 @@ async function handleCalculator(q: CalculatorPayload) {
   });
 
   const service = CALCULATOR_SERVICES[e.type || ''];
-  const [deal] = await create(T.deals, [
-    {
-      Name: `${companyName}, project calculator`,
-      'Lead name': name,
-      Stage: 'Lead',
-      ...(service ? { Service: service } : {}),
-      ...(company ? { Company: [company.id] } : {}),
-      ...(value > 0 ? { [DEAL_VALUE]: value } : {}),
-      Notes: [
-        `Project calculator: ${figure}`,
-        ...(share ? [`Their estimate: ${share}`] : []),
-        `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
-        '',
-        'What makes up the figure:',
-        ...drivers,
-        '',
-        ...answers,
-        '',
-        `Contact: ${name} <${email}>`,
-        ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
-        `Calculator ${id || ''}`,
-      ].join('\n'),
-      'Next step': 'Reply to calculator lead',
-      'Next step date': today(),
-    },
-  ]);
+  const dealNotes = [
+    `Project calculator: ${figure}`,
+    ...(share ? [`Their estimate: ${share}`] : []),
+    `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
+    '',
+    'What makes up the figure:',
+    ...drivers,
+    '',
+    ...answers,
+    '',
+    `Contact: ${name} <${email}>`,
+    ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
+    `Calculator ${id || ''}`,
+  ].join('\n');
+
+  // repeat visitors: update their open calculator Deal instead of adding another
+  const open = await find(
+    T.deals,
+    `AND(FIND("<${esc(email)}>", {Notes}), FIND(", project calculator", {Name}), {Stage} = "Lead")`
+  );
+  const dealFields = {
+    ...(service ? { Service: service } : {}),
+    ...(value > 0 ? { [DEAL_VALUE]: value } : {}),
+    'Next step': open ? 'Reply to calculator lead (ran it again)' : 'Reply to calculator lead',
+    'Next step date': today(),
+  };
+  const deal = open
+    ? await patch(T.deals, open.id, {
+        ...dealFields,
+        Notes: `${today()}: ran the calculator again\n${dealNotes}\n\n---\n${String(open.fields.Notes || '')}`.slice(0, 90000),
+      })
+    : (
+        await create(T.deals, [
+          {
+            Name: `${companyName}, project calculator`,
+            'Lead name': name,
+            Stage: 'Lead',
+            ...(company ? { Company: [company.id] } : {}),
+            ...dealFields,
+            Notes: dealNotes,
+          },
+        ])
+      )[0];
 
   const mailing = c.resources
     ? await upsertMailing(
@@ -514,8 +545,14 @@ async function handleCalculator(q: CalculatorPayload) {
       )
     : null;
 
-  const held = await holdEmail(email, 'project calculator');
-  const emailed = held || (await sendResultsEmail(email, calculatorEmail(q), `calculator-${id || email}`, 'calculator'));
+  const held = await holdEmail(open);
+  const emailed =
+    held || (await sendResultsEmail(email, calculatorEmail(q), `calculator-${id || email}`, 'calculator', deal.id));
+  await patch(T.deals, deal.id, {
+    'Results email': emailed.startsWith('sent') ? 'Sent' : emailed.startsWith('held') ? 'Held' : 'Not sent',
+    ...(emailed.startsWith('sent') ? { 'Results sent at': new Date().toISOString() } : {}),
+    'Follow-up due': workingDaysFrom(3),
+  }).catch((err) => console.error('results email fields', err));
 
   await notify(
     `Project calculator: ${figure}`,
@@ -523,12 +560,29 @@ async function handleCalculator(q: CalculatorPayload) {
       `${name} (${email})${c.company ? `, ${c.company.slice(0, 120)}` : ''}`,
       `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
       `Results email: ${emailed}`,
-      'Deal created, reply today',
+      open ? 'Deal updated (they ran it again), reply today' : 'Deal created, reply today',
     ],
     recordUrl(T.deals, deal.id)
   );
 
-  return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id, emailed };
+  return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id, emailed, updated: !!open };
+}
+
+/** Someone opened a calculator share link that carries a lead id. */
+async function handleReopen(ref: string) {
+  const deal = await find(T.deals, `FIND("Calculator ${esc(ref)}", {Notes})`);
+  if (!deal) return { ok: true };
+  const last = Date.parse(String(deal.fields['Reopened at'] || ''));
+  await patch(T.deals, deal.id, { 'Reopened at': new Date().toISOString() });
+  // one ping an hour is plenty
+  if (!last || Date.now() - last > 60 * 60 * 1000) {
+    await notify(
+      'Estimate reopened',
+      [`${String(deal.fields['Lead name'] || deal.fields.Name || 'A lead')} opened their calculator estimate again`],
+      recordUrl(T.deals, deal.id)
+    );
+  }
+  return { ok: true };
 }
 
 /* utm_* hidden inputs (track.ts) → "linkedin / ben-post / aeo-adfin" */
@@ -661,6 +715,10 @@ async function create(
   return res.records;
 }
 
+async function patch(table: string, id: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+  return airtable(`${table}/${id}`, 'PATCH', { fields, typecast: false });
+}
+
 async function airtable(path: string, method: string, body?: unknown) {
   const token = process.env.AIRTABLE_TOKEN;
   if (!token) throw new Error('AIRTABLE_TOKEN not set');
@@ -755,6 +813,16 @@ function cors(request: Request): Record<string, string> {
   };
 }
 
+function parseReopen(raw: string): string | null {
+  try {
+    const body = JSON.parse(raw);
+    const ref = body?.form === 'calculator-reopen' ? String(body.ref || '') : '';
+    return /^[\w-]{6,64}$/.test(ref) ? ref : null;
+  } catch {
+    return null;
+  }
+}
+
 function parseCalculator(raw: string): CalculatorPayload | null {
   try {
     const body = JSON.parse(raw);
@@ -796,7 +864,7 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
 // The results email goes to whatever address is typed in, so a few cheap limits
 // keep hey@shrink.studio from being used to mail strangers:
 // 1. per IP: at most 5 tool submissions in 10 minutes (per warm function instance)
-// 2. per address: one results email in 24 hours
+// 2. per address: one results email in 24 hours (their open Deal's Results sent at)
 // 3. per day: RESULTS_EMAIL_DAILY_CAP results emails across the site (default 40)
 // The lead is always saved; only the email is held, and Slack says why.
 
@@ -819,25 +887,30 @@ async function count(table: string, formula: string): Promise<number> {
   return res.records?.length ?? 0;
 }
 
-/** A reason to hold the results email, or '' to send it. Deals carry "<email>" in their Notes. */
-async function holdEmail(email: string, dealSuffix: string): Promise<string> {
+/** A reason to hold the results email, or '' to send it. `open` is their existing Deal, if any. */
+async function holdEmail(open: AirtableRecord | null): Promise<string> {
   try {
-    const sameAddress = await count(
-      T.deals,
-      `AND(FIND("<${esc(email)}>", {Notes}), IS_AFTER(CREATED_TIME(), DATEADD(NOW(), -1, 'days')))`
-    );
-    if (sameAddress > 1) return 'held: this address already had one today';
+    const last = Date.parse(String(open?.fields['Results sent at'] || ''));
+    if (last && Date.now() - last < 24 * 60 * 60 * 1000) return 'held: this address already had one today';
     const cap = Number(process.env.RESULTS_EMAIL_DAILY_CAP) || 40;
-    const today = await count(
-      T.deals,
-      `AND(FIND(", ${esc(dealSuffix)}", {Name}), IS_SAME(CREATED_TIME(), TODAY(), 'day'))`
-    );
-    if (today > cap) return `held: daily cap of ${cap} reached`;
+    const today = await count(T.deals, `IS_SAME({Results sent at}, TODAY(), 'day')`);
+    if (today >= cap) return `held: daily cap of ${cap} reached`;
     return '';
   } catch (err) {
     console.error('email guard', err);
     return 'held: guard check failed';
   }
+}
+
+/** YYYY-MM-DD, n working days from today (Monday to Friday). */
+function workingDaysFrom(n: number) {
+  const d = new Date();
+  while (n > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const day = d.getUTCDay();
+    if (day !== 0 && day !== 6) n -= 1;
+  }
+  return d.toISOString().slice(0, 10);
 }
 
 /* ---------- results email ---------- */
@@ -967,7 +1040,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>${h(subject)}</title>
-<style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-h{font-size:26px !important}.sk-h5{font-size:20px !important}.sk-body{font-size:16px !important}.sk-lbl{width:96px !important;padding-right:12px !important}}</style>
+<style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-h{font-size:26px !important}.sk-h5{font-size:20px !important}.sk-body{font-size:16px !important}.sk-lbl{width:96px !important;padding-right:12px !important}.sk-stack{display:block !important;width:100% !important;text-align:left !important}.sk-photo{padding-top:16px !important}.sk-cta{margin-top:24px !important}}</style>
 </head>
 <body style="margin:0;padding:0;background:${C.smoke}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(figure)}. ${kind === 'range' ? 'How it adds up, and what happens next.' : 'And what happens next.'}</div>
@@ -1007,12 +1080,12 @@ ${gap(48)}
 ${gap(24)}
 <tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td style="vertical-align:top">
+    <td class="sk-stack" style="vertical-align:top">
       <p style="${t(18, 500, C.ink, 1.3)}">Ben Hammond</p>
       <p style="${t(18, 500, C.light, 1.3)}">Founder</p>
-      <p style="margin:48px 0 0"><a href="${cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${button}</a></p>
+      <p class="sk-cta" style="margin:48px 0 0"><a href="${cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${button}</a></p>
     </td>
-    <td width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
+    <td class="sk-stack sk-photo" width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
   </tr></table>
 </td></tr>
 ${
@@ -1060,7 +1133,7 @@ ${gap(48)}
 }
 
 /** Sends through Resend. Returns the email id, or why it wasn't sent. */
-async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, tool: string): Promise<string> {
+async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, tool: string, deal: string): Promise<string> {
   const mode = (process.env.RESULTS_EMAIL || 'off').toLowerCase();
   const testers = (process.env.RESULTS_EMAIL_TEST || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
   const apiKey = process.env.RESEND_API_KEY;
@@ -1077,7 +1150,11 @@ async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, 
         subject: mail.subject,
         html: mail.html,
         text: mail.text,
-        tags: [{ name: 'tool', value: tool }],
+        // the deal tag comes back on Resend events (api/email-events.ts)
+        tags: [
+          { name: 'tool', value: tool },
+          { name: 'deal', value: deal },
+        ],
       }),
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
