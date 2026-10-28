@@ -256,7 +256,8 @@ export function Calculator({
 
   return (
     <>
-      <style>{css}</style>
+      {/* raw, so SSR does not entity-escape the CSS (that broke hydration: React #425/#422) */}
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       <div className={`sk theme-${theme} frame-${frame}`} ref={rootRef}>
         {phase === 'intro' && (
           <div className="sk-step" key="intro">
