@@ -6,9 +6,10 @@
 // go out under PostHog's server-side daily hash ($posthog_cookieless), nothing
 // is written to cookies or storage, and session recording is off. The project
 // has Cookieless tracking on (Settings > Web analytics) or those events drop.
-// Accepting analytics opts in (cookies, so returning visitors are recognised)
-// and starts session recording; a refusal opts out again, which clears the
-// PostHog cookie and goes back to cookieless.
+// Accepting analytics opts in (cookies, so returning visitors are recognised),
+// starts session recording and, on a fresh yes, sends a $pageview for the
+// current page so the new session has it; a refusal opts out again, which
+// clears the PostHog cookie and goes back to cookieless.
 //
 // CookieYes API used: window.getCkyConsent() for the stored choice on load,
 // and the `cookieyes_consent_update` document event when the banner is
@@ -23,6 +24,8 @@ interface CkyConsent {
 
 interface PostHogLike {
   set_config?: (config: Record<string, unknown>) => void;
+  capture?: (event: string) => void;
+  has_opted_in_capturing?: () => boolean;
   opt_in_capturing?: () => void;
   opt_out_capturing?: () => void;
   startSessionRecording?: () => void;
@@ -49,9 +52,12 @@ const apply = (allow: boolean) => {
   if (!ph) return;
   try {
     if (allow) {
+      const wasIn = ph.has_opted_in_capturing?.() ?? true;
       ph.opt_in_capturing?.();
       ph.set_config?.({ disable_session_recording: false });
       ph.startSessionRecording?.();
+      // a fresh yes starts a new session; log the page they're on so it isn't blank
+      if (!wasIn) ph.capture?.('$pageview');
     } else {
       ph.stopSessionRecording?.();
       ph.set_config?.({ disable_session_recording: true });
