@@ -978,7 +978,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr><td>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-2x.png" width="39" height="30" alt="Shrink" style="display:block;border:0"></a></td>
+    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0"></a></td>
     <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${tag}</span></td>
   </tr></table>
 </td></tr>
