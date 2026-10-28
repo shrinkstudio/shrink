@@ -111,14 +111,30 @@ type AirtableRecord = { id: string; fields: Record<string, unknown> };
 type QuizPayload = {
   form: 'quiz';
   id?: string;
+  /** honeypot: a hidden field people never fill */
+  hp?: string;
+  /** ms from seeing the result to sending the form */
+  elapsed?: number;
   pageUrl?: string;
+  shareUrl?: string;
   contact?: { name?: string; email?: string; company?: string; resources?: boolean };
   result?: {
     state?: string;
     readiness?: number;
     urgency?: number;
+    readinessNote?: string;
+    urgencyNote?: string;
+    headline?: string;
+    diagnosis?: string;
+    jtbdLabel?: string;
+    jtbd?: string[];
     engagementId?: string;
     engagement?: string;
+    engagementBlurb?: string;
+    engagementPrice?: string;
+    engagementHref?: string;
+    engagementLink?: string;
+    value?: number;
   };
   answers?: { question?: string; answer?: string }[];
 };
@@ -162,6 +178,7 @@ export async function POST(request: Request): Promise<Response> {
   if (quiz) {
     const headers = cors(request);
     if (!headers['Access-Control-Allow-Origin']) return json({ ok: false, error: 'origin' }, 403);
+    if (tooMany(request)) return json({ ok: false, error: 'slow down' }, 429, headers);
     try {
       const out = await handleQuiz(quiz);
       return json(out, out.ok ? 200 : 400, headers);
@@ -171,7 +188,7 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
-  // calculator share link reopened: note it on their Deal
+  // calculator or quiz share link reopened: note it on their Deal
   const reopen = parseReopen(raw);
   if (reopen) {
     const headers = cors(request);
@@ -340,6 +357,9 @@ async function handleResource(s: Submission) {
 }
 
 async function handleQuiz(q: QuizPayload) {
+  // bots: filled the hidden field, or sent the form faster than anyone can type. Say ok, store nothing
+  if (q.hp) return { ok: true };
+  if (typeof q.elapsed === 'number' && q.elapsed < 2500) return { ok: true };
   const c = q.contact || {};
   const email = c.email?.trim().toLowerCase() || '';
   const name = c.name?.trim().slice(0, 200) || '';
@@ -389,30 +409,49 @@ async function handleQuiz(q: QuizPayload) {
     await patch(T.contacts, contact.id, { 'Recheck date': recheck }).catch((err) => console.error('recheck date', err));
   }
 
+  const share = /^https:\/\/(www\.)?shrink\.studio\//.test(q.shareUrl || '') ? q.shareUrl!.slice(0, 1500) : '';
   let deal: AirtableRecord | undefined;
+  let open: AirtableRecord | null = null;
   if (ready) {
     const service = QUIZ_SERVICES[r.engagementId || ''];
-    [deal] = await create(T.deals, [
-      {
-        Name: `${companyName}, readiness quiz`,
-        'Lead name': name,
-        Stage: 'Lead',
-        ...(service ? { Service: service } : {}),
-        ...(company ? { Company: [company.id] } : {}),
-        Notes: [
-          `Readiness quiz: ${state.replace('_', ' ')}, ${score}`,
-          `Where we'd start: ${engagement}`,
-          '',
-          ...answers,
-          '',
-          `Contact: ${name} <${email}>`,
-          ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
-          `Quiz ${id || ''}`,
-        ].join('\n'),
-        'Next step': 'Reply to quiz lead',
-        'Next step date': today(),
-      },
-    ]);
+    const value = amt(r.value);
+    const dealNotes = [
+      `Readiness quiz: ${state.replace('_', ' ')}, ${score}`,
+      `Where we'd start: ${engagement}${r.engagementPrice ? ` (${r.engagementPrice.slice(0, 40)})` : ''}`,
+      ...(share ? [`Their result: ${share}`] : []),
+      '',
+      ...answers,
+      '',
+      `Contact: ${name} <${email}>`,
+      ...(q.pageUrl ? [`Page: ${q.pageUrl.slice(0, 300)}`] : []),
+      `Quiz ${id || ''}`,
+    ].join('\n');
+    const dealFields = {
+      ...(service ? { Service: service } : {}),
+      ...(value > 0 ? { [DEAL_VALUE]: value } : {}),
+      'Next step': 'Reply to quiz lead',
+      'Next step date': today(),
+    };
+    // repeat visitors: update their open quiz Deal instead of adding another
+    open = await find(T.deals, `AND(FIND("<${esc(email)}>", {Notes}), FIND(", readiness quiz", {Name}), {Stage} = "Lead")`);
+    deal = open
+      ? await patch(T.deals, open.id, {
+          ...dealFields,
+          'Next step': 'Reply to quiz lead (took it again)',
+          Notes: `${today()}: took the quiz again\n${dealNotes}\n\n---\n${String(open.fields.Notes || '')}`.slice(0, 90000),
+        })
+      : (
+          await create(T.deals, [
+            {
+              Name: `${companyName}, readiness quiz`,
+              'Lead name': name,
+              Stage: 'Lead',
+              ...(company ? { Company: [company.id] } : {}),
+              ...dealFields,
+              Notes: dealNotes,
+            },
+          ])
+        )[0];
   }
 
   const mailing = c.resources
@@ -422,12 +461,27 @@ async function handleQuiz(q: QuizPayload) {
       )
     : null;
 
+  // everyone gets their result; only ready and close have a Deal to track it on
+  const held = await holdEmail(open);
+  // the old quiz component (before 28 Oct) sends no result copy, so there is nothing to email
+  const emailed = !r.headline
+    ? 'not sent: older quiz version'
+    : held || (await sendResultsEmail(email, quizEmail(q), `quiz-${id || email}`, 'quiz', deal?.id || 'none'));
+  if (deal) {
+    await patch(T.deals, deal.id, {
+      'Results email': emailed.startsWith('sent') ? 'Sent' : emailed.startsWith('held') ? 'Held' : 'Not sent',
+      ...(emailed.startsWith('sent') ? { 'Results sent at': new Date().toISOString() } : {}),
+      'Follow-up due': workingDaysFrom(3),
+    }).catch((err) => console.error('results email fields', err));
+  }
+
   await notify(
     `Readiness quiz: ${state.replace('_', ' ')}`,
     [
       `${name} (${email})${c.company ? `, ${c.company.slice(0, 120)}` : ''}`,
       `${score}, we'd start with ${engagement}`,
-      ready ? 'Deal created, reply today' : 'Contact set to Nurture, recheck in 90 days',
+      `Results email: ${emailed}`,
+      ready ? (open ? 'Deal updated (took it again), reply today' : 'Deal created, reply today') : 'Contact set to Nurture, recheck in 90 days',
     ],
     recordUrl(deal ? T.deals : T.contacts, deal?.id ?? contact.id)
   );
@@ -439,6 +493,7 @@ async function handleQuiz(q: QuizPayload) {
     company: company?.id,
     deal: deal?.id,
     mailing: mailing?.id,
+    emailed,
   };
 }
 
@@ -575,17 +630,17 @@ async function handleCalculator(q: CalculatorPayload) {
   return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id, emailed, updated: !!open };
 }
 
-/** Someone opened a calculator share link that carries a lead id. */
+/** Someone opened a calculator or quiz share link that carries a lead id ("Calculator <id>" or "Quiz <id>"). */
 async function handleReopen(ref: string) {
-  const deal = await find(T.deals, `FIND("Calculator ${esc(ref)}", {Notes})`);
+  const deal = await find(T.deals, `FIND("${esc(ref)}", {Notes})`);
   if (!deal) return { ok: true };
   const last = Date.parse(String(deal.fields['Reopened at'] || ''));
   await patch(T.deals, deal.id, { 'Reopened at': new Date().toISOString() });
   // one ping an hour is plenty
   if (!last || Date.now() - last > 60 * 60 * 1000) {
     await notify(
-      'Estimate reopened',
-      [`${String(deal.fields['Lead name'] || deal.fields.Name || 'A lead')} opened their calculator estimate again`],
+      ref.startsWith('Quiz') ? 'Result reopened' : 'Estimate reopened',
+      [`${String(deal.fields['Lead name'] || deal.fields.Name || 'A lead')} opened their ${ref.startsWith('Quiz') ? 'quiz result' : 'calculator estimate'} again`],
       recordUrl(T.deals, deal.id)
     );
   }
@@ -823,8 +878,9 @@ function cors(request: Request): Record<string, string> {
 function parseReopen(raw: string): string | null {
   try {
     const body = JSON.parse(raw);
-    const ref = body?.form === 'calculator-reopen' ? String(body.ref || '') : '';
-    return /^[\w-]{6,64}$/.test(ref) ? ref : null;
+    const tool = body?.form === 'calculator-reopen' ? 'Calculator' : body?.form === 'quiz-reopen' ? 'Quiz' : '';
+    const ref = tool ? String(body.ref || '') : '';
+    return /^[\w-]{6,64}$/.test(ref) ? `${tool} ${ref}` : null;
   } catch {
     return null;
   }
@@ -962,10 +1018,137 @@ function withUtm(url: string, campaign: string) {
 
 type CalculatorEmail = { subject: string; html: string; text: string };
 
+/* text style + spacer helpers for the email tables */
+const t = (size: number, weight: number, color: string, lh = 1.5, extra = '') =>
+  `font-family:${FONT};font-size:${size}px;line-height:${lh};font-weight:${weight};color:${color};margin:0;${extra}`;
+const gap = (px: number) => `<tr><td style="height:${px}px;line-height:${px}px;font-size:0">&nbsp;</td></tr>`;
+
+/* one priced or scored line: muted label, what it is, the figure on the right */
+const lineRow = (label: string, choice: string, figure: string, last = false) => `<tr>
+  <td class="sk-lbl" style="border-top:1px solid ${C.line};padding:12px 16px ${last ? 0 : 12}px 0;width:150px;vertical-align:top;${last ? t(16, 600, C.ink) : t(14, 400, C.muted)}">${h(label)}</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 16px ${last ? 0 : 12}px 0;vertical-align:top;${t(14, 500, C.ink)}">${h(choice)}</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 0 ${last ? 0 : 12}px;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${h(figure)}</td>
+</tr>`;
+
+type EmailParts = {
+  subject: string;
+  preheader: string;
+  tag: string;
+  top: string;
+  figure: string;
+  /** already escaped where it carries user input */
+  body: string;
+  /** the middle of the email: rows and notes, already built */
+  sectionHtml: string;
+  sectionText: string[];
+  nextLine: string;
+  note: string;
+  button: string;
+  cta: string;
+  share: string;
+  /** "estimate" or "result", used in the reopen line and the footer */
+  thing: string;
+  campaign: string;
+};
+
+/** The results email shell, from the Figma template (Playground > Updates). */
+function renderEmail(p: EmailParts): CalculatorEmail {
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
+  const html = `<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>${h(p.subject)}</title>
+<style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-h{font-size:26px !important}.sk-h5{font-size:20px !important}.sk-body{font-size:16px !important}.sk-lbl{width:96px !important;padding-right:12px !important}.sk-stack{display:block !important;width:100% !important;text-align:left !important}.sk-photo{padding-top:16px !important}.sk-cta{margin-top:24px !important}}</style>
+</head>
+<body style="margin:0;padding:0;background:${C.smoke}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(p.preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.smoke}">
+<tr><td class="sk-outer" align="center" style="padding:40px 16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${C.white};border-radius:12px">
+<tr><td class="sk-pad" style="padding:40px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><a href="${withUtm(SITE + '/', p.campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0"></a></td>
+    <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${h(p.tag)}</span></td>
+  </tr></table>
+</td></tr>
+${gap(48)}
+<tr><td>
+  <p class="sk-h" style="${t(32, 500, C.muted, 1.3, 'letter-spacing:-0.3px')}">${h(p.top)}</p>
+  <p class="sk-h" style="${t(32, 500, C.ink, 1.3, 'letter-spacing:-0.3px')}">${h(p.figure)}</p>
+  <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${p.body}</p>
+</td></tr>
+${p.sectionHtml}
+${gap(48)}
+<tr><td>
+  <p class="sk-h5" style="${t(24, 500, C.muted, 1.3, 'letter-spacing:-0.2px')}">What happens next</p>
+  <p class="sk-h5" style="${t(24, 500, C.ink, 1.3, 'letter-spacing:-0.2px')}">${h(p.nextLine)}</p>
+  <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${h(p.note)}</p>
+</td></tr>
+${gap(24)}
+<tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td class="sk-stack" style="vertical-align:top">
+      <p style="${t(18, 500, C.ink, 1.3)}">Ben Hammond</p>
+      <p style="${t(18, 500, C.light, 1.3)}">Founder</p>
+      <p class="sk-cta" style="margin:48px 0 0"><a href="${p.cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${h(p.button)}</a></p>
+    </td>
+    <td class="sk-stack sk-photo" width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
+  </tr></table>
+</td></tr>
+${
+  p.share
+    ? `${gap(24)}
+<tr><td>
+  <p style="${t(14, 500, C.ink)}"><a href="${h(p.share)}" style="color:${C.ink};text-decoration:underline">Reopen your ${p.thing} to change any of your answers &rarr;</a></p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">To share this with your team, just forward this email. The link above opens your answers, so they'll see the same ${p.thing}.</p>
+</td></tr>`
+    : ''
+}
+${gap(48)}
+<tr><td style="border-top:1px solid ${C.line};padding-top:16px">
+  <p style="${t(14, 500, C.grey)}">You asked for this ${p.thing} on shrink.studio on ${date}. We'll only send you guides and updates if you ticked the box to get them.</p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788) &middot; Waverley House, 9 Noel St, London</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+  const text = [
+    p.top,
+    p.figure,
+    '',
+    p.body.replace(/&[a-z#0-9]+;/g, ''),
+    ...p.sectionText,
+    '',
+    `What happens next: ${p.nextLine}`,
+    p.note,
+    `${p.button}: ${p.cta}`,
+    ...(p.share ? ['', `Reopen your ${p.thing}: ${p.share}`] : []),
+    '',
+    'Ben Hammond, Founder, Shrink Studio',
+    `You asked for this ${p.thing} on shrink.studio on ${date}.`,
+  ].join('\n');
+
+  return { subject: p.subject, html, text };
+}
+
+const shareLink = (url: string | undefined, campaign: string) =>
+  url && /^https:\/\/(www\.)?shrink\.studio\//.test(url) ? withUtm(url, campaign) : '';
+const firstName = (name?: string) => (name || '').trim().split(/\s+/)[0]?.slice(0, 40) || 'there';
+
 export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   const c = q.contact || {};
   const e = q.estimate || {};
-  const first = (c.name || '').trim().split(/\s+/)[0]?.slice(0, 40) || 'there';
+  const first = firstName(c.name);
   const kind = e.kind || 'range';
   const next = q.nextStep || {};
   const compound = /compound/i.test(next.label || '') || /compound/i.test(e.label || '');
@@ -1007,136 +1190,122 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
     nextLine = 'A 30-minute call is the best way to agree the scope together.';
     subject = 'Your project with Shrink';
   }
-  const note =
-    "I'm happy to go through it with you, answer any questions and help you work out the right scope for where you are now. Or just reply to this email. It comes to me.";
 
   const rows: RowIn[] = kind === 'range' ? (q.drivers || []).slice(0, 14) : [];
   const total = amt(e.total) || rows.reduce((s, r) => s + amt(r.low), 0);
-  const campaign = kind === 'recurring' ? 'calculator-retainer' : 'calculator';
-  const cta = withUtm(SITE + href, campaign);
-  const share = q.shareUrl && /^https:\/\/(www\.)?shrink\.studio\//.test(q.shareUrl) ? withUtm(q.shareUrl, campaign) : '';
   const sprint = amt(e.sprint);
-  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
+  const campaign = kind === 'recurring' ? 'calculator-retainer' : 'calculator';
+  const amount = (r: RowIn, i: number) => (i === 0 ? gbp(r.low) : `+${gbp(r.low)}`);
 
-  const t = (size: number, weight: number, color: string, lh = 1.5, extra = '') =>
-    `font-family:${FONT};font-size:${size}px;line-height:${lh};font-weight:${weight};color:${color};margin:0;${extra}`;
-  const gap = (px: number) => `<tr><td style="height:${px}px;line-height:${px}px;font-size:0">&nbsp;</td></tr>`;
-
-  const rowHtml = rows
-    .map((r, i) => {
-      const amount = i === 0 ? gbp(r.low) : `+${gbp(r.low)}`;
-      return `<tr>
-  <td class="sk-lbl" style="border-top:1px solid ${C.line};padding:12px 16px 12px 0;width:150px;vertical-align:top;${t(14, 400, C.muted)}">${h(r.label)}</td>
-  <td style="border-top:1px solid ${C.line};padding:12px 16px 12px 0;vertical-align:top;${t(14, 500, C.ink)}">${h(r.choice)}</td>
-  <td style="border-top:1px solid ${C.line};padding:12px 0;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${amount}</td>
-</tr>`;
-    })
-    .join('');
-  const totalHtml = rows.length
-    ? `<tr>
-  <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(16, 600, C.ink)}">Total</td>
-  <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(14, 500, C.ink)}">Shown as a range until we agree the scope</td>
-  <td style="border-top:1px solid ${C.line};padding:12px 0 0;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${gbp(total)}</td>
-</tr>`
-    : '';
-
-  const html = `<!doctype html>
-<html lang="en-GB">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light">
-<title>${h(subject)}</title>
-<style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-h{font-size:26px !important}.sk-h5{font-size:20px !important}.sk-body{font-size:16px !important}.sk-lbl{width:96px !important;padding-right:12px !important}.sk-stack{display:block !important;width:100% !important;text-align:left !important}.sk-photo{padding-top:16px !important}.sk-cta{margin-top:24px !important}}</style>
-</head>
-<body style="margin:0;padding:0;background:${C.smoke}">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(figure)}. ${kind === 'range' ? 'How it adds up, and what happens next.' : 'And what happens next.'}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.smoke}">
-<tr><td class="sk-outer" align="center" style="padding:40px 16px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${C.white};border-radius:12px">
-<tr><td class="sk-pad" style="padding:40px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr><td>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0"></a></td>
-    <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${tag}</span></td>
-  </tr></table>
-</td></tr>
-${gap(48)}
-<tr><td>
-  <p class="sk-h" style="${t(32, 500, C.muted, 1.3, 'letter-spacing:-0.3px')}">${h(top)}</p>
-  <p class="sk-h" style="${t(32, 500, C.ink, 1.3, 'letter-spacing:-0.3px')}">${h(figure)}</p>
-  <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${body}</p>
-</td></tr>
-${
-  rows.length
+  const sectionHtml = rows.length
     ? `${gap(48)}
 <tr><td>
   <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">How it adds up</p>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}${totalHtml}</table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows
+    .map((r, i) => lineRow(r.label || '', r.choice || '', amount(r, i)))
+    .join('')}${lineRow('Total', 'Shown as a range until we agree the scope', gbp(total), true)}</table>
   ${sprint ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">You said the brief is still open, so we'd suggest a Clarity Sprint first (${gbp(sprint)}). It's priced separately, and it means the build starts from a brief your whole team has agreed.</p>` : ''}
 </td></tr>`
-    : ''
+    : '';
+  const sectionText = rows.length
+    ? [
+        '',
+        'How it adds up:',
+        ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${amount(r, i)})`),
+        `- Total: ${gbp(total)}`,
+        ...(sprint ? ['', `We'd suggest a Clarity Sprint first (${gbp(sprint)}), outside this figure.`] : []),
+      ]
+    : [];
+
+  return renderEmail({
+    subject,
+    preheader: `${figure}. ${kind === 'range' ? 'How it adds up, and what happens next.' : 'And what happens next.'}`,
+    tag,
+    top,
+    figure,
+    body,
+    sectionHtml,
+    sectionText,
+    nextLine,
+    note: "I'm happy to go through it with you, answer any questions and help you work out the right scope for where you are now. Or just reply to this email. It comes to me.",
+    button,
+    cta: withUtm(SITE + href, campaign),
+    share: shareLink(q.shareUrl, campaign),
+    thing: 'estimate',
+    campaign,
+  });
 }
-${gap(48)}
+
+export function quizEmail(q: QuizPayload): CalculatorEmail {
+  const c = q.contact || {};
+  const r = q.result || {};
+  const first = firstName(c.name);
+  const state = r.state || 'not_yet';
+  const early = state === 'not_yet';
+  const jtbd = (r.jtbd || []).filter((x) => typeof x === 'string').slice(0, 3);
+  const reco = r.engagement?.slice(0, 60) || '';
+  const recoHref = /^\/[\w/-]*$/.test(r.engagementHref || '') ? r.engagementHref! : '/resources';
+  const campaign = 'quiz';
+
+  const sectionHtml = `${gap(48)}
 <tr><td>
-  <p class="sk-h5" style="${t(24, 500, C.muted, 1.3, 'letter-spacing:-0.2px')}">What happens next</p>
-  <p class="sk-h5" style="${t(24, 500, C.ink, 1.3, 'letter-spacing:-0.2px')}">${nextLine}</p>
-  <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${note}</p>
-</td></tr>
-${gap(24)}
-<tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td class="sk-stack" style="vertical-align:top">
-      <p style="${t(18, 500, C.ink, 1.3)}">Ben Hammond</p>
-      <p style="${t(18, 500, C.light, 1.3)}">Founder</p>
-      <p class="sk-cta" style="margin:48px 0 0"><a href="${cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${button}</a></p>
-    </td>
-    <td class="sk-stack sk-photo" width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
-  </tr></table>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">Where you are</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lineRow('Readiness', r.readinessNote || '', `${num(r.readiness)} / 9`)}${lineRow('Urgency', r.urgencyNote || '', `${num(r.urgency)} / 6`)}</table>
 </td></tr>
 ${
-  share
-    ? `${gap(24)}
+  jtbd.length
+    ? `${gap(32)}
 <tr><td>
-  <p style="${t(14, 500, C.ink)}"><a href="${h(share)}" style="color:${C.ink};text-decoration:underline">Reopen your estimate to change any of your answers &rarr;</a></p>
-  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">To share this with your team, just forward this email. The link above opens your answers, so they'll see the same estimate.</p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">${h(r.jtbdLabel || 'What the next site needs to do')}</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${jtbd
+    .map((x, i) => lineRow(String(i + 1).padStart(2, '0'), x, ''))
+    .join('')}</table>
 </td></tr>`
     : ''
 }
-${gap(48)}
-<tr><td style="border-top:1px solid ${C.line};padding-top:16px">
-  <p style="${t(14, 500, C.grey)}">You asked for this estimate on shrink.studio on ${date}. We'll only send you guides and updates if you ticked the box to get them.</p>
-  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788) &middot; Waverley House, 9 Noel St, London</p>
-</td></tr>
-</table>
-</td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
+${
+  reco
+    ? `${gap(32)}
+<tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:8px')}">Where we'd start</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td style="${t(20, 500, C.ink, 1.4)}">${h(reco)}</td>
+    <td align="right" style="white-space:nowrap;${t(14, 500, C.muted)}">${h(r.engagementPrice || '')}</td>
+  </tr></table>
+  <p style="${t(14, 500, C.muted, 1.5, 'margin-top:8px')}">${h(r.engagementBlurb || '')}</p>
+  <p style="${t(14, 500, C.ink, 1.5, 'margin-top:12px')}"><a href="${withUtm(SITE + recoHref, campaign)}" style="color:${C.ink};text-decoration:underline">${h(r.engagementLink || 'Find out more')} &rarr;</a></p>
+</td></tr>`
+    : ''
+}`;
+  const sectionText = [
+    '',
+    `Readiness: ${num(r.readiness)} / 9, ${r.readinessNote || ''}`,
+    `Urgency: ${num(r.urgency)} / 6, ${r.urgencyNote || ''}`,
+    ...(jtbd.length ? ['', `${r.jtbdLabel || 'What the next site needs to do'}:`, ...jtbd.map((x) => `- ${x}`)] : []),
+    ...(reco ? ['', `Where we'd start: ${reco}${r.engagementPrice ? ` (${r.engagementPrice})` : ''}`, r.engagementBlurb || ''] : []),
+  ];
 
-  const text = [
-    top,
-    figure,
-    '',
-    body.replace(/&[a-z]+;/g, ''),
-    ...(rows.length
-      ? ['', 'How it adds up:', ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${i === 0 ? gbp(r.low) : `+${gbp(r.low)}`})`), `- Total: ${gbp(total)}`]
-      : []),
-    ...(sprint ? ['', `We'd suggest a Clarity Sprint first (${gbp(sprint)}), outside this figure.`] : []),
-    '',
-    `What happens next: ${nextLine}`,
-    note,
-    `${button}: ${cta}`,
-    ...(share ? ['', `Reopen your estimate: ${share}`] : []),
-    '',
-    'Ben Hammond, Founder, Shrink Studio',
-    `You asked for this estimate on shrink.studio on ${date}.`,
-  ].join('\n');
-
-  return { subject, html, text };
+  return renderEmail({
+    subject: 'Your readiness result from Shrink',
+    preheader: `${r.headline || 'Your result'} Where you are, and what happens next.`,
+    tag: 'Readiness quiz',
+    top: `Here's your result, ${first}.`,
+    figure: r.headline?.slice(0, 120) || 'Your readiness result',
+    body: h(r.diagnosis?.slice(0, 600) || ''),
+    sectionHtml,
+    sectionText,
+    nextLine: early
+      ? "When the time is right, we'd love to help. Until then, our guides are a good place to start."
+      : 'A 30-minute call is the easiest way to plan your next step together.',
+    note: early
+      ? "If you'd like to talk anything through in the meantime, just reply to this email. It comes to me."
+      : "I'm happy to go through your result with you and help you work out the right first step. Or just reply to this email. It comes to me.",
+    button: early ? 'Read the guides' : 'Book a call with Ben',
+    cta: withUtm(SITE + (early ? '/resources' : '/calls/intro'), campaign),
+    share: shareLink(q.shareUrl, campaign),
+    thing: 'result',
+    campaign,
+  });
 }
 
 /** Sends through Resend. Returns the email id, or why it wasn't sent. */

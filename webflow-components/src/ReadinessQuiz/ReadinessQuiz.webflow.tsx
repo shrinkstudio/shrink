@@ -21,16 +21,16 @@ export default declareComponent(ReadinessQuiz, {
     introBody: props.Text({
       name: 'Intro body',
       defaultValue:
-        "Seven quick questions. You'll get a readiness score, the gaps worth closing, and where we'd start.",
+        "Answer seven questions about your team, your timing and what the site needs to do. You'll see how ready you are, what's worth sorting first and where we'd suggest starting.",
     }),
     bullet1: props.Text({ name: 'Bullet 1', defaultValue: 'About two minutes' }),
-    bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'No email to start' }),
-    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'An honest read, with no sales pitch attached' }),
+    bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'See your result straight away' }),
+    bullet3: props.Text({ name: 'Bullet 3', defaultValue: 'A clear next step, whatever your answers' }),
     startLabel: props.Text({ name: 'Start button label', defaultValue: 'Start the quiz' }),
 
     // In-quiz
     backLabel: props.Text({ name: 'Back button label', defaultValue: 'Back' }),
-    restartLabel: props.Text({ name: 'Retake label', defaultValue: 'Retake the quiz' }),
+    restartLabel: props.Text({ name: 'Start over label', defaultValue: 'Start over' }),
 
     // Integration
     optInLabel: props.Text({

@@ -13,7 +13,6 @@ import {
   buildShareUrl,
   decodeAnswers,
   describeAnswers,
-  slugifyCompany,
   type Answers,
 } from '../src/ReadinessQuiz/quiz.ts';
 
@@ -54,7 +53,7 @@ it('best readiness answers => readiness 9, ready', () => {
   const r = computeResult(answers);
   assert.equal(r.state, 'ready');
   assert.equal(r.recommendedEngagement.id, 'seed-website');
-  assert.deepEqual(r.jtbd, ['Land enterprise prospects', 'Brief investors on the next round']);
+  assert.deepEqual(r.jtbd, ['Win enterprise customers', 'Support the next funding round']);
 });
 
 it('pre-raise => not_yet regardless of the rest', () => {
@@ -102,17 +101,20 @@ it('shape routes a ready result to a sprint', () => {
   assert.equal(r.recommendedEngagement.id, 'clarity-sprint');
 });
 
-it('share url encodes company slug + answers', () => {
-  assert.equal(slugifyCompany('  Acme, Inc! '), 'acme-inc');
-  const url = buildShareUrl('https://www.shrink.studio/quiz?x=1#top', 'Acme Inc', { moment: 'recent-seed' });
-  assert.match(url, /^https:\/\/www\.shrink\.studio\/quiz\?c=acme-inc&d=/);
+it('share url carries the answers and the lead id, and drops old params', () => {
+  const url = new URL(buildShareUrl('https://www.shrink.studio/quiz?x=1#top', { moment: 'recent-seed' }, 'lead-1'));
+  assert.equal(url.pathname, '/quiz');
+  assert.equal(url.searchParams.get('ref'), 'lead-1');
+  assert.ok(url.searchParams.get('d'));
+  assert.equal(url.searchParams.get('x'), null);
+  assert.equal(url.hash, '');
 });
 
 it('share link round-trips a full answer set, rejects junk', () => {
   const full: Answers = Object.fromEntries(
     QUESTIONS.map((q) => [q.id, q.type === 'multi' ? q.options.slice(0, 2).map((o) => o.id) : q.options[0].id]),
   );
-  const d = new URL(buildShareUrl('https://www.shrink.studio/quiz', 'x', full)).searchParams.get('d')!;
+  const d = new URL(buildShareUrl('https://www.shrink.studio/quiz', full)).searchParams.get('d')!;
   assert.deepEqual(decodeAnswers(d), full);
   assert.equal(decodeAnswers('not-base64!'), null);
   assert.equal(decodeAnswers(d.slice(0, 10)), null);
@@ -121,8 +123,22 @@ it('share link round-trips a full answer set, rejects junk', () => {
 it('describeAnswers gives readable pairs for the lead notes', () => {
   const rows = describeAnswers({ moment: 'recent-seed', jtbd: ['land-enterprise', 'convert-demos'] });
   assert.equal(rows.length, QUESTION_COUNT);
-  assert.ok(rows.some((r) => r.answer === 'Recently raised seed (within 6 months)'));
-  assert.ok(rows.some((r) => r.answer === 'Land enterprise prospects; Convert demo or trial requests'));
+  assert.ok(rows.some((r) => r.answer === 'Raised seed in the last 6 months'));
+  assert.ok(rows.some((r) => r.answer === 'Win enterprise customers; Turn visitors into demo or trial requests'));
+});
+
+it('recommendations carry a price and a deal value; the guides carry neither', () => {
+  const seed = computeResult(Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === 'multi' ? [q.options[0].id] : q.options.find((o) => (o.score ?? 0) === Math.max(...q.options.map((x) => x.score ?? 0)))!.id])));
+  assert.equal(seed.recommendedEngagement.price, '£15,000, fixed');
+  assert.equal(seed.recommendedEngagement.value, 15000);
+  const early = computeResult({ moment: 'pre-raise' });
+  assert.equal(early.recommendedEngagement.value, 0);
+  assert.equal(early.recommendedEngagement.price, '');
+});
+
+it('copy: no dashes or em dashes in the questions or results', () => {
+  const text = JSON.stringify(QUESTIONS) + JSON.stringify(computeResult({ moment: 'recent-seed', clarity: 'unclear', team: 'no-one' }));
+  assert.ok(!/[\u2013\u2014]/.test(text));
 });
 
 console.log(`\n${passed} passed`);

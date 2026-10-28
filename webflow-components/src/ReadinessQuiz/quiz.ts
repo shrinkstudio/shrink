@@ -42,93 +42,93 @@ export const QUESTIONS: Question[] = [
     id: 'moment',
     dimension: 'moment',
     type: 'single',
-    prompt: 'Where are you in the funding journey?',
-    helper: 'We work with venture-backed teams. This helps us tell you if now is the moment.',
+    prompt: 'Where are you with funding?',
+    helper: 'We mostly work with venture-backed teams, so this helps us suggest the right timing.',
     options: [
-      { id: 'pre-raise', label: 'Pre-seed, or yet to raise', score: 0 },
-      { id: 'recent-seed', label: 'Recently raised seed (within 6 months)', score: 3 },
-      { id: 'mid-cycle', label: 'Raised seed or Series A 6–18 months ago', score: 3 },
-      { id: 'post-cycle', label: 'Raised over 18 months ago', score: 2 },
-      { id: 'bootstrapped', label: 'Bootstrapped, post-revenue', score: 1 },
+      { id: 'pre-raise', label: 'Pre-seed, or still to raise', score: 0 },
+      { id: 'recent-seed', label: 'Raised seed in the last 6 months', score: 3 },
+      { id: 'mid-cycle', label: 'Raised seed or Series A 6 to 18 months ago', score: 3 },
+      { id: 'post-cycle', label: 'Raised more than 18 months ago', score: 2 },
+      { id: 'bootstrapped', label: 'Self-funded, with revenue coming in', score: 1 },
     ],
   },
   {
     id: 'clarity',
     dimension: 'clarity',
     type: 'single',
-    prompt: "Whose homepage are you writing: yours, or your customer's?",
-    helper: "The sharpest sites are written from the customer's point of view, not the product's.",
+    prompt: 'Who is your homepage written for today?',
+    helper: "The strongest sites speak from the customer's side, about their world and what they need.",
     options: [
-      { id: 'customer', label: "Our customer's: their problems, their world", score: 3 },
-      { id: 'mixed', label: 'A mix, depending where you look', score: 2 },
-      { id: 'ours', label: 'Ours: our product, our story', score: 1 },
-      { id: 'unclear', label: 'Honestly, that is still open', score: 0 },
+      { id: 'customer', label: 'Our customers, in their words', score: 3 },
+      { id: 'mixed', label: 'A mix, depending on the page', score: 2 },
+      { id: 'ours', label: 'Mostly about our product', score: 1 },
+      { id: 'unclear', label: "We're still working that out", score: 0 },
     ],
   },
   {
     id: 'gap-external',
     dimension: 'gapExternal',
     type: 'single',
-    prompt: 'When an investor or enterprise prospect Googles you, does the site hold up?',
+    prompt: 'When an investor or a big prospect looks you up, how does the site feel?',
     options: [
-      { id: 'confident', label: "Confidently, we'd point them straight at it", score: 0 },
+      { id: 'confident', label: "We'd happily send them straight to it", score: 0 },
       { id: 'does-job', label: 'It does the job', score: 1 },
-      { id: 'rather-not', label: "We'd rather they didn't look too hard", score: 2 },
-      { id: 'hurts', label: 'It actively hurts us', score: 3 },
+      { id: 'rather-not', label: "We'd like it to say more about where we are now", score: 2 },
+      { id: 'hurts', label: "It's some way behind where the company is", score: 3 },
     ],
   },
   {
     id: 'gap-internal',
     dimension: 'gapInternal',
     type: 'single',
-    prompt: 'Does your marketing team have somewhere to point campaigns?',
+    prompt: 'Can your marketing team build the pages they need?',
     options: [
-      { id: 'yes-kit', label: 'Yes: landing pages, sector pages, the full kit', score: 0 },
-      { id: 'sort-of', label: 'Sort of, they make it work', score: 1 },
-      { id: 'work-around', label: 'They mostly work around the site', score: 2 },
-      { id: 'no-team', label: 'The marketing team is still to come', score: 3 },
+      { id: 'yes-kit', label: 'Yes, landing and campaign pages are easy', score: 0 },
+      { id: 'sort-of', label: 'Mostly, with a bit of help', score: 1 },
+      { id: 'work-around', label: 'They often work around the site', score: 2 },
+      { id: 'no-team', label: 'Our marketing team is still to come', score: 3 },
     ],
   },
   {
     id: 'jtbd',
     dimension: 'jtbd',
     type: 'multi',
-    prompt: 'What does the next site need to do?',
-    helper: "Pick up to three. We'll play these back as the priorities your build has to deliver on.",
+    prompt: 'What should the next site help you do?',
+    helper: "Pick up to three, and we'll put them at the heart of your result.",
     maxSelections: 3,
     options: [
-      { id: 'convert-demos', label: 'Convert demo or trial requests' },
-      { id: 'land-enterprise', label: 'Land enterprise prospects' },
-      { id: 'support-recruiting', label: 'Support hiring and recruiting' },
-      { id: 'brief-investors', label: 'Brief investors on the next round' },
-      { id: 'launch-narratives', label: 'Launch new product narratives' },
-      { id: 'marketing-experiments', label: 'Let marketing experiment fast' },
-      { id: 'company-story', label: 'Tell the company story properly' },
+      { id: 'convert-demos', label: 'Turn visitors into demo or trial requests' },
+      { id: 'land-enterprise', label: 'Win enterprise customers' },
+      { id: 'support-recruiting', label: 'Help with hiring' },
+      { id: 'brief-investors', label: 'Support the next funding round' },
+      { id: 'launch-narratives', label: 'Launch new products and stories' },
+      { id: 'marketing-experiments', label: 'Let marketing test ideas quickly' },
+      { id: 'company-story', label: 'Tell the company story well' },
     ],
   },
   {
     id: 'team',
     dimension: 'team',
     type: 'single',
-    prompt: 'Who owns this internally, and have they got the time?',
+    prompt: 'Who would own the project on your side?',
     options: [
-      { id: 'named-time', label: 'Named owner with time carved out', score: 3 },
-      { id: 'named-no-time', label: 'Named owner, but no real time', score: 2 },
-      { id: 'whoever', label: "Whoever's free that week", score: 1 },
-      { id: 'no-one', label: 'Nobody, so far', score: 0 },
+      { id: 'named-time', label: 'Someone named, with time set aside', score: 3 },
+      { id: 'named-no-time', label: 'Someone named, though their time is tight', score: 2 },
+      { id: 'whoever', label: 'Whoever is free that week', score: 1 },
+      { id: 'no-one', label: "We'd need to decide that", score: 0 },
     ],
   },
   {
     id: 'shape',
     dimension: 'shape',
     type: 'single',
-    prompt: 'What feels closest to what you need?',
-    helper: 'There are no wrong answers. We use this to point you at the right starting point.',
+    prompt: 'What sounds closest to what you need?',
+    helper: 'Any answer works here. It helps us suggest the right place to start.',
     options: [
       { id: 'rebuild', label: 'A full rebuild' },
-      { id: 'sprint', label: 'A targeted sprint on specific gaps' },
-      { id: 'discovery', label: 'Discovery first, build later' },
-      { id: 'unsure', label: 'Still working that out' },
+      { id: 'sprint', label: 'Focused work on specific parts of the site' },
+      { id: 'discovery', label: 'Some thinking first, then a build' },
+      { id: 'unsure', label: "We'd like help deciding" },
     ],
   },
 ];
@@ -155,7 +155,10 @@ export interface RecommendedEngagement {
   id: 'seed-website' | 'clarity-sprint' | 'discovery' | 'audit' | 'resource';
   label: string;
   blurb: string;
-  cta: string;
+  /** Shown beside the label, eg. "£15,000, fixed"; empty for the guides. */
+  price: string;
+  /** Deal value in Shrink OS for ready and close results. */
+  value: number;
   /** Package or service page for the recommendation. */
   href: string;
   linkLabel: string;
@@ -215,43 +218,71 @@ function deriveState(s: ScoreBreakdown): ResultState {
 }
 
 function buildHeadline(state: ResultState): string {
-  if (state === 'ready') return "You're at the moment.";
-  if (state === 'close') return 'Close, but the brief is still forming.';
-  return 'Not the moment yet, but worth laying the groundwork.';
+  if (state === 'ready') return "You're ready to brief a build.";
+  if (state === 'close') return "You're close, and a little groundwork will help.";
+  return "It's early, and that's a good time to plan.";
 }
 
 function buildDiagnosis(state: ResultState, s: ScoreBreakdown, urgent: boolean): string {
   if (state === 'ready') {
     if (urgent) {
-      return "The brief is there, the team's there, and the gap between where you are and what's expected is wide enough that moving sooner pays off.";
+      return 'Your brief, your team and your timing all line up, and your current site has some catching up to do, so moving soon will pay off.';
     }
-    return 'Clarity, team, and timing all line up. This is the point where briefing a build pays the most.';
+    return 'Your brief, your team and your timing all line up. This is a great point to brief a build.';
   }
   if (state === 'close') {
     const weakClarity = s.clarity < 2;
     const weakTeam = s.team < 2;
     if (weakClarity && weakTeam) {
-      return "The funding's there, but the brief is still forming. Positioning and team ownership need to land before a build is worth briefing.";
+      return 'Your funding is in place. Agreeing who the site is for, and who owns it inside the team, will make the build quicker and the result stronger.';
     }
     if (weakClarity) {
-      return "The timing and team are there. What's missing is the clarity: whose homepage you're writing and what it has to say.";
+      return 'Your timing and your team are in place. The next step is agreeing who the site speaks to and what it needs to say.';
     }
-    return 'The thinking is there. What is missing is someone inside the company who owns the build with real time to give it.';
+    return 'Your thinking is clear. The next step is giving someone inside the team the time to own the build.';
   }
-  return "Now isn't the moment for a full rebuild, but there's groundwork worth doing so you're ready when it is.";
+  return "A full rebuild can wait for now. There's useful groundwork you can do in the meantime, so you're ready when the time comes.";
 }
 
 function readinessNote(readiness: number): string {
-  if (readiness >= 7) return 'Clear on what and why.';
-  if (readiness >= 4) return 'The pieces are mostly there.';
-  return 'Still finding the shape.';
+  if (readiness >= 7) return 'Clear on what and why';
+  if (readiness >= 4) return 'Most of the pieces are in place';
+  return 'Still taking shape';
 }
 
 function urgencyNote(urgency: number): string {
-  if (urgency >= 4) return 'The window is open now.';
-  if (urgency >= 2) return 'A gap worth closing.';
-  return 'No pressing gap so far.';
+  if (urgency >= 4) return 'The site is behind the company';
+  if (urgency >= 2) return 'Some catching up to do';
+  return 'The site is keeping up well';
 }
+
+const SEED: RecommendedEngagement = {
+  id: 'seed-website',
+  label: 'Seed Website',
+  blurb: 'A fixed scope and a fixed price, live in six weeks. The simplest route to a site that works for where you are now.',
+  price: '£15,000, fixed',
+  value: 15000,
+  href: '/packages/seed-website',
+  linkLabel: 'See the Seed Website',
+};
+const SPRINT = (blurb: string): RecommendedEngagement => ({
+  id: 'clarity-sprint',
+  label: 'Clarity Sprint',
+  blurb,
+  price: '£3,500',
+  value: 3500,
+  href: '/packages/clarity-sprint',
+  linkLabel: 'See the Clarity Sprint',
+});
+const DISCOVERY = (blurb: string): RecommendedEngagement => ({
+  id: 'discovery',
+  label: 'Discovery',
+  blurb,
+  price: 'From £3,500',
+  value: 3500,
+  href: '/services/discovery',
+  linkLabel: 'See Discovery',
+});
 
 function recommendEngagement(
   state: ResultState,
@@ -259,62 +290,24 @@ function recommendEngagement(
   shape: string | null,
 ): RecommendedEngagement {
   if (state === 'ready') {
-    if (shape === 'sprint') {
-      return {
-        id: 'clarity-sprint',
-        label: 'Clarity Sprint',
-        blurb: 'A focused sprint on the specific gaps holding the site back.',
-        cta: 'Send us the brief',
-        href: '/packages/clarity-sprint',
-        linkLabel: 'See the Clarity Sprint',
-      };
-    }
-    if (shape === 'discovery') {
-      return {
-        id: 'discovery',
-        label: 'Discovery',
-        blurb: 'Get the thinking right first, then build with a clear plan.',
-        cta: 'Send us the brief',
-        href: '/services/discovery',
-        linkLabel: 'See Discovery',
-      };
-    }
-    return {
-      id: 'seed-website',
-      label: 'Seed Website',
-      blurb: 'Fixed scope, fixed price, six weeks. The productised route for a Seed-stage build.',
-      cta: 'Send us the brief',
-      href: '/packages/seed-website',
-      linkLabel: 'See the Seed Website',
-    };
+    if (shape === 'sprint') return SPRINT('Two focused weeks on the parts of the site that matter most right now.');
+    if (shape === 'discovery') return DISCOVERY('We get the thinking right together first, then build from a clear plan.');
+    return SEED;
   }
   if (state === 'close') {
     if (s.clarity < 2) {
-      return {
-        id: 'clarity-sprint',
-        label: 'Clarity Sprint',
-        blurb: 'Nail whose homepage you are writing and what it has to say, before you build.',
-        cta: 'Book a free audit',
-        href: '/packages/clarity-sprint',
-        linkLabel: 'See the Clarity Sprint',
-      };
+      return SPRINT('Two weeks to agree who the site speaks to and what it says, so the build starts from a brief your whole team supports.');
     }
-    return {
-      id: 'discovery',
-      label: 'Discovery',
-      blurb: 'A short piece of discovery to line up ownership and scope before a build.',
-      cta: 'Book a free audit',
-      href: '/services/discovery',
-      linkLabel: 'See Discovery',
-    };
+    return DISCOVERY('A short piece of discovery to agree ownership and scope, so the build has a clear owner from day one.');
   }
   return {
     id: 'resource',
-    label: 'The funding moment',
-    blurb: 'Groundwork worth doing now, so you are ready to brief when the moment comes.',
-    cta: 'Book a free audit',
+    label: 'Our guides',
+    blurb: "Practical guides on positioning, site structure and AI search, so you're ready when the time comes.",
+    price: '',
+    value: 0,
     href: '/resources',
-    linkLabel: 'Browse the resources',
+    linkLabel: 'Read the guides',
   };
 }
 
@@ -340,12 +333,12 @@ export function computeResult(answers: Answers): QuizResult {
     scores,
     jtbd: jtbdLabels(answers),
     shape,
-    eyebrow: 'Your readiness',
+    eyebrow: 'Your result',
     headline: buildHeadline(state),
     diagnosis: buildDiagnosis(state, scores, urgent),
     readinessNote: readinessNote(scores.readiness),
     urgencyNote: urgencyNote(scores.urgency),
-    jtbdLabel: state === 'ready' ? 'What the next site needs' : 'What to nail before briefing',
+    jtbdLabel: state === 'ready' ? 'What the next site needs to do' : 'What to agree before you brief',
     recommendedEngagement: recommendEngagement(state, scores, shape),
   };
 }
@@ -353,17 +346,6 @@ export function computeResult(answers: Answers): QuizResult {
 // -------------------------------------------------------------------
 // Shareable result link (base64url-encoded answers), client-only.
 // -------------------------------------------------------------------
-
-export function slugifyCompany(input: string): string {
-  const cleaned = input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  return cleaned || 'anon';
-}
 
 function toBase64Url(s: string): string {
   return btoa(unescape(encodeURIComponent(s)))
@@ -398,13 +380,13 @@ export function decodeAnswers(data: string): Answers | null {
   }
 }
 
-/** `${page}?c=<slug>&d=<data>`: the quiz page rehydrates straight into results. */
-export function buildShareUrl(base: string, company: string, answers: Answers): string {
+/** `${page}?d=<answers>&ref=<lead id>`: the quiz page rehydrates straight into results. */
+export function buildShareUrl(base: string, answers: Answers, ref?: string): string {
   const url = new URL(base);
   url.search = '';
   url.hash = '';
-  url.searchParams.set('c', slugifyCompany(company));
   url.searchParams.set('d', encodeAnswers(answers));
+  if (ref) url.searchParams.set('ref', ref);
   return url.toString();
 }
 

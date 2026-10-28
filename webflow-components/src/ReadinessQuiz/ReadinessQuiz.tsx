@@ -1,8 +1,9 @@
 /**
  * "Ready to brief a build?" readiness quiz. Intro -> 7 questions (single and
  * one multi-select) -> results: two-axis score, what the next site needs,
- * where we'd start (linked to the package or service page), a lead form that
- * posts to the site's forms handler, and a shareable link.
+ * where we'd start (with its price, linked to the package or service page), a
+ * lead form that posts to the site's forms handler (which emails the result), and
+ * a share link that reopens the answers and carries the lead id.
  * Shadow-DOM component; styles are scoped and read the site's MAST variables.
  * Scoring, questions and result copy live in quiz.ts.
  */
@@ -56,18 +57,26 @@ function newId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+type Props = Record<string, string | number | boolean | undefined>;
+
+/** PostHog when the site has it (consent is handled by the site's own set-up). */
+function track(name: string, props: Props = {}) {
+  const w = window as unknown as { posthog?: { capture?: (n: string, p?: Props) => void } };
+  w.posthog?.capture?.(name, { tool: 'quiz', ...props });
+}
+
 export function ReadinessQuiz({
   theme = 'light',
   frame = 'none',
   eyebrow = 'Readiness quiz',
   introHeading = 'Ready to brief a build?',
-  introBody = "Seven quick questions. You'll get a readiness score, the gaps worth closing, and where we'd start.",
+  introBody = "Answer seven questions about your team, your timing and what the site needs to do. You'll see how ready you are, what's worth sorting first and where we'd suggest starting.",
   bullet1 = 'About two minutes',
-  bullet2 = 'No email to start',
-  bullet3 = 'An honest read, with no sales pitch attached',
+  bullet2 = 'See your result straight away',
+  bullet3 = 'A clear next step, whatever your answers',
   startLabel = 'Start the quiz',
   backLabel = 'Back',
-  restartLabel = 'Retake the quiz',
+  restartLabel = 'Start over',
   submitEndpoint = 'https://shrink-site-api.vercel.app/api/forms',
   shareBaseUrl = '',
   optInLabel = 'Send me guides and resources from Shrink',
@@ -78,20 +87,34 @@ export function ReadinessQuiz({
 
   const [contact, setContact] = useState({ name: '', email: '', company: '', resources: false });
   const [submit, setSubmit] = useState<SubmitState>({ status: 'idle' });
-  const [shareCompany, setShareCompany] = useState('');
-  const [shareUrl, setShareUrl] = useState('');
-  const [copied, setCopied] = useState<'idle' | 'copied' | 'manual'>('idle');
-  const shareInput = useRef<HTMLInputElement>(null);
+  const [leadId, setLeadId] = useState(newId);
+  const [copied, setCopied] = useState(false);
+  const [hp, setHp] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
+  // when the result appeared: a form sent within seconds of it is a bot
+  const shownAt = useRef(0);
 
   // shared link (?d=): open straight on the results
   useEffect(() => {
-    const d = new URLSearchParams(window.location.search).get('d');
+    const params = new URLSearchParams(window.location.search);
+    const d = params.get('d');
     const shared = d ? decodeAnswers(d) : null;
-    if (shared) {
-      setAnswers(shared);
-      setPhase('results');
+    if (!shared) return;
+    setAnswers(shared);
+    const ref = params.get('ref');
+    if (ref) setLeadId(ref);
+    setPhase('results');
+    shownAt.current = Date.now();
+    track('quiz_reopened', { ref: ref || '' });
+    // tell Shrink OS the lead came back to their result
+    if (ref) {
+      fetch(submitEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form: 'quiz-reopen', ref }),
+      }).catch(() => undefined);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // keep the top of the card in view as the phase changes
@@ -108,6 +131,13 @@ export function ReadinessQuiz({
   const result = useMemo<QuizResult | null>(
     () => (phase === 'results' ? computeResult(answers) : null),
     [phase, answers],
+  );
+
+  const link = useMemo(
+    () => (phase === 'results' && typeof window !== 'undefined'
+      ? buildShareUrl(shareBaseUrl || window.location.origin + window.location.pathname, answers, leadId)
+      : ''),
+    [phase, answers, leadId, shareBaseUrl],
   );
 
   const bullets = [bullet1, bullet2, bullet3].filter(Boolean);
@@ -135,8 +165,14 @@ export function ReadinessQuiz({
   }
 
   function next() {
-    if (!isLast) setStep(step + 1);
-    else setPhase('results');
+    if (!isLast) {
+      setStep(step + 1);
+      return;
+    }
+    const r = computeResult(answers);
+    setPhase('results');
+    shownAt.current = Date.now();
+    track('quiz_completed', { state: r.state, readiness: r.scores.readiness, urgency: r.scores.urgency, engagement: r.recommendedEngagement.id });
   }
   function back() {
     if (step > 0) setStep(step - 1);
@@ -150,9 +186,8 @@ export function ReadinessQuiz({
     setAnswers({});
     setContact({ name: '', email: '', company: '', resources: false });
     setSubmit({ status: 'idle' });
-    setShareCompany('');
-    setShareUrl('');
-    setCopied('idle');
+    setLeadId(newId());
+    setCopied(false);
     setStep(0);
     setPhase('intro');
   }
@@ -160,7 +195,7 @@ export function ReadinessQuiz({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!contact.name.trim() || !EMAIL_RE.test(contact.email)) {
-      setSubmit({ status: 'error', message: 'Add your name and a valid email address.' });
+      setSubmit({ status: 'error', message: 'Please add your name and a valid email address.' });
       return;
     }
     setSubmit({ status: 'sending' });
@@ -170,15 +205,29 @@ export function ReadinessQuiz({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           form: 'quiz',
-          id: newId(),
+          id: leadId,
+          hp,
+          elapsed: shownAt.current ? Date.now() - shownAt.current : undefined,
           pageUrl: window.location.href,
+          shareUrl: link,
           contact,
           result: result && {
             state: result.state,
             readiness: result.scores.readiness,
             urgency: result.scores.urgency,
+            readinessNote: result.readinessNote,
+            urgencyNote: result.urgencyNote,
+            headline: result.headline,
+            diagnosis: result.diagnosis,
+            jtbdLabel: result.jtbdLabel,
+            jtbd: result.jtbd,
             engagementId: result.recommendedEngagement.id,
             engagement: result.recommendedEngagement.label,
+            engagementBlurb: result.recommendedEngagement.blurb,
+            engagementPrice: result.recommendedEngagement.price,
+            engagementHref: result.recommendedEngagement.href,
+            engagementLink: result.recommendedEngagement.linkLabel,
+            value: result.recommendedEngagement.value,
           },
           answers: describeAnswers(answers),
         }),
@@ -186,23 +235,19 @@ export function ReadinessQuiz({
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error || 'Submit failed');
       setSubmit({ status: 'sent' });
+      track('quiz_email_requested', { state: result?.state || '' });
     } catch {
-      setSubmit({ status: 'error', message: 'Something went wrong. Please try again, or email hey@shrink.studio.' });
+      setSubmit({ status: 'error', message: 'Something went wrong on our side. Please try again, or email hey@shrink.studio.' });
     }
   }
 
-  async function handleShare() {
-    const base = shareBaseUrl || window.location.origin + window.location.pathname;
-    const url = buildShareUrl(base, shareCompany || 'anon', answers);
-    setShareUrl(url);
+  async function copyLink() {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied('copied');
-      window.setTimeout(() => setCopied('idle'), 2500);
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      track('quiz_link_copied');
     } catch {
-      // clipboard blocked: show the link so it can be copied by hand
-      setCopied('manual');
-      window.setTimeout(() => shareInput.current?.select(), 0);
+      setCopied(false);
     }
   }
 
@@ -217,7 +262,7 @@ export function ReadinessQuiz({
         {phase === 'intro' && (
           <div className="sk-step" key="intro">
             {eyebrow && <p className="sk-eyebrow">{eyebrow}</p>}
-            <h3 className="sk-title">{introHeading}</h3>
+            {introHeading && <h3 className="sk-title">{introHeading}</h3>}
             {introBody && <p className="sk-body">{introBody}</p>}
             {bullets.length > 0 && (
               <ul className="sk-points">
@@ -230,7 +275,7 @@ export function ReadinessQuiz({
               <button
                 type="button"
                 className="sk-btn"
-                onClick={() => { setPhase('quiz'); setStep(0); }}
+                onClick={() => { setPhase('quiz'); setStep(0); track('quiz_started'); }}
               >
                 {startLabel}
               </button>
@@ -347,7 +392,10 @@ export function ReadinessQuiz({
             <div className="sk-block">
               <p className="sk-label">Where we'd start</p>
               <div className="sk-panel">
-                <p className="rq-reco-title">{result.recommendedEngagement.label}</p>
+                <p className="rq-reco-head">
+                  <span className="rq-reco-title">{result.recommendedEngagement.label}</span>
+                  {result.recommendedEngagement.price && <span className="rq-reco-price">{result.recommendedEngagement.price}</span>}
+                </p>
                 <p className="sk-small">{result.recommendedEngagement.blurb}</p>
                 {result.recommendedEngagement.href && (
                   <p className="sk-small rq-reco-link">
@@ -361,12 +409,17 @@ export function ReadinessQuiz({
 
             {submit.status === 'sent' ? (
               <div className="sk-block" role="status">
-                <p className="sk-label">Get the full result</p>
-                <p className="sk-small sk-success">Thanks. We'll be in touch shortly with the full read.</p>
+                <p className="sk-label">Keep your result</p>
+                <p className="sk-small sk-success">
+                  Thank you. Your result is on its way to your inbox{result.state === 'not_yet' ? '.' : ', and Ben will be in touch to talk through the next step.'} If you can't see it in a few minutes, it may be in your spam folder.
+                </p>
               </div>
             ) : (
               <form className="sk-block" onSubmit={handleSubmit} noValidate>
-                <p className="sk-label">Get the full result</p>
+                <p className="sk-label">Keep your result</p>
+                <p className="sk-small" style={{ marginBottom: '1rem' }}>
+                  Leave your details and we'll email you your result, so you can share it with your team.
+                </p>
                 <div className="sk-field-row">
                   <label className="sk-field">
                     <span className="sk-field-label">Name</span>
@@ -398,6 +451,13 @@ export function ReadinessQuiz({
                     onChange={(e) => setContact((c) => ({ ...c, company: e.target.value }))}
                   />
                 </label>
+                {/* honeypot: hidden from people and screen readers, bots fill it */}
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+                  <label>
+                    Website
+                    <input tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} />
+                  </label>
+                </div>
                 {optInLabel && (
                   <label className="sk-check">
                     <input
@@ -412,52 +472,18 @@ export function ReadinessQuiz({
                 {submit.status === 'error' && <p className="sk-error" role="alert">{submit.message}</p>}
                 <div className="sk-actions" style={{ marginTop: 0 }}>
                   <button type="submit" className="sk-btn" disabled={submit.status === 'sending'}>
-                    {submit.status === 'sending' ? 'Sending' : 'Send me the full result'}
+                    {submit.status === 'sending' ? 'Sending' : 'Email me my result'}
                   </button>
                 </div>
               </form>
             )}
 
-            <div className="sk-block">
-              <p className="sk-label">Share</p>
-              <p className="sk-small">Add your company name and we'll make you a link that opens on this result.</p>
-              <div className="rq-share-row">
-                <input
-                  className="sk-input"
-                  placeholder="Company name"
-                  aria-label="Company name for the share link"
-                  value={shareCompany}
-                  onChange={(e) => { setShareCompany(e.target.value); setShareUrl(''); setCopied('idle'); }}
-                />
-                <button
-                  type="button"
-                  className="sk-btn sk-btn--secondary"
-                  onClick={handleShare}
-                  disabled={!shareCompany.trim()}
-                >
-                  {copied === 'copied' ? 'Copied' : 'Copy link'}
-                </button>
-              </div>
-              {shareUrl && (
-                <div className="rq-share-row">
-                  <input
-                    ref={shareInput}
-                    className="sk-input"
-                    readOnly
-                    aria-label="Your share link"
-                    value={shareUrl}
-                    onFocus={(e) => e.currentTarget.select()}
-                  />
-                </div>
-              )}
-              {copied === 'manual' && (
-                <p className="sk-small" style={{ marginTop: '0.5rem' }}>Copy the link above.</p>
-              )}
-            </div>
-
-            <div className="sk-actions">
-              <button type="button" className="sk-btn sk-btn--secondary" onClick={changeAnswers}>Change an answer</button>
-              <button type="button" className="sk-btn sk-btn--secondary" onClick={restart}>{restartLabel}</button>
+            <div className="rq-tools">
+              <button type="button" className="rq-textbtn" onClick={copyLink}>
+                {copied ? 'Link copied, ready to share' : 'Copy a link to share your result'}
+              </button>
+              <button type="button" className="rq-textbtn" onClick={changeAnswers}>Change an answer</button>
+              <button type="button" className="rq-textbtn" onClick={restart}>{restartLabel}</button>
             </div>
           </div>
         )}
