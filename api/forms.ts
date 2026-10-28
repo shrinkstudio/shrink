@@ -454,7 +454,7 @@ async function handleCalculator(q: CalculatorPayload) {
     .map((a) => `- ${a.question?.slice(0, 200) || '?'}: ${a.answer?.slice(0, 300) || '(skipped)'}`);
   const drivers = (q.drivers || [])
     .slice(0, 12)
-    .map((d) => `- ${d.label?.slice(0, 60) || '?'}: ${d.choice?.slice(0, 120) || ''} (+${gbp(d.low)} to ${gbp(d.high)})`);
+    .map((d) => `- ${d.label?.slice(0, 60) || '?'}: ${d.choice?.slice(0, 120) || ''} (${d.low === d.high ? gbp(d.low) : `+${gbp(d.low)} to ${gbp(d.high)}`})`);
   const next = q.nextStep?.label?.slice(0, 80) || 'not given';
   const pkg = q.nextStep?.package?.slice(0, 60);
 
@@ -485,7 +485,7 @@ async function handleCalculator(q: CalculatorPayload) {
         ...(share ? [`Their estimate: ${share}`] : []),
         `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
         '',
-        'What moved the figure:',
+        'What makes up the figure:',
         ...drivers,
         '',
         ...answers,
