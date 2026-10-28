@@ -261,7 +261,7 @@ export function Calculator({
         {phase === 'intro' && (
           <div className="sk-step" key="intro">
             {eyebrow && <p className="sk-eyebrow">{eyebrow}</p>}
-            <h3 className="sk-title">{introHeading}</h3>
+            {introHeading && <h3 className="sk-title">{introHeading}</h3>}
             {introBody && <p className="sk-body">{introBody}</p>}
             {bullets.length > 0 && (
               <ul className="sk-points">
