@@ -26,7 +26,8 @@ python3 -m fontTools.subset "$TMP/Phosphor.woff2" --unicodes="${CODES#,}" \
   --flavor=woff2 --output-file=dist/icons/phosphor.woff2 2>/dev/null
 
 cat > dist/icons/phosphor-embed.html <<HTML
-<!-- Phosphor regular icons: self-hosted subset of icons/phosphor.txt (bin/phosphor-subset.sh); each glyph keeps its 1em box -->
+<!-- Phosphor regular icons: self-hosted subset, no script, so icons show in the Designer too; each glyph keeps its 1em box.
+     Only the icons in icons/phosphor.txt (shrinkstudio/shrink) render: add a name there and run bin/phosphor-subset.sh -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="$CDN/phosphor.woff2" />
 <style>@font-face{font-family:"Phosphor";src:url("$CDN/phosphor.woff2") format("woff2");font-weight:normal;font-style:normal;font-display:block}.ph{display:inline-block;width:1em;height:1em;font-family:"Phosphor"!important;speak:never;font-style:normal;font-weight:normal;font-variant:normal;text-transform:none;line-height:1;letter-spacing:0;font-feature-settings:"liga";font-variant-ligatures:discretionary-ligatures;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}$RULES</style>
 HTML
