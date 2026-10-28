@@ -24,18 +24,6 @@ ${controls}
 .pc-driver-value { flex: none; text-align: right; }
 .pc-driver-value.is-zero { color: var(--sk-muted); }
 
-/* where it goes */
-.pc-details { margin-top: var(--sk-gap-md); }
-.pc-details summary {
-  cursor: pointer; list-style: none; display: inline-flex; gap: 0.375rem; align-items: baseline;
-  font-size: var(--sk-size-sm); color: var(--sk-muted); text-decoration: underline; text-underline-offset: 0.2em;
-  text-decoration-color: transparent; transition: text-decoration-color 0.3s var(--sk-ease), color 0.3s var(--sk-ease);
-}
-.pc-details summary::-webkit-details-marker { display: none; }
-.pc-details summary:hover { color: var(--sk-text); text-decoration-color: currentColor; }
-.pc-details summary:focus-visible { outline: 2px solid var(--sk-accent); outline-offset: 2px; border-radius: 2px; }
-.pc-details[open] summary { margin-bottom: 0.75rem; }
-
 /* next step */
 .pc-next-title { margin: 0 0 0.25em; font-size: var(--sk-size-h5); line-height: 1.4; font-weight: 500; letter-spacing: -0.02em; }
 .pc-package { margin-top: var(--sk-gap-md); padding-top: var(--sk-gap-md); border-top: 1px solid var(--sk-border); }
@@ -43,6 +31,17 @@ ${controls}
 .pc-package-name { font-size: var(--sk-size-body); font-weight: 500; color: var(--sk-text); }
 .pc-package-price { font-size: var(--sk-size-sm); color: var(--sk-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pc-package-link { margin-top: 0.5rem; }
+
+/* quiet tools at the foot of the results: share, change, start over */
+.pc-tools { display: flex; flex-wrap: wrap; gap: var(--sk-gap-sm) var(--sk-gap-md); margin-top: var(--sk-gap-md); padding-top: var(--sk-gap-md); border-top: 1px solid var(--sk-border); }
+.pc-textbtn {
+  appearance: none; background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+  font: inherit; font-size: var(--sk-size-sm); line-height: 1.5; color: var(--sk-text);
+  text-decoration: underline; text-underline-offset: 0.2em; text-decoration-color: var(--sk-border);
+  transition: text-decoration-color 0.3s var(--sk-ease);
+}
+.pc-textbtn:hover { text-decoration-color: currentColor; }
+.pc-textbtn:focus-visible { outline: 2px solid var(--sk-accent); outline-offset: 2px; border-radius: 2px; }
 
 @media (max-width: 560px) {
   .pc-driver { flex-direction: column; gap: 0.25rem; }

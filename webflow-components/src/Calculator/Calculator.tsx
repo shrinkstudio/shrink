@@ -406,13 +406,13 @@ export function Calculator({
             {submit.status === 'sent' ? (
               <div className="sk-block" role="status">
                 <p className="sk-label">Keep this estimate</p>
-                <p className="sk-small sk-success">Thank you. Ben will send your estimate over personally within a working day.</p>
+                <p className="sk-small sk-success">Thank you. Your estimate is saved with us, and Ben will be in touch to talk through the next step.</p>
               </div>
             ) : (
               <form className="sk-block" onSubmit={handleSubmit} noValidate>
                 <p className="sk-label">Keep this estimate</p>
                 <p className="sk-small" style={{ marginBottom: '1rem' }}>
-                  Leave your details and we'll send the estimate over, with every line explained, so it's easy to share with your team.
+                  Leave your details and we'll keep this estimate on file, with every line explained, ready to talk through with you.
                 </p>
                 <div className="sk-field-row">
                   <label className="sk-field">
@@ -438,30 +438,21 @@ export function Calculator({
                 {submit.status === 'error' && <p className="sk-error" role="alert">{submit.message}</p>}
                 <div className="sk-actions" style={{ marginTop: 0 }}>
                   <button type="submit" className="sk-btn" disabled={submit.status === 'sending'}>
-                    {submit.status === 'sending' ? 'Sending' : 'Send me the estimate'}
+                    {submit.status === 'sending' ? 'Saving' : 'Save my estimate'}
                   </button>
                 </div>
               </form>
             )}
 
-            <div className="sk-block">
-              <p className="sk-label">Share this estimate</p>
-              <p className="sk-small" style={{ marginBottom: '1rem' }}>
-                This link opens your answers exactly as you left them, so your team starts from the same place.
-              </p>
-              <div className="sk-actions" style={{ marginTop: 0 }}>
-                <button type="button" className="sk-btn sk-btn--secondary" onClick={copyLink}>
-                  {copied ? 'Link copied' : 'Copy the link'}
-                </button>
-              </div>
-            </div>
+            {disclaimer && <p className="sk-small" style={{ marginTop: 'var(--sk-gap-main)' }}>{disclaimer}</p>}
 
-            <div className="sk-actions">
-              <button type="button" className="sk-btn sk-btn--secondary" onClick={changeAnswers}>Change an answer</button>
-              <button type="button" className="sk-btn sk-btn--secondary" onClick={restart}>{restartLabel}</button>
+            <div className="pc-tools">
+              <button type="button" className="pc-textbtn" onClick={copyLink}>
+                {copied ? 'Link copied, ready to share' : 'Copy a link to share this estimate'}
+              </button>
+              <button type="button" className="pc-textbtn" onClick={changeAnswers}>Change an answer</button>
+              <button type="button" className="pc-textbtn" onClick={restart}>{restartLabel}</button>
             </div>
-
-            {disclaimer && <p className="sk-small" style={{ marginTop: 'var(--sk-gap-md)' }}>{disclaimer}</p>}
           </div>
         )}
       </div>
