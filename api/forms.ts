@@ -506,17 +506,20 @@ async function handleCalculator(q: CalculatorPayload) {
       )
     : null;
 
+  const emailed = await sendResultsEmail(email, calculatorEmail(q), `calculator-${id || email}`, 'calculator');
+
   await notify(
     `Project calculator: ${figure}`,
     [
       `${name} (${email})${c.company ? `, ${c.company.slice(0, 120)}` : ''}`,
       `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
+      `Results email: ${emailed}`,
       'Deal created, reply today',
     ],
     recordUrl(T.deals, deal.id)
   );
 
-  return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id };
+  return { ok: true, contact: contact.id, company: company?.id, deal: deal.id, mailing: mailing?.id, emailed };
 }
 
 /* utm_* hidden inputs (track.ts) → "linkedin / ben-post / aeo-adfin" */
@@ -778,6 +781,258 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
     status,
     headers: { 'Content-Type': 'application/json', ...headers },
   });
+}
+
+/* ---------- results email ---------- */
+// The one automatic email: what the visitor asked for. Everything after it is a
+// personal email from Ben. Built from the Figma template (Shrink Studio: Master,
+// Playground > Updates, "Email: calculator results"). Sent with Resend from
+// hey@shrink.studio. RESULTS_EMAIL: "on" sends to everyone, "test" only to the
+// addresses in RESULTS_EMAIL_TEST (comma separated), anything else is off.
+// Never throws: the lead is already in Airtable.
+
+const SITE = 'https://www.shrink.studio';
+const ASSETS = 'https://cdn.jsdelivr.net/gh/shrinkstudio/shrink@master/email';
+const FONT = "'Helvetica Now Display','Helvetica Neue',Helvetica,Arial,sans-serif";
+const C = {
+  ink: '#111111',
+  muted: '#50565f',
+  grey: '#666666',
+  light: '#aaaaaa',
+  smoke: '#f4f4f5',
+  white: '#ffffff',
+  line: '#e8e8e9',
+  accent: '#4469fc',
+};
+
+type RowIn = { label?: string; choice?: string; low?: number; high?: number };
+
+function h(v: unknown) {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function withUtm(url: string, campaign: string) {
+  const u = new URL(url, SITE);
+  u.searchParams.set('utm_source', 'results-email');
+  u.searchParams.set('utm_medium', 'email');
+  u.searchParams.set('utm_campaign', campaign);
+  return u.toString();
+}
+
+type CalculatorEmail = { subject: string; html: string; text: string };
+
+export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
+  const c = q.contact || {};
+  const e = q.estimate || {};
+  const first = (c.name || '').trim().split(/\s+/)[0]?.slice(0, 40) || 'there';
+  const kind = e.kind || 'range';
+  const next = q.nextStep || {};
+  const compound = /compound/i.test(next.label || '') || /compound/i.test(e.label || '');
+
+  // headline, body and the next step, per kind of result
+  let tag = 'Project calculator';
+  let top = `Here's your estimate, ${first}.`;
+  let figure = `${gbp(e.low)} to ${gbp(e.high)}`;
+  let body =
+    "Thanks for using the project calculator. This is an estimate for the site you described, before VAT, built from the same price list we use to scope real projects. Your final price comes in a fixed proposal once we've agreed the scope together.";
+  let nextLine = 'A 30-minute call is the easiest way to turn this into a fixed proposal.';
+  let button = 'Book a call with Ben';
+  let href = '/calls/intro';
+  let subject = 'Your website estimate from Shrink';
+
+  if (amt(e.low) && e.low === e.high) figure = gbp(e.low);
+  if (kind === 'range' && next.kind === 'brief') {
+    nextLine = 'A short written brief is usually all we need to scope this properly.';
+    button = 'Send Ben a brief';
+    href = '/contact?service=development';
+  }
+  if (kind === 'recurring') {
+    tag = 'Retainer';
+    top = `Here's your retainer, ${first}.`;
+    figure = `${gbp(e.monthly)} a month`;
+    body = `That's ${h(e.label || 'the retainer')}, a rolling monthly retainer with a three-month first term. Every programme starts with a free audit of your site, so the first month already has a plan.`;
+    nextLine = 'A short call is the best place to start, and the audit follows from there.';
+    button = compound ? 'Book a Compound call' : 'Book a call with Ben';
+    href = compound ? '/calls/compound' : '/calls/intro';
+    subject = 'Your retainer estimate from Shrink';
+  }
+  if (kind === 'call') {
+    top = `Thank you, ${first}.`;
+    figure = e.reason === 'large' && amt(e.from) ? `From ${gbp(e.from)}` : "Let's talk it through";
+    body =
+      e.reason === 'web-app'
+        ? "Products vary too much for a fair figure from a few questions, so I'd love to hear about yours first. Thirty minutes is usually enough to shape a scope and a range."
+        : "A site this size deserves a proper look at the content and the audiences first. We'll scope it with you on a call and send a fixed proposal.";
+    nextLine = 'A 30-minute call is the best way to shape the scope together.';
+    subject = 'Your project with Shrink';
+  }
+  const note =
+    "I'd be glad to talk it through with you, answer any questions and help you find the right scope for where you are now. You can also reply to this email, and it comes straight to me.";
+
+  const rows: RowIn[] = kind === 'range' ? (q.drivers || []).slice(0, 14) : [];
+  const total = amt(e.total) || rows.reduce((s, r) => s + amt(r.low), 0);
+  const campaign = kind === 'recurring' ? 'calculator-retainer' : 'calculator';
+  const cta = withUtm(SITE + href, campaign);
+  const share = q.shareUrl && /^https:\/\/(www\.)?shrink\.studio\//.test(q.shareUrl) ? withUtm(q.shareUrl, campaign) : '';
+  const sprint = amt(e.sprint);
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
+
+  const t = (size: number, weight: number, color: string, lh = 1.5, extra = '') =>
+    `font-family:${FONT};font-size:${size}px;line-height:${lh};font-weight:${weight};color:${color};margin:0;${extra}`;
+  const gap = (px: number) => `<tr><td style="height:${px}px;line-height:${px}px;font-size:0">&nbsp;</td></tr>`;
+
+  const rowHtml = rows
+    .map((r, i) => {
+      const amount = i === 0 ? gbp(r.low) : `+${gbp(r.low)}`;
+      return `<tr>
+  <td class="sk-lbl" style="border-top:1px solid ${C.line};padding:12px 16px 12px 0;width:150px;vertical-align:top;${t(14, 400, C.muted)}">${h(r.label)}</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 16px 12px 0;vertical-align:top;${t(14, 500, C.ink)}">${h(r.choice)}</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 0;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${amount}</td>
+</tr>`;
+    })
+    .join('');
+  const totalHtml = rows.length
+    ? `<tr>
+  <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(16, 600, C.ink)}">Total</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 16px 0 0;vertical-align:top;${t(14, 500, C.ink)}">Shown as a range while the scope settles</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 0 0;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${gbp(total)}</td>
+</tr>`
+    : '';
+
+  const html = `<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>${h(subject)}</title>
+<style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-h{font-size:26px !important}.sk-h5{font-size:20px !important}.sk-body{font-size:16px !important}.sk-lbl{width:96px !important;padding-right:12px !important}}</style>
+</head>
+<body style="margin:0;padding:0;background:${C.smoke}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(figure)}. ${kind === 'range' ? 'Every line explained, and what happens next.' : 'And what happens next.'}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.smoke}">
+<tr><td class="sk-outer" align="center" style="padding:40px 16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${C.white};border-radius:12px">
+<tr><td class="sk-pad" style="padding:40px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-2x.png" width="39" height="30" alt="Shrink" style="display:block;border:0"></a></td>
+    <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${tag}</span></td>
+  </tr></table>
+</td></tr>
+${gap(48)}
+<tr><td>
+  <p class="sk-h" style="${t(32, 500, C.muted, 1.3, 'letter-spacing:-0.3px')}">${h(top)}</p>
+  <p class="sk-h" style="${t(32, 500, C.ink, 1.3, 'letter-spacing:-0.3px')}">${h(figure)}</p>
+  <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${body}</p>
+</td></tr>
+${
+  rows.length
+    ? `${gap(48)}
+<tr><td>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">How we got to this figure</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowHtml}${totalHtml}</table>
+  ${sprint ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">You mentioned the brief is still open, so we'd suggest a Clarity Sprint first (${gbp(sprint)}). It sits outside this figure and gives the build a plan your whole team supports.</p>` : ''}
+</td></tr>`
+    : ''
+}
+${gap(48)}
+<tr><td>
+  <p class="sk-h5" style="${t(24, 400, C.muted, 1.3)}">What happens next</p>
+  <p class="sk-h5" style="${t(24, 400, C.ink, 1.3)}">${nextLine}</p>
+  <p class="sk-body" style="${t(18, 500, C.muted, 1.5, 'margin-top:24px')}">${note}</p>
+</td></tr>
+${gap(24)}
+<tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td style="vertical-align:top">
+      <p style="${t(18, 500, C.ink, 1.3)}">Ben Hammond</p>
+      <p style="${t(18, 500, C.light, 1.3)}">Founder</p>
+      <p style="margin:48px 0 0"><a href="${cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${button}</a></p>
+    </td>
+    <td width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
+  </tr></table>
+</td></tr>
+${
+  share
+    ? `${gap(24)}
+<tr><td>
+  <p style="${t(14, 500, C.ink)}"><a href="${h(share)}" style="color:${C.ink};text-decoration:underline">You can reopen your estimate and adjust your answers any time &rarr;</a></p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">If you'd like to share this with your team, just forward this email. The link opens your answers exactly as you left them, so everyone starts from the same place.</p>
+</td></tr>`
+    : ''
+}
+${gap(48)}
+<tr><td style="border-top:1px solid ${C.line};padding-top:16px">
+  <p style="${t(14, 500, C.grey)}">You're receiving this because you asked for your estimate on shrink.studio on ${date}. We'll only send guides and updates if you chose to hear from us.</p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788) &middot; Waverley House, 9 Noel St, London</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+  const text = [
+    top,
+    figure,
+    '',
+    body.replace(/&[a-z]+;/g, ''),
+    ...(rows.length
+      ? ['', 'How we got to this figure:', ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${i === 0 ? gbp(r.low) : `+${gbp(r.low)}`})`), `- Total: ${gbp(total)}`]
+      : []),
+    ...(sprint ? ['', `We'd suggest a Clarity Sprint first (${gbp(sprint)}), outside this figure.`] : []),
+    '',
+    `What happens next: ${nextLine}`,
+    note,
+    `${button}: ${cta}`,
+    ...(share ? ['', `Reopen your estimate: ${share}`] : []),
+    '',
+    'Ben Hammond, Founder, Shrink Studio',
+    `You're receiving this because you asked for your estimate on shrink.studio on ${date}.`,
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
+/** Sends through Resend. Returns the email id, or why it wasn't sent. */
+async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, tool: string): Promise<string> {
+  const mode = (process.env.RESULTS_EMAIL || 'off').toLowerCase();
+  const testers = (process.env.RESULTS_EMAIL_TEST || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return 'not sent: no RESEND_API_KEY';
+  if (mode !== 'on' && !(mode === 'test' && testers.includes(to))) return `not sent: RESULTS_EMAIL ${mode}`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'Idempotency-Key': key.slice(0, 256) },
+      body: JSON.stringify({
+        from: 'Ben at Shrink <hey@shrink.studio>',
+        to: [to],
+        reply_to: 'hey@shrink.studio',
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
+        tags: [{ name: 'tool', value: tool }],
+      }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+    if (!res.ok) {
+      console.error('resend', res.status, data);
+      return `not sent: Resend ${res.status} ${data.message || ''}`.trim();
+    }
+    return `sent ${data.id || ''}`.trim();
+  } catch (err) {
+    console.error('resend failed', err);
+    return 'not sent: Resend unreachable';
+  }
 }
 
 /* ---------- slack ---------- */
