@@ -584,8 +584,8 @@ Mobile: Performance 70, Accessibility 89, Best Practices 100, SEO 100, Agentic B
     6. [x] **C** PostHog funnel per tool: started, completed, email requested, booked
     7. [ ] **C then B** (code ready 28 Oct: 20 tests pass, flow and share link checked in the local preview; awaiting Ben's OK to push and import) Republish the library (`npm run import`), Ben accepts the update in the Designer, live check
   - Results email
-    8. [ ] **B** Choose the sender: Resend or Postmark
-    9. [ ] **B+C** Sending subdomain and DNS in GoDaddy: SPF merged with the Google Workspace record, DKIM, DMARC; replies to hey@shrink.studio
+    8. [x] **B** Sender: Resend (28 Oct). Account on hey@shrink.studio, `RESEND_API_KEY` in Vercel, domain `send.shrink.studio` added. Postmark noted (Dan, MakeBuild); sequencing is unnecessary because follow-ups are personal
+    9. [ ] **B+C** DNS in GoDaddy for Resend. shrink.studio has DMARC `p=reject` with strict alignment (`adkim=s; aspf=s`), so the From address must sit on the domain Resend signs: with `send.shrink.studio` the From is `…@send.shrink.studio` (reply-to hey@shrink.studio); verifying the root `shrink.studio` in Resend instead allows From hey@shrink.studio. Resend's SPF and MX go on its own return-path host, so the root SPF and Google Workspace stay untouched. No Resend records live yet (checked 28 Oct)
     10. [ ] **C** Build the HTML email from the Figma template (`4859:22726`) inside `api/forms.ts`, for calculator and quiz
     11. [ ] **C** Click and bounce events from the sender into Airtable
   - Foundations (before the quiz)
