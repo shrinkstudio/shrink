@@ -99,7 +99,8 @@ export function Calculator({
   const [copied, setCopied] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const flow = useMemo(() => visibleQuestions(answers), [answers]);
+  // until a type is picked, count the website route so the first step reads 1 / 10, not 1 / 1
+  const flow = useMemo(() => visibleQuestions(answers.type ? answers : { ...answers, type: 'new-site' }), [answers]);
   const q = flow[Math.min(step, flow.length - 1)];
   const isLast = step >= flow.length - 1;
 
