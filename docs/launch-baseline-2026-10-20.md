@@ -87,3 +87,16 @@ Scroll depth since launch, share of page sessions reaching each mark: home (146)
 
 ## PageSpeed, 26 Oct 11:51 (home, mobile, Lighthouse 13.5, before the 26 Oct fixes)
 Performance 58, Accessibility 89, Best Practices 100, SEO 100, Agentic Browsing 2/3. FCP 7.1 s, LCP 10.7 s, TBT 60 ms, CLS 0, Speed Index 7.2 s. Render-blocking savings estimate 4.6 s. Orbit lab run the same minute: performance 63, LCP 6.9 s, CLS 0.009.
+
+## Local Lighthouse 12, 28 Oct (before the speed pass)
+Lighthouse 12 run locally from London, headless Chrome, incognito, performance only. Mobile was run twice per page; run 1 often hit a cold Webflow edge cache (TTFB 1.4 to 2.3 s against 0.5 s warm), so read the pair as a range.
+
+| Page | Mobile perf | Mobile FCP | Mobile LCP | Mobile CLS | Desktop perf | Desktop LCP | Desktop CLS | Weight |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| / | 63 / 82 | 3.7 / 2.0 s | 6.7 / 4.5 s | 0.009 | 65 | 3.6 s | 0.079 | 2.2 MiB |
+| /services/development | 68 / 81 | 4.5 / 3.3 s | 5.1 / 3.9 s | 0.000 | 98 | 0.9 s | 0.011 | 1.6 MiB |
+| /case-studies/adfin | 63 / 67 | 4.3 / 3.3 s | 10.4 / 9.4 s | 0.008 | 91 | 1.9 s | 0.033 | 1.7 MiB |
+| /resources/aeo-for-b2b-saas | 73 / 79 | 4.3 / 3.4 s | 4.3 / 4.0 s | 0.001 | 92 | 1.4 s | 0.004 | 1.4 MiB |
+| /tools/project-calculator | 66 / 64 | 3.4 / 3.3 s | 10.3 / 9.5 s | 0.002 | 88 | 2.3 s | 0.000 | 1.4 MiB |
+
+LCP elements: home = hero marquee AVIF (mobile eager; desktop picks a lazy one); case study = hero card background image, set to lazy (load delay 6.9 to 8.1 s); services and article = body text (render delay, so FCP-bound); calculator = the CookieYes banner text on mobile. Desktop CLS on home is the hero logo cluster images (no size until they load). Fix list in LAUNCH.md under "Speed pass (28 Oct)".
