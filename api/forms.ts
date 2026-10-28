@@ -8,7 +8,8 @@
  *
  * The Readiness Quiz code component POSTs here directly (JSON, `form: "quiz"`, CORS):
  * upsert Contact (+ Company from a work email), score and answers into the Contact notes;
- * state "ready" also creates a Deal at Stage "Lead", otherwise the Contact is Nurture.
+ * states "ready" and "close" also create a Deal at Stage "Lead" (Ben replies personally);
+ * "not yet" leaves the Contact at Nurture with a Recheck date 90 days out.
  *
  * The Project Calculator code component POSTs `form: "calculator"` the same way: upsert
  * Contact (+ Company), and always a Deal at Stage "Lead" carrying the range, what moved
@@ -347,7 +348,8 @@ async function handleQuiz(q: QuizPayload) {
 
   const r = q.result || {};
   const state = ['ready', 'close', 'not_yet'].includes(r.state || '') ? r.state! : 'not_yet';
-  const ready = state === 'ready';
+  // ready and close get a Deal and a personal reply from Ben; not yet is Nurture with a 90-day recheck
+  const ready = state === 'ready' || state === 'close';
   const engagement = r.engagement?.slice(0, 100) || 'not given';
   const id = q.id?.slice(0, 64);
 
@@ -382,6 +384,11 @@ async function handleQuiz(q: QuizPayload) {
     note: summary,
   });
 
+  if (!ready) {
+    const recheck = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await patch(T.contacts, contact.id, { 'Recheck date': recheck }).catch((err) => console.error('recheck date', err));
+  }
+
   let deal: AirtableRecord | undefined;
   if (ready) {
     const service = QUIZ_SERVICES[r.engagementId || ''];
@@ -393,7 +400,7 @@ async function handleQuiz(q: QuizPayload) {
         ...(service ? { Service: service } : {}),
         ...(company ? { Company: [company.id] } : {}),
         Notes: [
-          `Readiness quiz: ready, ${score}`,
+          `Readiness quiz: ${state.replace('_', ' ')}, ${score}`,
           `Where we'd start: ${engagement}`,
           '',
           ...answers,
@@ -420,7 +427,7 @@ async function handleQuiz(q: QuizPayload) {
     [
       `${name} (${email})${c.company ? `, ${c.company.slice(0, 120)}` : ''}`,
       `${score}, we'd start with ${engagement}`,
-      ready ? 'Deal created, reply today' : 'Contact set to Nurture',
+      ready ? 'Deal created, reply today' : 'Contact set to Nurture, recheck in 90 days',
     ],
     recordUrl(deal ? T.deals : T.contacts, deal?.id ?? contact.id)
   );
