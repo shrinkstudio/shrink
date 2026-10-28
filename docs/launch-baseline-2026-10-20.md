@@ -113,3 +113,16 @@ Same setup as the before run. Mobile run 1 on home hit a cold cache straight aft
 | /tools/project-calculator | 89 / 90 (was 66 / 64) | 2.9 / 2.8 s | 2.9 / 3.0 s (was 9.5 best) | 0.000 | 99 (was 88) | 0.7 s | 0.000 | 2.4 MiB (1.6 MB avatar, fixed and staged) |
 
 The small CLS rise (0.016 to 0.036 mobile, 0.077 desktop home) is now "web font loaded": pages paint before Inter arrives, so the swap moves text. A preload for the woff2 is staged in the head.
+
+## Local Lighthouse 12, 28 Oct 15:25, final (font preload, avatar, code component fix live)
+Mobile best of two runs (run 1 on home hit a cold connection, TTFB 2.8 s simulated).
+
+| Page | Mobile perf | Mobile LCP | Mobile CLS | Desktop perf | Desktop LCP | Desktop CLS | Weight |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| / | 90 (was 82) | 3.1 s (was 4.5) | 0.007 | 99 (was 65) | 0.8 s (was 3.6) | 0.004 (was 0.079) | 1.0 MiB (was 2.2) |
+| /services/development | 93 (was 81) | 3.0 s (was 3.9) | 0.000 to 0.028 | 99 | 0.7 s | 0.000 | 0.66 MiB (was 1.65) |
+| /case-studies/adfin | 93 (was 67) | 3.0 s (was 9.4) | 0.008 | 99 (was 91) | 0.9 s | 0.032 | 0.64 MiB (was 1.78) |
+| /resources/aeo-for-b2b-saas | 98 (was 79) | 2.3 s (was 4.0) | 0.000 | 99 (was 92) | 0.8 s | 0.001 | 0.51 MiB (was 1.45) |
+| /tools/project-calculator | 96 (was 64) | 2.4 s (was 9.5) | 0.000 | 99 (was 88) | 0.8 s | 0.000 | 0.82 MiB (was 1.39) |
+
+Mobile scores still move 5 to 15 points between runs on the same build; read LCP and weight first. Field data (CrUX) needs about 28 days of traffic.
