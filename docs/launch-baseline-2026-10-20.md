@@ -100,3 +100,16 @@ Lighthouse 12 run locally from London, headless Chrome, incognito, performance o
 | /tools/project-calculator | 66 / 64 | 3.4 / 3.3 s | 10.3 / 9.5 s | 0.002 | 88 | 2.3 s | 0.000 | 1.4 MiB |
 
 LCP elements: home = hero marquee AVIF (mobile eager; desktop picks a lazy one); case study = hero card background image, set to lazy (load delay 6.9 to 8.1 s); services and article = body text (render delay, so FCP-bound); calculator = the CookieYes banner text on mobile. Desktop CLS on home is the hero logo cluster images (no size until they load). Fix list in LAUNCH.md under "Speed pass (28 Oct)".
+
+## Local Lighthouse 12, 28 Oct, after the speed pass publish
+Same setup as the before run. Mobile run 1 on home hit a cold cache straight after the publish (TTFB 3.9 s simulated), so read run 2 there.
+
+| Page | Mobile perf | Mobile FCP | Mobile LCP | Mobile CLS | Desktop perf | Desktop LCP | Desktop CLS | Weight |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| / | 58 / 95 (was 63 / 82) | 4.6 / 1.8 s | 8.0 / 2.8 s (was 4.5 best) | 0.016 | 79 (was 65) | 2.1 s (was 3.6) | 0.084 | 1.0 MiB (was 2.2) |
+| /services/development | 95 / 98 (was 68 / 81) | 2.1 / 1.8 s | 2.1 / 1.8 s (was 3.9 best) | 0.028 | 99 | 0.7 s | 0.011 | 0.7 MiB (was 1.6) |
+| /case-studies/adfin | 74 / 98 (was 63 / 67) | 2.3 / 1.8 s | 5.8 / 2.0 s (was 9.4 best) | 0.036 | 99 (was 91) | 0.9 s | 0.032 | 0.65 MiB (was 1.7) |
+| /resources/aeo-for-b2b-saas | 93 / 90 (was 73 / 79) | 2.4 / 2.8 s | 2.4 / 3.0 s (was 4.0 best) | 0.028 | 100 (was 92) | 0.6 s | 0.004 | 0.55 MiB (was 1.4) |
+| /tools/project-calculator | 89 / 90 (was 66 / 64) | 2.9 / 2.8 s | 2.9 / 3.0 s (was 9.5 best) | 0.000 | 99 (was 88) | 0.7 s | 0.000 | 2.4 MiB (1.6 MB avatar, fixed and staged) |
+
+The small CLS rise (0.016 to 0.036 mobile, 0.077 desktop home) is now "web font loaded": pages paint before Inter arrives, so the swap moves text. A preload for the woff2 is staged in the head.

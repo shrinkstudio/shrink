@@ -170,5 +170,17 @@
     }
    ]
   }
+ },
+ {
+  "collection": "Clients",
+  "id": "6a8f0de0c1c35822dba7a045",
+  "slug": "asset-reality",
+  "fieldData": {
+   "testimonial-avatar": {
+    "fileId": "6a8f0de0c1c35822dba79ffa",
+    "url": "https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6a8f0de0c1c35822dba79ffa_6a7312bb7a7f507b38fcc906_6a2fd9a737b7e1a3df450d32_69a98f144e4928f6f3f3308a_699e1c360f2afe40ab623757_69947324b5a30dbf54f58151_hugo-h-asset.svg",
+    "alt": null
+   }
+  }
  }
 ]
