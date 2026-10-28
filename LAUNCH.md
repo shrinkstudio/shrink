@@ -741,3 +741,8 @@ At four or more articles a month the shared FAQs collection would bury the 37 si
 - [x] Aria: every CMS FAQ accordion rendered `<details role="listitem">` inside the collection item's own `role="listitem"` (a listitem in a listitem). List Item Role prop off on all 7 instances: article template, /faq, /pricing, the three packages, Services template. Live on the next publish.
 - New article FAQs go in Article FAQs, three per article.
 - MCP limits hit: current-item list filters can't be read or written, collection template pages can't be drafted, and list writes on this template hit a multiplayer "Conflict" until the list was rebuilt.
+
+### Package buttons, split journeys, /packages (28 Oct)
+Ben: a recording showed someone exploring the packages and abandoning the form. Every package CTA resolves (Start/Book a free audit to `/contact?service=…` with the Need option preselected, Book a Call to `/calls/<package>`, "Prefer to write?" to the same contact URL). The session was `01a178c2…` (Mon 26 Oct 15:09 to 15:47, Mac, Chrome, UK): 2 to 5 seconds per page through the nav, 4 seconds on /contact, so most likely our own testing. It also typed `/packages`, which 404s.
+- [x] Split journeys: since cookieless, pre-consent views land in a cookieless session and a yes starts a new session with no pageview (11 of 17 consenting sessions on 27 Oct had none). consent.ts now sends `$pageview` on a fresh yes (`has_opted_in_capturing` false before), commit b9f74d9, pushed, purged. Verified live as a new visitor on /packages/seed-website: Accept sends `$opt_in` then `$pageview`, recording starts.
+- [ ] Ben: 301 `/packages` to `/pricing` in Site settings > Publishing > 301 redirects (the redirects API is Enterprise-only).
