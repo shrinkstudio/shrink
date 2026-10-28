@@ -155,7 +155,7 @@ export interface RecommendedEngagement {
   id: 'seed-website' | 'clarity-sprint' | 'discovery' | 'audit' | 'resource';
   label: string;
   blurb: string;
-  /** Shown beside the label, eg. "£15,000, fixed"; empty for the guides. */
+  /** Shown beside the label, eg. "£15,000, fixed"; empty for the resources. */
   price: string;
   /** Deal value in Shrink OS for ready and close results. */
   value: number;
@@ -302,12 +302,12 @@ function recommendEngagement(
   }
   return {
     id: 'resource',
-    label: 'Our guides',
-    blurb: "Practical guides on positioning, site structure and AI search, so you're ready when the time comes.",
+    label: 'Our resources',
+    blurb: "Practical articles and guides on positioning, site structure and AI search, so you're ready when the time comes.",
     price: '',
     value: 0,
     href: '/resources',
-    linkLabel: 'Read the guides',
+    linkLabel: 'Browse our resources',
   };
 }
 

@@ -1295,12 +1295,12 @@ ${
     sectionHtml,
     sectionText,
     nextLine: early
-      ? "When the time is right, we'd love to help. Until then, our guides are a good place to start."
+      ? "When the time is right, we'd love to help. Until then, our resources are a good place to start."
       : 'A 30-minute call is the easiest way to plan your next step together.',
     note: early
       ? "If you'd like to talk anything through in the meantime, just reply to this email. It comes to me."
       : "I'm happy to go through your result with you and help you work out the right first step. Or just reply to this email. It comes to me.",
-    button: early ? 'Read the guides' : 'Book a call with Ben',
+    button: early ? 'Browse our resources' : 'Book a call with Ben',
     cta: withUtm(SITE + (early ? '/resources' : '/calls/intro'), campaign),
     share: shareLink(q.shareUrl, campaign),
     thing: 'result',

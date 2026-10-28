@@ -127,7 +127,7 @@ it('describeAnswers gives readable pairs for the lead notes', () => {
   assert.ok(rows.some((r) => r.answer === 'Win enterprise customers; Turn visitors into demo or trial requests'));
 });
 
-it('recommendations carry a price and a deal value; the guides carry neither', () => {
+it('recommendations carry a price and a deal value; the resources carry neither', () => {
   const seed = computeResult(Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === 'multi' ? [q.options[0].id] : q.options.find((o) => (o.score ?? 0) === Math.max(...q.options.map((x) => x.score ?? 0)))!.id])));
   assert.equal(seed.recommendedEngagement.price, '£15,000, fixed');
   assert.equal(seed.recommendedEngagement.value, 15000);
