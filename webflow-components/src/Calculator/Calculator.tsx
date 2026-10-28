@@ -97,7 +97,10 @@ export function Calculator({
   const [submit, setSubmit] = useState<SubmitState>({ status: 'idle' });
   const [leadId, setLeadId] = useState(newId);
   const [copied, setCopied] = useState(false);
+  const [hp, setHp] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
+  // when the result appeared: a form sent within seconds of it is a bot
+  const shownAt = useRef(0);
 
   // until a type is picked, count the website route so the first step reads 1 / 10, not 1 / 1
   const flow = useMemo(() => visibleQuestions(answers.type ? answers : { ...answers, type: 'new-site' }), [answers]);
@@ -124,6 +127,7 @@ export function Calculator({
     const ref = params.get('ref');
     if (ref) setLeadId(ref);
     setPhase('results');
+    shownAt.current = Date.now();
     track('calculator_reopened', { ref: ref || '' });
   }, []);
 
@@ -158,6 +162,7 @@ export function Calculator({
   function showResults() {
     const est = computeEstimate(answers);
     setPhase('results');
+    shownAt.current = Date.now();
     track('calculator_completed', {
       type: String(answers.type || ''),
       kind: est?.kind || '',
@@ -212,6 +217,8 @@ export function Calculator({
         body: JSON.stringify({
           form: 'calculator',
           id: leadId,
+          hp,
+          elapsed: shownAt.current ? Date.now() - shownAt.current : undefined,
           pageUrl: window.location.href,
           shareUrl: link,
           contact,
@@ -428,6 +435,13 @@ export function Calculator({
                   <span className="sk-field-label">Company</span>
                   <input className="sk-input" autoComplete="organization" value={contact.company} onChange={(e) => setContact((c) => ({ ...c, company: e.target.value }))} />
                 </label>
+                {/* honeypot: hidden from people and screen readers, bots fill it */}
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+                  <label>
+                    Website
+                    <input tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} />
+                  </label>
+                </div>
                 {optInLabel && (
                   <label className="sk-check">
                     <input type="checkbox" checked={contact.resources} onChange={(e) => setContact((c) => ({ ...c, resources: e.target.checked }))} />

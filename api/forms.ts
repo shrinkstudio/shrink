@@ -125,6 +125,10 @@ type QuizPayload = {
 type CalculatorPayload = {
   form: 'calculator';
   id?: string;
+  /** honeypot: a hidden field people never fill */
+  hp?: string;
+  /** ms from seeing the result to sending the form */
+  elapsed?: number;
   pageUrl?: string;
   contact?: { name?: string; email?: string; company?: string; resources?: boolean };
   shareUrl?: string;
@@ -171,6 +175,7 @@ export async function POST(request: Request): Promise<Response> {
   if (calc) {
     const headers = cors(request);
     if (!headers['Access-Control-Allow-Origin']) return json({ ok: false, error: 'origin' }, 403);
+    if (tooMany(request)) return json({ ok: false, error: 'slow down' }, 429, headers);
     try {
       const out = await handleCalculator(calc);
       return json(out, out.ok ? 200 : 400, headers);
@@ -417,6 +422,9 @@ async function handleQuiz(q: QuizPayload) {
 }
 
 async function handleCalculator(q: CalculatorPayload) {
+  // bots: filled the hidden field, or sent the form faster than anyone can type. Say ok, store nothing
+  if (q.hp) return { ok: true };
+  if (typeof q.elapsed === 'number' && q.elapsed < 2500) return { ok: true };
   const c = q.contact || {};
   const email = c.email?.trim().toLowerCase() || '';
   const name = c.name?.trim().slice(0, 200) || '';
@@ -506,7 +514,8 @@ async function handleCalculator(q: CalculatorPayload) {
       )
     : null;
 
-  const emailed = await sendResultsEmail(email, calculatorEmail(q), `calculator-${id || email}`, 'calculator');
+  const held = await holdEmail(email, 'project calculator');
+  const emailed = held || (await sendResultsEmail(email, calculatorEmail(q), `calculator-${id || email}`, 'calculator'));
 
   await notify(
     `Project calculator: ${figure}`,
@@ -781,6 +790,54 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
     status,
     headers: { 'Content-Type': 'application/json', ...headers },
   });
+}
+
+/* ---------- abuse guards ---------- */
+// The results email goes to whatever address is typed in, so a few cheap limits
+// keep hey@shrink.studio from being used to mail strangers:
+// 1. per IP: at most 5 tool submissions in 10 minutes (per warm function instance)
+// 2. per address: one results email in 24 hours
+// 3. per day: RESULTS_EMAIL_DAILY_CAP results emails across the site (default 40)
+// The lead is always saved; only the email is held, and Slack says why.
+
+const recent = new Map<string, number[]>();
+
+function tooMany(request: Request) {
+  const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown';
+  const now = Date.now();
+  const hits = (recent.get(ip) || []).filter((t) => now - t < 10 * 60 * 1000);
+  hits.push(now);
+  recent.set(ip, hits);
+  if (recent.size > 5000) recent.clear();
+  return hits.length > 5;
+}
+
+async function count(table: string, formula: string): Promise<number> {
+  const qs = new URLSearchParams({ filterByFormula: formula, pageSize: '100' });
+  qs.append('fields[]', 'Name');
+  const res = await airtable(`${table}?${qs}`, 'GET');
+  return res.records?.length ?? 0;
+}
+
+/** A reason to hold the results email, or '' to send it. Deals carry "<email>" in their Notes. */
+async function holdEmail(email: string, dealSuffix: string): Promise<string> {
+  try {
+    const sameAddress = await count(
+      T.deals,
+      `AND(FIND("<${esc(email)}>", {Notes}), IS_AFTER(CREATED_TIME(), DATEADD(NOW(), -1, 'days')))`
+    );
+    if (sameAddress > 1) return 'held: this address already had one today';
+    const cap = Number(process.env.RESULTS_EMAIL_DAILY_CAP) || 40;
+    const today = await count(
+      T.deals,
+      `AND(FIND(", ${esc(dealSuffix)}", {Name}), IS_SAME(CREATED_TIME(), TODAY(), 'day'))`
+    );
+    if (today > cap) return `held: daily cap of ${cap} reached`;
+    return '';
+  } catch (err) {
+    console.error('email guard', err);
+    return 'held: guard check failed';
+  }
 }
 
 /* ---------- results email ---------- */
