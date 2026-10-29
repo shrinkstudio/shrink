@@ -16,8 +16,10 @@ import {
   encodeAnswers,
   fmtRange,
   isComplete,
+  optionPrice,
   shareUrl,
   siteLines,
+  timelineFor,
   visibleQuestions,
   type Answers,
 } from '../src/Calculator/model.ts';
@@ -36,6 +38,7 @@ const seed: Answers = {
   templates: 'up-to-8',
   cms: 'up-to-2',
   design: 'brand',
+  system: 'no',
   platform: 'none',
   integrations: [],
   extras: [],
@@ -46,7 +49,8 @@ const isla: Answers = {
   type: 'rebuild',
   templates: '9-15',
   cms: 'up-to-2',
-  design: 'system',
+  design: 'brand',
+  system: 'yes',
   platform: 'wordpress',
   migration: '50-200',
   integrations: ['crm', 'analytics'],
@@ -59,6 +63,7 @@ const buildstore: Answers = {
   templates: 'up-to-8',
   cms: 'up-to-2',
   design: 'direction',
+  system: 'no',
   platform: 'other',
   migration: '50-200',
   integrations: [],
@@ -69,8 +74,8 @@ const buildstore: Answers = {
 
 it('branching: a site asks the scope, a retainer asks the tier, a web app asks nothing more', () => {
   const ids = (a: Answers) => visibleQuestions(a).map((q) => q.id);
-  assert.deepEqual(ids({ type: 'new-site' }), ['type', 'templates', 'cms', 'design', 'platform', 'integrations', 'extras', 'brief', 'timing']);
-  assert.deepEqual(ids({ type: 'rebuild', platform: 'webflow' }), ['type', 'templates', 'cms', 'design', 'platform', 'migration', 'integrations', 'extras', 'brief', 'timing']);
+  assert.deepEqual(ids({ type: 'new-site' }), ['type', 'templates', 'cms', 'design', 'system', 'platform', 'integrations', 'extras', 'brief', 'timing']);
+  assert.deepEqual(ids({ type: 'rebuild', platform: 'webflow' }), ['type', 'templates', 'cms', 'design', 'system', 'platform', 'migration', 'integrations', 'extras', 'brief', 'timing']);
   assert.deepEqual(ids({ type: 'retainer' }), ['type', 'tier']);
   assert.deepEqual(ids({ type: 'web-app' }), ['type']);
   assert.ok(QUESTIONS.every((q) => q.options.length >= 2));
@@ -162,6 +167,58 @@ it('lead notes read cleanly', () => {
   const d = describeAnswers(isla);
   assert.equal(d[0].answer, 'A rebuild of our current site');
   assert.ok(d.every((x) => x.answer.length > 0));
+});
+
+it('a brand direction and a design system together cost £7,500, a system on its own £5,000', () => {
+  const lineFor = (a: Answers) => siteLines(a).filter((l) => l.id === 'design' || l.id === 'system').reduce((s, l) => s + l.amount, 0);
+  assert.equal(lineFor({ ...seed, design: 'direction', system: 'yes' }), 7500);
+  assert.equal(lineFor({ ...seed, design: 'brand', system: 'yes' }), 5000);
+  assert.equal(lineFor({ ...seed, design: 'direction', system: 'no' }), 3500);
+  assert.equal(optionPrice('system', 'yes', { design: 'direction' }), '+£4,000');
+  assert.equal(optionPrice('design', 'brand', {}), 'Included');
+  assert.equal(optionPrice('extras', 'custom', {}), 'On a call');
+});
+
+it('timeline: six weeks for the Seed scope, more for bigger sites, and a kind note when they asked for sooner', () => {
+  assert.equal(timelineFor(seed).label, 'About six weeks');
+  assert.equal(timelineFor(isla).label, 'About 10 to 12 weeks');
+  const big: Answers = { ...isla, templates: '16-25', migration: '200-plus', extras: ['lang-3'], timing: 'fast' };
+  const t = timelineFor(big);
+  assert.equal(t.label, 'About 16 to 18 weeks');
+  assert.match(t.note, /under six weeks/);
+  assert.equal(timelineFor({ ...big, timing: 'flexible' }).note, '');
+  const e = computeEstimate(big);
+  assert.ok(e && e.kind === 'range' && e.timeline.low === 16);
+});
+
+it('custom features stay out of the figure and make the next step a call', () => {
+  const a: Answers = { ...seed, extras: ['custom'] };
+  const e = computeEstimate(a);
+  assert.ok(e && e.kind === 'range');
+  assert.equal(e.custom, true);
+  assert.equal(e.total, BASE);
+  assert.ok(!e.lines.some((l) => l.id.includes('custom')));
+  const n = computeNextStep(a, e, LINKS)!;
+  assert.equal(n.kind, 'call');
+  assert.equal(n.package, undefined);
+});
+
+it('other tools: free text rides along in the share link and the lead notes', () => {
+  const a: Answers = { ...seed, integrations: ['crm', 'other'], otherTools: 'Intercom and Zapier' };
+  assert.deepEqual(decodeAnswers(encodeAnswers(a)), a);
+  const d = describeAnswers(a).find((x) => x.question.startsWith('Which tools'))!;
+  assert.match(d.answer, /\(Intercom and Zapier\)$/);
+});
+
+it('share links from before the design system question still open', () => {
+  const old = { ...isla, design: 'system' } as Answers;
+  delete old.system;
+  const back = decodeAnswers(encodeAnswers(old))!;
+  assert.equal(back.design, 'brand');
+  assert.equal(back.system, 'yes');
+  const oldSeed = { ...seed } as Answers;
+  delete oldSeed.system;
+  assert.equal(decodeAnswers(encodeAnswers(oldSeed))!.system, 'no');
 });
 
 it('copy: no em dashes anywhere in the model', () => {

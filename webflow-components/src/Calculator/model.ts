@@ -22,7 +22,10 @@ export const CLARITY_SPRINT = 3500;
 
 const TEMPLATES: Record<string, number> = { 'up-to-8': 0, '9-15': 3000, '16-25': 6000 };
 const CMS: Record<string, number> = { 'up-to-2': 0, '3-4': 1500, '5-plus': 2250 };
-const DESIGN: Record<string, number> = { brand: 0, direction: 3500, system: 5000 };
+const DESIGN: Record<string, number> = { brand: 0, direction: 3500 };
+/* a design system; less alongside a new direction, which already lays the groundwork (£7,500 together) */
+const SYSTEM = 5000;
+const SYSTEM_WITH_DIRECTION = 4000;
 const MIGRATION: Record<string, number> = { none: 0, 'up-to-50': 1000, '50-200': 2000, '200-plus': 4000 };
 const INTEGRATION = 1000;
 const EXTRAS: Record<string, number> = { motion: 2000, a11y: 1500, 'lang-2': 2500, 'lang-3': 5000 };
@@ -49,6 +52,9 @@ export const RETAINERS: Record<string, { monthly: number; label: string; body: s
 
 export type Option = { id: string; label: string; hint?: string };
 
+/** A free-text box shown under a multi-select when one option is picked (it never changes the price). */
+export type OtherField = { when: string; key: string; label: string; placeholder: string };
+
 export type Question = {
   id: string;
   type: 'single' | 'multi';
@@ -59,6 +65,7 @@ export type Question = {
   optional?: boolean;
   /** Only ask this when the predicate passes. */
   visibleWhen?: (a: Answers) => boolean;
+  other?: OtherField;
 };
 
 export type Answers = Record<string, string | string[]>;
@@ -113,8 +120,18 @@ export const QUESTIONS: Question[] = [
     options: [
       { id: 'brand', label: 'We have a brand you can apply', hint: 'Logo, colours and type are settled' },
       { id: 'direction', label: "We'd like a fresh design direction", hint: 'A new look, designed around your brand' },
-      { id: 'system', label: 'We need a full design system', hint: 'A component library your team can build with' },
     ],
+  },
+  {
+    id: 'system',
+    type: 'single',
+    prompt: 'Do you need a design system?',
+    helper: 'A documented library of components your team can build new pages from, with or without a designer.',
+    options: [
+      { id: 'no', label: 'Not for now', hint: 'Your site is still built from reusable sections' },
+      { id: 'yes', label: 'Yes, a full design system', hint: 'Components, rules and documentation your team can build with' },
+    ],
+    visibleWhen: isSite,
   },
   {
     id: 'platform',
@@ -146,6 +163,7 @@ export const QUESTIONS: Question[] = [
     id: 'integrations',
     type: 'multi',
     prompt: 'Which tools should the site connect to?',
+    other: { when: 'other', key: 'otherTools', label: 'Which tools?', placeholder: 'For example Intercom, Clearbit or Zapier' },
     helper: 'Pick any that apply. We set each one up, map it and test it.',
     optional: true,
     visibleWhen: isSite,
@@ -154,7 +172,7 @@ export const QUESTIONS: Question[] = [
       { id: 'analytics', label: 'Analytics and tag management, such as GA4' },
       { id: 'booking', label: 'Booking or scheduling, such as Cal.com' },
       { id: 'product', label: 'Sign-up or login for your product' },
-      { id: 'other', label: 'Other marketing tools' },
+      { id: 'other', label: 'Other tools' },
     ],
   },
   {
@@ -166,9 +184,10 @@ export const QUESTIONS: Question[] = [
     visibleWhen: isSite,
     options: [
       { id: 'motion', label: 'Rich motion and interaction' },
-      { id: 'a11y', label: 'An accessibility audit to WCAG 2.2 AA' },
+      { id: 'a11y', label: 'A formal accessibility audit to WCAG 2.2 AA', hint: 'Every site is built to be accessible. The audit adds an independent check and the fixes it finds' },
       { id: 'lang-2', label: 'A second language' },
       { id: 'lang-3', label: 'Three or more languages' },
+      { id: 'custom', label: 'Custom features, such as complex forms, calculators or product demos', hint: "We'll price these with you on a call" },
     ],
   },
   {
@@ -237,7 +256,18 @@ export type Line = {
 };
 
 export type Estimate =
-  | { kind: 'range'; low: number; high: number; total: number; lines: Line[]; sprint: number; note: string }
+  | {
+      kind: 'range';
+      low: number;
+      high: number;
+      total: number;
+      lines: Line[];
+      sprint: number;
+      note: string;
+      /** custom features: left out of the figure, priced on a call */
+      custom: boolean;
+      timeline: Timeline;
+    }
   | { kind: 'recurring'; tier: string; monthly: number; label: string; note: string }
   | { kind: 'call'; reason: 'web-app' | 'large'; from?: number; note: string }
   | null;
@@ -259,7 +289,7 @@ export function siteLines(a: Answers): Line[] {
       label: 'Seed Website base',
       choice: 'Up to 8 templates, two content types, your brand applied',
       amount: BASE,
-      note: 'Design, build, CMS and launch in about six weeks, on a site your team can run.',
+      note: "Design, build, CMS and launch, built to be accessible as standard. We refine the design with you until it's right, with no limit on rounds.",
     },
   ];
   const add = (id: string, label: string, choice: string, amount: number, note: string) => {
@@ -270,19 +300,22 @@ export function siteLines(a: Answers): Line[] {
   const c = a.cms as string;
   add('cms', 'Content types', labelOf('cms', c), CMS[c] ?? 0, 'Each type of content gets its own template, set up so your team can publish it.');
   const d = a.design as string;
-  add(
-    'design',
-    'Design direction',
-    labelOf('design', d),
-    DESIGN[d] ?? 0,
-    d === 'system'
-      ? 'A design system and component library, so new pages are quick to build and always on brand.'
-      : 'A new look, designed around your brand and your buyers.',
-  );
+  add('design', 'Design direction', labelOf('design', d), DESIGN[d] ?? 0, 'A new look, designed around your brand and your buyers.');
+  if (a.system === 'yes')
+    add(
+      'system',
+      'Design system',
+      d === 'direction' ? 'Alongside your new direction' : 'Built on your current brand',
+      d === 'direction' ? SYSTEM_WITH_DIRECTION : SYSTEM,
+      d === 'direction'
+        ? 'A documented component library, sharing the groundwork with your new direction, so new pages are quick to build and always on brand.'
+        : 'A documented component library, so new pages are quick to build and always on brand.',
+    );
   const m = a.platform && a.platform !== 'none' ? (a.migration as string) : 'none';
   add('migration', 'Content migration', labelOf('migration', m), MIGRATION[m] ?? 0, 'Moved, tidied and redirected, so you keep your search rankings.');
   for (const id of (a.integrations as string[]) || []) {
-    add(`integration-${id}`, 'Integration', labelOf('integrations', id), INTEGRATION, 'Set up and tested, so leads and data go straight into the tools your team uses.');
+    const other = id === 'other' && typeof a.otherTools === 'string' ? a.otherTools.trim().slice(0, 80) : '';
+    add(`integration-${id}`, 'Integration', other ? `Other tools: ${other}` : labelOf('integrations', id), INTEGRATION, 'Set up and tested, so leads and data go straight into the tools your team uses.');
   }
   const extras = (a.extras as string[]) || [];
   for (const id of extras) {
@@ -293,6 +326,7 @@ export function siteLines(a: Answers): Line[] {
       'lang-2': 'Localised pages, navigation and search settings for a second market.',
       'lang-3': 'Localised pages, navigation and search settings for each market you serve.',
     };
+    if (id === 'custom') continue;
     const labels: Record<string, string> = { motion: 'Motion', a11y: 'Accessibility', 'lang-2': 'Languages', 'lang-3': 'Languages' };
     add(`extra-${id}`, labels[id] || 'Extra', labelOf('extras', id), EXTRAS[id] ?? 0, notes[id] || '');
   }
@@ -304,6 +338,53 @@ function range(lines: Line[]) {
   const total = lines.reduce((s, l) => s + l.amount, 0);
   if (total <= BASE) return { total, low: BASE, high: BASE };
   return { total, low: Math.max(BASE, roundTo(total * (1 - BAND))), high: roundTo(total * (1 + BAND)) };
+}
+
+// --- Timeline ------------------------------------------------------------------
+
+/* weeks on top of the Seed Website's six (agreed with Ben, 29 Oct 2026) */
+const BASE_WEEKS = 6;
+const WEEKS: Record<string, Record<string, number>> = {
+  templates: { '9-15': 2, '16-25': 4 },
+  system: { yes: 2 },
+  migration: { '200-plus': 2 },
+};
+const LANG_WEEKS: Record<string, number> = { 'lang-2': 1, 'lang-3': 2 };
+
+export type Timeline = { low: number; high: number; label: string; note: string };
+
+/** A realistic build time for the scope, and a kind word when the launch they asked for is tighter. */
+export function timelineFor(a: Answers): Timeline {
+  const extras = (a.extras as string[]) || [];
+  const migration = a.platform && a.platform !== 'none' ? (a.migration as string) : 'none';
+  const lang = LANG_WEEKS[extras.includes('lang-3') ? 'lang-3' : extras.includes('lang-2') ? 'lang-2' : ''] ?? 0;
+  const low =
+    BASE_WEEKS +
+    (WEEKS.templates[a.templates as string] ?? 0) +
+    (WEEKS.system[a.system as string] ?? 0) +
+    (WEEKS.migration[migration] ?? 0) +
+    lang;
+  const high = low === BASE_WEEKS ? low : low + 2;
+  const label = low === high ? 'About six weeks' : `About ${low} to ${high} weeks`;
+  let note = '';
+  if (a.timing === 'fast' && low > BASE_WEEKS)
+    note = `You'd like to launch in under six weeks. For a site this size, ${label.toLowerCase()} is realistic. If your date is fixed, we can launch the most important pages first and add the rest straight after.`;
+  else if (a.timing === 'quarter' && high > 13)
+    note = `Two to three months is tight for a site this size, where ${label.toLowerCase()} is realistic. We'll plan the order with you, so the most important pages go live first.`;
+  return { low, high, label, note };
+}
+
+/** What an option adds, for the option rows: "+£3,000", "Included", "On a call", or '' when it isn't priced. */
+export function optionPrice(qid: string, oid: string, a: Answers): string {
+  const plus = (n: number) => (n > 0 ? `+${fmtGBP(n)}` : 'Included');
+  if (qid === 'templates') return oid === '25-plus' ? 'On a call' : plus(TEMPLATES[oid] ?? 0);
+  if (qid === 'cms') return plus(CMS[oid] ?? 0);
+  if (qid === 'design') return plus(DESIGN[oid] ?? 0);
+  if (qid === 'system') return oid === 'yes' ? plus(a.design === 'direction' ? SYSTEM_WITH_DIRECTION : SYSTEM) : '';
+  if (qid === 'migration') return plus(MIGRATION[oid] ?? 0);
+  if (qid === 'integrations') return plus(INTEGRATION);
+  if (qid === 'extras') return oid === 'custom' ? 'On a call' : plus(EXTRAS[oid] ?? 0);
+  return '';
 }
 
 export function computeEstimate(a: Answers): Estimate {
@@ -338,11 +419,24 @@ export function computeEstimate(a: Answers): Estimate {
   }
   const lines = siteLines(a);
   const { total, low, high } = range(lines);
+  const timeline = timelineFor(a);
+  // a launch tighter than the scope allows is covered by the timeline note instead
   const note =
-    a.timing === 'fast'
+    a.timing === 'fast' && !timeline.note
       ? "An estimate for the site as you described it, before VAT. Under six weeks is possible for smaller sites, though a faster launch can change the price, so we'll talk it through with you."
       : 'An estimate for the site as you described it, before VAT. Your final price comes in a fixed proposal, once we have agreed the scope together.';
-  return { kind: 'range', low, high, total, lines, sprint: a.brief === 'open' ? CLARITY_SPRINT : 0, note };
+  const custom = ((a.extras as string[]) || []).includes('custom');
+  return {
+    kind: 'range',
+    low,
+    high,
+    total,
+    lines,
+    sprint: a.brief === 'open' ? CLARITY_SPRINT : 0,
+    note: custom ? note.replace('before VAT.', 'before VAT, with your custom features to price together on a call.') : note,
+    custom,
+    timeline,
+  };
 }
 
 // --- Next step ---------------------------------------------------------------
@@ -408,10 +502,21 @@ export function computeNextStep(
   const seedFit =
     a.templates === 'up-to-8' &&
     a.design === 'brand' &&
-    !((a.extras as string[]) || []).some((x) => x.startsWith('lang'));
+    a.system !== 'yes' &&
+    !((a.extras as string[]) || []).some((x) => x.startsWith('lang') || x === 'custom');
   const sprintFit = a.brief === 'open' || a.brief === 'mostly';
   const pkg = sprintFit ? SPRINT : seedFit ? SEED : undefined;
 
+  if (est.custom) {
+    return {
+      kind: 'call',
+      title: 'Book a 30-minute call',
+      body: "Custom features are easiest to price once we've heard what they need to do. We'll go through them with you, then send a fixed proposal for the whole site.",
+      href: links.call,
+      label: 'Book an intro call',
+      package: pkg,
+    };
+  }
   if (est.total >= CALL_THRESHOLD) {
     return {
       kind: 'call',
@@ -447,12 +552,20 @@ export function decodeAnswers(data: string): Answers | null {
   try {
     const parsed = JSON.parse(decodeURIComponent(escape(atob(data.replace(/-/g, '+').replace(/_/g, '/')))));
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    // links from before the design system had its own question (29 Oct 2026)
+    if (parsed.design === 'system') {
+      parsed.design = 'brand';
+      parsed.system = 'yes';
+    }
+    if ((parsed.type === 'new-site' || parsed.type === 'rebuild') && !parsed.system) parsed.system = 'no';
     const out: Answers = {};
     for (const q of QUESTIONS) {
       const ids = new Set(q.options.map((o) => o.id));
       const v = parsed[q.id];
       if (q.type === 'single' && typeof v === 'string' && ids.has(v)) out[q.id] = v;
       if (q.type === 'multi' && Array.isArray(v)) out[q.id] = v.filter((x) => typeof x === 'string' && ids.has(x));
+      const other = q.other && parsed[q.other.key];
+      if (q.other && typeof other === 'string' && other.trim()) out[q.other.key] = other.trim().slice(0, 200);
     }
     return out.type && isComplete(out) ? out : null;
   } catch {
@@ -485,6 +598,8 @@ export function describeAnswers(a: Answers): { question: string; answer: string 
     const v = a[q.id];
     const picks = Array.isArray(v) ? v : typeof v === 'string' ? [v] : [];
     const labels = picks.map((id) => q.options.find((o) => o.id === id)?.label).filter(Boolean);
-    return { question: q.prompt, answer: labels.join('; ') || (q.optional ? 'None' : '') };
+    const other = q.other && picks.includes(q.other.when) ? (a[q.other.key] as string | undefined)?.trim() : '';
+    const answer = labels.join('; ') + (other ? ` (${other})` : '');
+    return { question: q.prompt, answer: answer || (q.optional ? 'None' : '') };
   });
 }

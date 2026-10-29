@@ -32,6 +32,7 @@ export default declareComponent(Calculator, {
     backLabel: props.Text({ name: 'Back button label', defaultValue: 'Back' }),
     restartLabel: props.Text({ name: 'Start over label', defaultValue: 'Start over' }),
     showWebApp: props.Boolean({ name: 'Offer "A web app or product"', defaultValue: true }),
+    showOptionPrices: props.Boolean({ name: 'Show what each option adds', defaultValue: true }),
 
     // Next step links
     callLink: props.Text({ name: 'Call link', defaultValue: '/calls/intro' }),

@@ -24,6 +24,17 @@ ${controls}
 .pc-driver-value { flex: none; text-align: right; }
 .pc-driver-value.is-zero { color: var(--sk-muted); }
 
+/* what an option adds, on the right of the option row */
+.pc-option-price { flex: none; margin-left: auto; padding-left: 1rem; font-size: var(--sk-size-sm); line-height: 1.5; color: var(--sk-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sk-option.is-selected .pc-option-price { color: var(--sk-text); }
+.pc-other { margin: var(--sk-gap-md) 0 0; }
+
+/* realistic timeline, under the figure */
+.pc-timeline { margin-top: var(--sk-gap-md); padding-top: var(--sk-gap-md); border-top: 1px solid var(--sk-border); }
+.pc-timeline-head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin: 0 0 0.25em; }
+.pc-timeline-label { font-size: var(--sk-size-sm); color: var(--sk-muted); }
+.pc-timeline-value { font-size: var(--sk-size-body); color: var(--sk-text); font-variant-numeric: tabular-nums; }
+
 /* next step */
 .pc-next-title { margin: 0 0 0.25em; font-size: var(--sk-size-h5); line-height: 1.4; font-weight: 500; letter-spacing: -0.02em; }
 .pc-package { margin-top: var(--sk-gap-md); padding-top: var(--sk-gap-md); border-top: 1px solid var(--sk-border); }

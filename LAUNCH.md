@@ -598,6 +598,7 @@ Mobile: Performance 70, Accessibility 89, Best Practices 100, SEO 100, Agentic B
     17. [ ] **B** Paste `brain-v2-suggested-changes-2026-10-28.md` into the Sales brain (tool-lead rules, new prices, personal follow-ups)
     18. [x] **B** TEST records deleted by Ben (28 Oct)
     19. [x] **B+C** Site-wide prices (item above), in its own session (done 28 Oct, scan clean)
+    20. [~] **C** Calculator tweaks from Tom's feedback (29 Oct, Ben agreed all): design split into brand (apply / fresh direction) and a separate "Do you need a design system?" (+£5,000, or +£4,000 alongside a new direction, so £7,500 together); a realistic timeline under the figure (Seed six weeks, +2 for 9 to 15 templates, +4 for 16 to 25, +2 design system, +2 for 200+ pages, +1 or +2 for languages) with a kind note when their launch date is tighter; what each option adds shown beside it (prop "Show what each option adds"); a "Which tools?" box under Other tools (notes only, no price change); custom features (complex forms, calculators, product demos) as an extra priced on a call, which makes the next step a call; the base line says accessible build is standard and design rounds have no limit; the audit option is now "formal". Old share links still open. Email and Deal notes carry the timeline and custom features. **Ben**: accept the library update in the Designer and publish
 
 ### AI search check (28 Oct, workstream 3)
 

@@ -168,6 +168,11 @@ type CalculatorPayload = {
     reason?: string;
     from?: number;
     type?: string;
+    /** custom features: outside the figure, priced on a call */
+    custom?: boolean;
+    /** "About 10 to 12 weeks", and a note when their launch date is tighter */
+    timeline?: string;
+    timelineNote?: string;
   };
   drivers?: { label?: string; choice?: string; low?: number; high?: number }[];
   nextStep?: { kind?: string; label?: string; package?: string };
@@ -550,7 +555,8 @@ async function handleCalculator(q: CalculatorPayload) {
         ? e.reason === 'web-app'
           ? 'web app, no figure, call to scope'
           : `from ${gbp(e.from)}, call to scope`
-        : `${gbp(e.low)} to ${gbp(e.high)}${amt(e.sprint) ? `, plus a Clarity Sprint ${gbp(e.sprint)}` : ''}`;
+        : `${gbp(e.low)} to ${gbp(e.high)}${amt(e.sprint) ? `, plus a Clarity Sprint ${gbp(e.sprint)}` : ''}${e.custom ? ', plus custom features (price on a call)' : ''}`;
+  const timeline = e.kind === 'range' && e.timeline ? e.timeline.slice(0, 60) : '';
   // deal value: the middle of the range, or the three-month first term of a retainer
   const value =
     e.kind === 'recurring' ? amt(e.monthly) * 3 : e.kind === 'range' ? amt(e.total) || (amt(e.low) + amt(e.high)) / 2 : amt(e.from);
@@ -593,6 +599,7 @@ async function handleCalculator(q: CalculatorPayload) {
   const service = CALCULATOR_SERVICES[e.type || ''];
   const dealNotes = [
     `Project calculator: ${figure}`,
+    ...(timeline ? [`Timeline: ${timeline.toLowerCase()}${e.timelineNote ? ` (they asked for sooner)` : ''}`] : []),
     ...(share ? [`Their estimate: ${share}`] : []),
     `Next step: ${next}${pkg ? ` (${pkg})` : ''}`,
     '',
@@ -1424,6 +1431,9 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   const rows: RowIn[] = kind === 'range' ? (q.drivers || []).slice(0, 14) : [];
   const total = amt(e.total) || rows.reduce((s, r) => s + amt(r.low), 0);
   const sprint = amt(e.sprint);
+  const custom = kind === 'range' && !!e.custom;
+  const timeline = kind === 'range' && e.timeline ? e.timeline.slice(0, 60) : '';
+  const timelineNote = timeline && e.timelineNote ? e.timelineNote.slice(0, 400) : '';
   const campaign = kind === 'recurring' ? 'calculator-retainer' : 'calculator';
   const amount = (r: RowIn, i: number) => (i === 0 ? gbp(r.low) : `+${gbp(r.low)}`);
 
@@ -1433,7 +1443,8 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">How it adds up</p>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows
     .map((r, i) => lineRow(r.label || '', r.choice || '', amount(r, i)))
-    .join('')}${lineRow('Total', 'Shown as a range until we agree the scope', gbp(total), true)}</table>
+    .join('')}${custom ? lineRow('Custom features', 'Complex forms, calculators or product demos, priced with you on a call', 'On a call') : ''}${lineRow('Total', 'Shown as a range until we agree the scope', gbp(total), true)}</table>
+  ${timeline ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">Realistic timeline: <span style="color:${C.ink}">${h(timeline.toLowerCase())}</span>.${timelineNote ? ` ${h(timelineNote)}` : ''}</p>` : ''}
   ${sprint ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">You said the brief is still open, so we'd suggest a Clarity Sprint first (${gbp(sprint)}). It's priced separately, and it means the build starts from a brief your whole team has agreed.</p>` : ''}
 </td></tr>`
     : '';
@@ -1442,7 +1453,9 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
         '',
         'How it adds up:',
         ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${amount(r, i)})`),
+        ...(custom ? ['- Custom features: priced with you on a call'] : []),
         `- Total: ${gbp(total)}`,
+        ...(timeline ? ['', `Realistic timeline: ${timeline.toLowerCase()}.${timelineNote ? ` ${timelineNote}` : ''}`] : []),
         ...(sprint ? ['', `We'd suggest a Clarity Sprint first (${gbp(sprint)}), outside this figure.`] : []),
       ]
     : [];

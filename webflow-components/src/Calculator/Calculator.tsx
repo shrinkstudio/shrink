@@ -16,6 +16,7 @@ import {
   describeAnswers,
   fmtGBP,
   fmtRange,
+  optionPrice,
   shareUrl,
   visibleQuestions,
   type Answers,
@@ -36,6 +37,8 @@ export interface CalculatorProps {
   restartLabel?: string;
   /** Offer "A web app or product" as a project type. */
   showWebApp?: boolean;
+  /** Show what each option adds ("+£3,000", "Included") beside it. */
+  showOptionPrices?: boolean;
   /** Links the next step points at. Site-relative paths are fine. */
   callLink?: string;
   compoundCallLink?: string;
@@ -83,6 +86,7 @@ export function Calculator({
   backLabel = 'Back',
   restartLabel = 'Start over',
   showWebApp = true,
+  showOptionPrices = true,
   callLink = '/calls/intro',
   compoundCallLink = '/calls/compound',
   briefLink = '/contact?service=development',
@@ -234,7 +238,17 @@ export function Calculator({
           estimate: !est
             ? null
             : est.kind === 'range'
-              ? { kind: 'range', low: est.low, high: est.high, total: est.total, sprint: est.sprint, type: answers.type }
+              ? {
+                  kind: 'range',
+                  low: est.low,
+                  high: est.high,
+                  total: est.total,
+                  sprint: est.sprint,
+                  type: answers.type,
+                  custom: est.custom,
+                  timeline: est.timeline.label,
+                  timelineNote: est.timeline.note,
+                }
               : est.kind === 'recurring'
                 ? { kind: 'recurring', monthly: est.monthly, label: est.label, type: answers.type }
                 : { kind: 'call', reason: est.reason, from: est.from, type: answers.type },
@@ -319,10 +333,26 @@ export function Calculator({
                       <span>{opt.label}</span>
                       {opt.hint && <span className="sk-option-hint">{opt.hint}</span>}
                     </span>
+                    {showOptionPrices && optionPrice(q.id, opt.id, answers) && (
+                      <span className="pc-option-price">{optionPrice(q.id, opt.id, answers)}</span>
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            {q.other && Array.isArray(currentAnswer) && currentAnswer.includes(q.other.when) && (
+              <label className="sk-field pc-other">
+                <span className="sk-field-label">{q.other.label}</span>
+                <input
+                  className="sk-input"
+                  placeholder={q.other.placeholder}
+                  maxLength={200}
+                  value={(answers[q.other.key] as string) || ''}
+                  onChange={(e) => setAnswers((prev) => ({ ...prev, [q.other!.key]: e.target.value }))}
+                />
+              </label>
+            )}
 
             <div className="sk-actions sk-actions--between">
               <button type="button" className="sk-btn sk-btn--secondary" onClick={back}>{backLabel}</button>
@@ -340,6 +370,13 @@ export function Calculator({
                 <p className="sk-eyebrow">Your estimate</p>
                 <h3 className="pc-figure">{fmtRange(estimate.low, estimate.high)}</h3>
                 <p className="sk-body pc-figure-sub">{estimate.note}</p>
+                <div className="pc-timeline">
+                  <p className="pc-timeline-head">
+                    <span className="pc-timeline-label">Realistic timeline</span>
+                    <span className="pc-timeline-value">{estimate.timeline.label}</span>
+                  </p>
+                  {estimate.timeline.note && <p className="sk-small">{estimate.timeline.note}</p>}
+                </div>
               </>
             )}
             {estimate.kind === 'recurring' && (
@@ -375,6 +412,18 @@ export function Calculator({
                       <span className="sk-row-value pc-driver-value">{l.id === 'base' ? fmtGBP(l.amount) : `+${fmtGBP(l.amount)}`}</span>
                     </li>
                   ))}
+                  {estimate.custom && (
+                    <li className="sk-row pc-driver">
+                      <span className="pc-driver-main">
+                        <span className="sk-row-marker" aria-hidden="true">{String(estimate.lines.length + 1).padStart(2, '0')}</span>
+                        <span className="pc-driver-text">
+                          <span className="pc-driver-label">Custom features: complex forms, calculators or product demos</span>
+                          <span className="pc-driver-note">Priced with you on a call, once we've heard what they need to do.</span>
+                        </span>
+                      </span>
+                      <span className="sk-row-value pc-driver-value">On a call</span>
+                    </li>
+                  )}
                   <li className="sk-row pc-driver">
                     <span className="pc-driver-main">
                       <span className="sk-row-marker" aria-hidden="true" />
