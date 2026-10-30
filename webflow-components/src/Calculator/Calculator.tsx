@@ -79,7 +79,7 @@ export function Calculator({
   frame = 'none',
   eyebrow = 'Project calculator',
   introHeading = 'What would your site cost?',
-  introBody = "Answer a few questions about the site you need, and your price range appears straight away, before we ask for anything. The full breakdown comes by email, using the prices we quote real projects from.",
+  introBody = "Answer a few questions to see how much your site might cost.",
   bullet1 = 'About two minutes',
   bullet2 = 'See your price range straight away',
   bullet3 = 'Get the full breakdown by email',

@@ -21,7 +21,7 @@ export default declareComponent(Calculator, {
     introBody: props.Text({
       name: 'Intro body',
       defaultValue:
-        "Answer a few questions about the site you need, and your price range appears straight away, before we ask for anything. The full breakdown comes by email, using the prices we quote real projects from.",
+        "Answer a few questions to see how much your site might cost.",
     }),
     bullet1: props.Text({ name: 'Bullet 1', defaultValue: 'About two minutes' }),
     bullet2: props.Text({ name: 'Bullet 2', defaultValue: 'See your price range straight away' }),
