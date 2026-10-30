@@ -333,6 +333,26 @@ export function siteLines(a: Answers): Line[] {
   return lines;
 }
 
+/** What would bring the price down: the three biggest things that could wait for a later phase. */
+export function priceLevers(a: Answers): { label: string; amount: number }[] {
+  const said = (id: string, line: Line): string => {
+    if (id === 'templates') return 'Launching with up to 8 templates and adding the rest later';
+    if (id === 'cms') return 'Starting with one or two content types';
+    if (id === 'design') return 'Applying your current brand for now';
+    if (id === 'system') return 'Leaving the design system for a later phase';
+    if (id === 'migration') return 'Moving only your most important pages';
+    if (id === 'extra-motion') return 'Keeping motion simple at launch';
+    if (id.startsWith('extra-lang')) return 'Launching in one language first';
+    if (id.startsWith('integration-')) return `Connecting this after launch: ${line.choice}`;
+    return '';
+  };
+  return siteLines(a)
+    .map((l) => ({ label: said(l.id, l), amount: l.amount }))
+    .filter((l) => l.label)
+    .sort((x, y) => y.amount - x.amount)
+    .slice(0, 3);
+}
+
 /** The band, applied once. Never below the Seed Website price; the bare Seed scope is its fixed price. */
 function range(lines: Line[]) {
   const total = lines.reduce((s, l) => s + l.amount, 0);

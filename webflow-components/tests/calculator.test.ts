@@ -17,6 +17,7 @@ import {
   fmtRange,
   isComplete,
   optionPrice,
+  priceLevers,
   shareUrl,
   siteLines,
   timelineFor,
@@ -219,6 +220,17 @@ it('share links from before the design system question still open', () => {
   const oldSeed = { ...seed } as Answers;
   delete oldSeed.system;
   assert.equal(decodeAnswers(encodeAnswers(oldSeed))!.system, 'no');
+});
+
+it('price levers: the three biggest things that could wait, biggest first', () => {
+  const big: Answers = { ...isla, templates: '16-25', design: 'direction', extras: ['a11y', 'motion'] };
+  const l = priceLevers(big);
+  assert.equal(l.length, 3);
+  assert.equal(l[0].label, 'Launching with up to 8 templates and adding the rest later');
+  assert.equal(l[0].amount, 6000);
+  assert.ok(l.every((x, i) => i === 0 || l[i - 1].amount >= x.amount));
+  assert.ok(!priceLevers({ ...seed, extras: ['a11y'] }).some((x) => /audit|accessib/i.test(x.label)));
+  assert.deepEqual(priceLevers(seed), []);
 });
 
 it('copy: no em dashes anywhere in the model', () => {

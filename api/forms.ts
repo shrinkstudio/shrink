@@ -174,7 +174,9 @@ type CalculatorPayload = {
     timeline?: string;
     timelineNote?: string;
   };
-  drivers?: { label?: string; choice?: string; low?: number; high?: number }[];
+  drivers?: { label?: string; choice?: string; note?: string; low?: number; high?: number }[];
+  /** what would bring the price down, biggest first */
+  levers?: { label?: string; amount?: number }[];
   nextStep?: { kind?: string; label?: string; package?: string };
   answers?: { question?: string; answer?: string }[];
 };
@@ -578,7 +580,7 @@ async function handleCalculator(q: CalculatorPayload) {
     .slice(0, 20)
     .map((a) => `- ${a.question?.slice(0, 200) || '?'}: ${a.answer?.slice(0, 300) || '(skipped)'}`);
   const drivers = (q.drivers || [])
-    .slice(0, 12)
+    .slice(0, 14)
     .map((d) => `- ${d.label?.slice(0, 60) || '?'}: ${d.choice?.slice(0, 120) || ''} (${d.low === d.high ? gbp(d.low) : `+${gbp(d.low)} to ${gbp(d.high)}`})`);
   const next = q.nextStep?.label?.slice(0, 80) || 'not given';
   const pkg = q.nextStep?.package?.slice(0, 60);
@@ -1232,7 +1234,7 @@ const C = {
   accent: '#4469fc',
 };
 
-type RowIn = { label?: string; choice?: string; low?: number; high?: number };
+type RowIn = { label?: string; choice?: string; note?: string; low?: number; high?: number };
 
 function h(v: unknown) {
   return String(v ?? '')
@@ -1258,9 +1260,9 @@ const t = (size: number, weight: number, color: string, lh = 1.5, extra = '') =>
 const gap = (px: number) => `<tr><td style="height:${px}px;line-height:${px}px;font-size:0">&nbsp;</td></tr>`;
 
 /* one priced or scored line: muted label, what it is, the figure on the right */
-const lineRow = (label: string, choice: string, figure: string, last = false) => `<tr>
+const lineRow = (label: string, choice: string, figure: string, last = false, note = '') => `<tr>
   <td class="sk-lbl" style="border-top:1px solid ${C.line};padding:12px 16px ${last ? 0 : 12}px 0;width:150px;vertical-align:top;${last ? t(16, 600, C.ink) : t(14, 400, C.muted)}">${h(label)}</td>
-  <td style="border-top:1px solid ${C.line};padding:12px 16px ${last ? 0 : 12}px 0;vertical-align:top;${t(14, 500, C.ink)}">${h(choice)}</td>
+  <td style="border-top:1px solid ${C.line};padding:12px 16px ${last ? 0 : 12}px 0;vertical-align:top;${t(14, 500, C.ink)}">${h(choice)}${note ? `<br><span style="${t(13, 400, C.muted)}">${h(note)}</span>` : ''}</td>
   <td style="border-top:1px solid ${C.line};padding:12px 0 ${last ? 0 : 12}px;vertical-align:top;text-align:right;white-space:nowrap;${t(16, 600, C.ink)}">${h(figure)}</td>
 </tr>`;
 
@@ -1431,6 +1433,7 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   const rows: RowIn[] = kind === 'range' ? (q.drivers || []).slice(0, 14) : [];
   const total = amt(e.total) || rows.reduce((s, r) => s + amt(r.low), 0);
   const sprint = amt(e.sprint);
+  const levers = kind === 'range' ? (q.levers || []).filter((l) => l.label && amt(l.amount)).slice(0, 3) : [];
   const custom = kind === 'range' && !!e.custom;
   const timeline = kind === 'range' && e.timeline ? e.timeline.slice(0, 60) : '';
   const timelineNote = timeline && e.timelineNote ? e.timelineNote.slice(0, 400) : '';
@@ -1442,21 +1445,34 @@ export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
 <tr><td>
   <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:16px')}">How it adds up</p>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows
-    .map((r, i) => lineRow(r.label || '', r.choice || '', amount(r, i)))
+    .map((r, i) => lineRow(r.label || '', r.choice || '', amount(r, i), false, r.note?.slice(0, 220)))
     .join('')}${custom ? lineRow('Custom features', 'Complex forms, calculators or product demos, priced with you on a call', 'On a call') : ''}${lineRow('Total', 'Shown as a range until we agree the scope', gbp(total), true)}</table>
   ${timeline ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">Realistic timeline: <span style="color:${C.ink}">${h(timeline.toLowerCase())}</span>.${timelineNote ? ` ${h(timelineNote)}` : ''}</p>` : ''}
   ${sprint ? `<p style="${t(14, 500, C.muted, 1.5, 'margin-top:16px')}">You said the brief is still open, so we'd suggest a Clarity Sprint first (${gbp(sprint)}). It's priced separately, and it means the build starts from a brief your whole team has agreed.</p>` : ''}
+</td></tr>
+${
+  levers.length
+    ? `${gap(32)}
+<tr><td>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:8px')}">What would bring the price down</p>
+  <p style="${t(14, 500, C.muted, 1.5, 'margin-bottom:16px')}">If the budget is tight, these would make the biggest difference. Each one can usually wait for a second phase.</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${levers
+    .map((l, i) => lineRow(String(i + 1).padStart(2, '0'), (l.label || '').slice(0, 120), `Save ${gbp(l.amount)}`))
+    .join('')}</table>
 </td></tr>`
+    : ''
+}`
     : '';
   const sectionText = rows.length
     ? [
         '',
         'How it adds up:',
-        ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${amount(r, i)})`),
+        ...rows.map((r, i) => `- ${r.label}: ${r.choice} (${amount(r, i)})${r.note ? `. ${r.note.slice(0, 220)}` : ''}`),
         ...(custom ? ['- Custom features: priced with you on a call'] : []),
         `- Total: ${gbp(total)}`,
         ...(timeline ? ['', `Realistic timeline: ${timeline.toLowerCase()}.${timelineNote ? ` ${timelineNote}` : ''}`] : []),
         ...(sprint ? ['', `We'd suggest a Clarity Sprint first (${gbp(sprint)}), outside this figure.`] : []),
+        ...(levers.length ? ['', 'What would bring the price down:', ...levers.map((l) => `- ${(l.label || '').slice(0, 120)} (save ${gbp(l.amount)})`)] : []),
       ]
     : [];
 

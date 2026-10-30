@@ -17,6 +17,7 @@ import {
   fmtGBP,
   fmtRange,
   optionPrice,
+  priceLevers,
   shareUrl,
   visibleQuestions,
   type Answers,
@@ -78,10 +79,10 @@ export function Calculator({
   frame = 'none',
   eyebrow = 'Project calculator',
   introHeading = 'What would your site cost?',
-  introBody = "Answer a few questions about the site you need, and you'll see an estimate, how it adds up and what to do next. The prices are the ones we quote real projects from.",
+  introBody = "Answer a few questions about the site you need, and your price range appears straight away, before we ask for anything. The full breakdown comes by email, using the prices we quote real projects from.",
   bullet1 = 'About two minutes',
-  bullet2 = 'See your estimate straight away',
-  bullet3 = 'See how it adds up',
+  bullet2 = 'See your price range straight away',
+  bullet3 = 'Get the full breakdown by email',
   startLabel = 'Start the calculator',
   backLabel = 'Back',
   restartLabel = 'Start over',
@@ -102,6 +103,8 @@ export function Calculator({
   const [leadId, setLeadId] = useState(newId);
   const [copied, setCopied] = useState(false);
   const [hp, setHp] = useState('');
+  // the breakdown and share link: by email, or on screen for anyone opening the emailed link
+  const [unlocked, setUnlocked] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   // when the result appeared: a form sent within seconds of it is a bot
   const shownAt = useRef(0);
@@ -130,6 +133,7 @@ export function Calculator({
     setAnswers(shared);
     const ref = params.get('ref');
     if (ref) setLeadId(ref);
+    setUnlocked(true);
     setPhase('results');
     shownAt.current = Date.now();
     track('calculator_reopened', { ref: ref || '' });
@@ -143,6 +147,18 @@ export function Calculator({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // gate seen, for the seen-to-email rate (once per visit to the results)
+  const gateSeen = useRef(false);
+  useEffect(() => {
+    if (phase !== 'results') {
+      gateSeen.current = false;
+      return;
+    }
+    if (gateSeen.current || unlocked || !estimate || submit.status === 'sent') return;
+    gateSeen.current = true;
+    track('calculator_gate_seen', { kind: estimate.kind });
+  }, [phase, estimate, unlocked, submit.status]);
 
   // keep the top of the card in view as the phase changes
   const firstRender = useRef(true);
@@ -202,6 +218,7 @@ export function Calculator({
     setContact({ name: '', email: '', company: '', resources: false });
     setSubmit({ status: 'idle' });
     setLeadId(newId());
+    setUnlocked(false);
     setStep(0);
     setPhase('intro');
   }
@@ -252,7 +269,8 @@ export function Calculator({
               : est.kind === 'recurring'
                 ? { kind: 'recurring', monthly: est.monthly, label: est.label, type: answers.type }
                 : { kind: 'call', reason: est.reason, from: est.from, type: answers.type },
-          drivers: est?.kind === 'range' ? est.lines.map((l) => ({ label: l.label, choice: l.choice, low: l.amount, high: l.amount })) : [],
+          drivers: est?.kind === 'range' ? est.lines.map((l) => ({ label: l.label, choice: l.choice, note: l.note, low: l.amount, high: l.amount })) : [],
+          levers: est?.kind === 'range' ? priceLevers(answers) : [],
           nextStep: nextStep && { kind: nextStep.kind, label: nextStep.label, package: nextStep.package?.name },
           answers: describeAnswers(answers),
         }),
@@ -396,7 +414,7 @@ export function Calculator({
               </>
             )}
 
-            {estimate.kind === 'range' && (
+            {estimate.kind === 'range' && unlocked && (
               <div className="sk-block">
                 <p className="sk-label">How it adds up</p>
                 <ol className="sk-rows">
@@ -444,42 +462,30 @@ export function Calculator({
               </div>
             )}
 
-            <div className="sk-block">
-              <p className="sk-label">The next step</p>
-              <div className="sk-panel">
-                <p className="pc-next-title">{nextStep.title}</p>
-                <p className="sk-small">{nextStep.body}</p>
-                <div className="sk-actions" style={{ marginTop: '1rem' }}>
-                  <a className="sk-btn" href={nextStep.href}>{nextStep.label}</a>
-                </div>
-                {nextStep.package && (
-                  <div className="pc-package">
-                    <p className="pc-package-head">
-                      <span className="pc-package-name">{nextStep.package.name}</span>
-                      <span className="pc-package-price">{nextStep.package.price}</span>
-                    </p>
-                    <p className="sk-small">{nextStep.package.body}</p>
-                    <p className="sk-small pc-package-link">
-                      <a className="sk-link" href={nextStep.package.href}>
-                        See the {nextStep.package.name} <span aria-hidden="true">&rarr;</span>
-                      </a>
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
+            {!unlocked && (
+              <>
             {submit.status === 'sent' ? (
               <div className="sk-block" role="status">
-                <p className="sk-label">Keep this estimate</p>
-                <p className="sk-small sk-success">Thank you. Your estimate is on its way to your inbox, and Ben will be in touch to talk through the next step. If you can't see it in a few minutes, it may be in your spam folder.</p>
+                <p className="sk-label">{estimate.kind === 'range' ? 'Your breakdown' : 'Keep this estimate'}</p>
+                <p className="sk-small sk-success">Thank you. Your {estimate.kind === 'range' ? 'breakdown' : 'estimate'} is on its way to your inbox, and Ben will be in touch to talk through the next step. If you can't see it in a few minutes, it may be in your spam folder.</p>
               </div>
             ) : (
               <form className="sk-block" onSubmit={handleSubmit} noValidate>
-                <p className="sk-label">Keep this estimate</p>
-                <p className="sk-small" style={{ marginBottom: '1rem' }}>
-                  Leave your details and we'll email you the estimate and how it adds up, so you can share it with your team.
-                </p>
+                {estimate.kind === 'range' ? (
+                  <>
+                    <p className="pc-next-title">See how your {fmtRange(estimate.low, estimate.high)} breaks down</p>
+                    <p className="sk-small" style={{ marginBottom: '1rem' }}>
+                      Leave your details and we'll email you every line behind your estimate, what would bring the price down and a link to share it with your team.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="sk-label">Keep this estimate</p>
+                    <p className="sk-small" style={{ marginBottom: '1rem' }}>
+                      Leave your details and we'll email you this estimate, with a link to share it with your team.
+                    </p>
+                  </>
+                )}
                 <div className="sk-field-row">
                   <label className="sk-field">
                     <span className="sk-field-label">Name</span>
@@ -511,18 +517,47 @@ export function Calculator({
                 {submit.status === 'error' && <p className="sk-error" role="alert">{submit.message}</p>}
                 <div className="sk-actions" style={{ marginTop: 0 }}>
                   <button type="submit" className="sk-btn" disabled={submit.status === 'sending'}>
-                    {submit.status === 'sending' ? 'Sending' : 'Email me the estimate'}
+                    {submit.status === 'sending' ? 'Sending' : estimate.kind === 'range' ? 'Email me the breakdown' : 'Email me the estimate'}
                   </button>
                 </div>
               </form>
             )}
+              </>
+            )}
+
+            <div className="sk-block">
+              <p className="sk-label">The next step</p>
+              <div className="sk-panel">
+                <p className="pc-next-title">{nextStep.title}</p>
+                <p className="sk-small">{nextStep.body}</p>
+                <div className="sk-actions" style={{ marginTop: '1rem' }}>
+                  <a className="sk-btn" href={nextStep.href}>{nextStep.label}</a>
+                </div>
+                {nextStep.package && (
+                  <div className="pc-package">
+                    <p className="pc-package-head">
+                      <span className="pc-package-name">{nextStep.package.name}</span>
+                      <span className="pc-package-price">{nextStep.package.price}</span>
+                    </p>
+                    <p className="sk-small">{nextStep.package.body}</p>
+                    <p className="sk-small pc-package-link">
+                      <a className="sk-link" href={nextStep.package.href}>
+                        See the {nextStep.package.name} <span aria-hidden="true">&rarr;</span>
+                      </a>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {disclaimer && <p className="sk-small" style={{ marginTop: 'var(--sk-gap-main)' }}>{disclaimer}</p>}
 
             <div className="pc-tools">
-              <button type="button" className="pc-textbtn" onClick={copyLink}>
-                {copied ? 'Link copied, ready to share' : 'Copy a link to share this estimate'}
-              </button>
+              {unlocked && (
+                <button type="button" className="pc-textbtn" onClick={copyLink}>
+                  {copied ? 'Link copied, ready to share' : 'Copy a link to share this estimate'}
+                </button>
+              )}
               <button type="button" className="pc-textbtn" onClick={changeAnswers}>Change an answer</button>
               <button type="button" className="pc-textbtn" onClick={restart}>{restartLabel}</button>
             </div>
