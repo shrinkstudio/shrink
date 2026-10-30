@@ -1,0 +1,56 @@
+{
+  "_note": "Source for the Ask AI Prompt CMS field. {url} and {title} fill in on the page (src/modules/ask-ai.ts).",
+  "defaults": {
+    "article": "Read {url} (\"{title}\" by Shrink Studio) and give me the key points in plain English. Then ask me one or two questions about my company, and tell me how this applies to us.",
+    "service": "Read {url} (\"{title}\" by Shrink Studio) and explain what this covers, who it's for and what it typically involves. Then ask me one or two questions about my company, and tell me whether it's a good fit and what else I should compare it with.",
+    "package": "Read {url} (\"{title}\" by Shrink Studio) and explain what's included, how long it takes and what it costs. Then ask me one or two questions about my company, and tell me whether it's a good fit and what else I should compare it with."
+  },
+  "articles": {
+    "webflow-agencies-london-b2b-tech": "summarise how the agencies differ. Then ask me about our stage, budget and team, and tell me which two or three are worth talking to.",
+    "ai-visibility-tools-b2b-saas": "compare the tools it covers. Then ask me about our team and budget, and tell me which one we should try first.",
+    "webflow-vs-framer-b2b-startup": "give me the main differences. Then ask me about our team, our content and how often the site changes, and tell me which suits us.",
+    "php2shell-marketing-site": "explain what happened in plain English. Then ask me what our site runs on and who hosts it, and tell me what we should check today.",
+    "what-post-raise-rebuilds-miss": "give me the key points. Then ask me about our raise and our current site, and tell me what our rebuild is most likely to miss.",
+    "five-files-ai-can-read-your-site": "explain what each file does. Then ask me for my domain, and tell me which of the five to check first.",
+    "how-to-properly-audit-a-site": "turn it into a short checklist. Then ask me about my site and its data, and tell me where to start.",
+    "aeo-for-b2b-saas": "explain AEO in plain English. Then ask me about my company and my buyers, and tell me the first questions we should try to show up for.",
+    "building-at-the-right-funding-moment": "give me the key points. Then ask me about our funding stage and our next raise, and tell me whether now is the right time to rebuild.",
+    "one-percent-better-every-week": "give me the main idea. Then ask me who looks after our site today, and suggest a simple weekly routine we could start with.",
+    "solid-foundation-for-ai-tools": "give me the key points. Then ask me which AI tools my team uses, and tell me what we should put in place first.",
+    "information-architecture-buyers": "give me the key points. Then ask me about my buyers and how my site is organised, and suggest how I could restructure it.",
+    "plain-english-structured-data": "explain it in plain English. Then ask me what kind of site I run, and tell me which structured data to add first.",
+    "conversion-questions-before-design": "list the questions it recommends. Then ask me about a page I want to improve, and help me answer them for that page.",
+    "ranks-but-never-cited": "explain why this happens. Then ask me about my site and my best-ranking pages, and tell me what to change so they get cited.",
+    "globalisation-as-architecture": "give me the key points. Then ask me which markets we're looking at, and tell me what to plan before adding a language.",
+    "core-web-vitals-without-the-panic": "explain the three metrics in plain English. Then ask me for my scores, and tell me which one to fix first.",
+    "landing-page-teardown": "list what it says earns the click. Then ask me about a landing page of mine, and review it against that list.",
+    "getting-quoted-by-chatgpt": "summarise what the experiment found. Then ask me about my site, and tell me which of those findings I could try first."
+  },
+  "services": {
+    "discovery": "explain what this service covers, who it's for and what you get at the end. Then ask me one or two questions about my company, and tell me whether we need it before a build.",
+    "development": "explain what's included, how long it takes and what it costs. Then ask me about our stage and our current site, and tell me which size of build would suit us and what else I should compare it with.",
+    "optimisation": "explain the monthly work, the retainer options and what they cost. Then ask me about our traffic and our team, and tell me which level suits us, or whether it's too early."
+  },
+  "solutions": {
+    "performance-reporting": "ask me how we report on our website today, and tell me what a better monthly report would look like.",
+    "analytics-conversion-tracking": "ask me what we track today, and tell me what's missing.",
+    "a-b-testing-experimentation": "ask me about our traffic, and tell me whether we have enough for testing yet.",
+    "answer-engine-optimisation-aeo": "ask me who my buyers are, and tell me which questions we should aim to show up for in AI answers.",
+    "conversion-rate-optimisation-cro": "ask me about our main conversion page, and tell me where to start.",
+    "platform-migrations": "ask me what platform we're on and how big the site is, and tell me the main risks of moving to Webflow.",
+    "webflow-development": "ask me who runs our site today, and tell me whether Webflow suits us.",
+    "ux-ui-design": "ask me about our site and our buyers, and tell me where design is most likely holding us back.",
+    "design-systems": "ask me how my team builds new pages today, and tell me whether a design system is worth it for us.",
+    "marketing-websites": "ask me about our stage and our current site, and tell me what our next site needs to do.",
+    "website-audits-teardowns": "ask me about my site, and tell me what an audit would look at first.",
+    "content-strategy": "ask me about our buyers and our main pages, and tell me what each page should be saying.",
+    "information-architecture": "ask me how our site is organised, and tell me where buyers are likely to get lost.",
+    "positioning-messaging": "ask me what we do and who we sell to, and tell me whether our message is clear enough for a website.",
+    "icp-audience-research": "ask me who we sell to today, and tell me what we should find out about them."
+  },
+  "packages": {
+    "seed-website": "Read {url} (\"{title}\" by Shrink Studio) and explain what's included, how long it takes and what it costs. Then ask me about our stage and what we need the site to do, and tell me whether this is enough for us or whether we need a bigger build.",
+    "clarity-sprint": "Read {url} (\"{title}\" by Shrink Studio) and explain what you get, how long it takes and what it costs. Then ask me how clear our positioning and brief are today, and tell me whether we need this before a build.",
+    "compound": "Read {url} (\"{title}\" by Shrink Studio) and explain the monthly work and what it costs. Then ask me about our traffic and our team, and tell me whether this level suits us or whether a smaller retainer would do."
+  }
+}

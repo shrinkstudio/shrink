@@ -2,7 +2,8 @@
 // ASK AI — footer widget: open an AI assistant with a prefilled prompt about Shrink.
 // Buttons are Webflow elements with [data-ask-ai="<platform>"] and a CMS-bound
 // [data-ask-ai-prompt] ({url} and {title} fill in from the page, eg. the
-// "Ask AI" component on articles). JS only attaches behaviour; markup + styling stay in Webflow.
+// "Ask AI" component). An empty prompt falls back to [data-ask-ai-fallback], the
+// component's Default prompt. JS only attaches behaviour; markup + styling stay in Webflow.
 // Ported from shrinkstudio/shrink-studio-site/src/ask-ai.js.
 //
 // Webflow binding (LLM Answers CMS): data-ask-ai <- Data Platform field,
@@ -65,8 +66,10 @@ function getPrompt(el: Element): string {
   let node: Node | null = el;
   while (node && node !== document.body) {
     if (node instanceof Element) {
-      const v = node.getAttribute('data-ask-ai-prompt');
-      if (v && v.trim()) return fillTokens(v.trim());
+      const v =
+        node.getAttribute('data-ask-ai-prompt')?.trim() ||
+        node.getAttribute('data-ask-ai-fallback')?.trim();
+      if (v) return fillTokens(v);
     }
     node = node.parentNode;
   }
