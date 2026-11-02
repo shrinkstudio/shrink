@@ -861,3 +861,6 @@ Why (PostHog, 28 to 30 Oct, excluding Claude browser sessions): 20 sessions view
 
 ### Homepage snippet (2 Nov)
 "webflow agency london": 192 impressions, 0 clicks since launch at about position 5. New title "Webflow agency London for funded B2B tech | Shrink Studio" and description "Premium Webflow Partner in London. Fixed-price sites for venture-backed B2B teams from £15,000, live in six weeks." (Ben cut the closing "Get a price in two minutes." line after the first publish.) Judge on clicks over two weeks. Site count: 50+ everywhere already (pages, metadata, schema, CMS, llms.txt), no 70+ left.
+
+### Orbit prompts honed (2 Nov)
+ChatGPT names Shrink where the question is service + audience + place and our page states it plainly (design system agency London). Broad questions are answered from third-party lists or platform docs. Seven overlapping or unwinnable prompts deactivated (history kept); seven hire-intent prompts added: Webflow component libraries for marketing teams (UK), Webflow sites marketing can edit without developers, agency to rebuild after a funding round, Webflow agency for a Series A startup (UK), fixed-price Webflow builds (UK), AEO for B2B SaaS (UK), London Webflow agency for fintech startups. 15 of 15 active; new prompts have no trend until a few scans in.
