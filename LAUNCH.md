@@ -864,3 +864,6 @@ Why (PostHog, 28 to 30 Oct, excluding Claude browser sessions): 20 sessions view
 
 ### Orbit prompts honed (2 Nov)
 ChatGPT names Shrink where the question is service + audience + place and our page states it plainly (design system agency London). Broad questions are answered from third-party lists or platform docs. Seven overlapping or unwinnable prompts deactivated (history kept); seven hire-intent prompts added: Webflow component libraries for marketing teams (UK), Webflow sites marketing can edit without developers, agency to rebuild after a funding round, Webflow agency for a Series A startup (UK), fixed-price Webflow builds (UK), AEO for B2B SaaS (UK), London Webflow agency for fintech startups. 15 of 15 active; new prompts have no trend until a few scans in.
+
+### Nav dropdown card to the calculator (2 Nov, Ben)
+- [ ] **C** Services mega nav card: swap "Ready to brief a build?" (quiz) for the calculator, link `/tools/project-calculator`. Needs the Webflow MCP back on ss-2027. Draft: eyebrow "Need a figure?", heading "What would your site cost?", body "A few questions about the site you need, then an estimate.", button "Try the calculator". Ben to OK the wording. Text over the light mesh panels is hard to read; check contrast when swapping.
