@@ -873,3 +873,7 @@ ChatGPT names Shrink where the question is service + audience + place and our pa
 - [x] **C** Case Studies: new switch **Show Client Quote** (`show-client-quote`, Case Study group), bound to the `.case-quote` figure's visibility on the template. On for six, off for `forest-bikes`, because Forest's client quote is about the quiz and that page shares the client. New case studies need it switched on to show a quote.
 - [ ] **C** After publish: quote on `/case-studies/forest-common-sense-quiz`, none on `/case-studies/forest-bikes`, quotes still on the other case studies, slider at 9 on `/contact`.
 - Left off the About Testimonial Card: it needs a 3:4 portrait at 600 x 800 and the photo is 400 x 400.
+
+### Mega Nav panels editable in the Designer (2 Nov, Ben)
+- [x] **C** Same pattern as nxzen. Both panels now carry `data-panel-state="inactive"`; set it to `active` inside the component to open that panel on the canvas, then back. Rule added to the Mega Nav embed under `.wf-design-mode`, so the live site is unchanged. `mega-nav.ts` only writes this attribute, it never reads it. The Designer Preview prop stays as view only (tooltip and component description updated).
+- [ ] **B** Try it in the Designer. Not testable through the MCP.
