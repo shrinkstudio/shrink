@@ -871,7 +871,7 @@ ChatGPT names Shrink where the question is service + audience + place and our pa
 ### Forest testimonial, Elizabeth Baillie (2 Nov, Ben)
 - [x] **C** Clients > Forest, staged: short and long quote "Thanks Shrink for working on part 2 of The Common Sense Quiz with us (and just being all round legends).", highlight "being all round legends", Senior Creative Producer, WebP avatar (6 KB), slider order 9. Shows in the Testimonial Slider and on the quiz case study.
 - [x] **C** Case Studies: new switch **Show Client Quote** (`show-client-quote`, Case Study group), bound to the `.case-quote` figure's visibility on the template. On for six, off for `forest-bikes`, because Forest's client quote is about the quiz and that page shares the client. New case studies need it switched on to show a quote.
-- [ ] **C** After publish: quote on `/case-studies/forest-common-sense-quiz`, none on `/case-studies/forest-bikes`, quotes still on the other case studies, slider at 9 on `/contact`.
+- [x] **C** Verified live 2 Nov: quote on `/case-studies/forest-common-sense-quiz`, none on `/case-studies/forest-bikes`, quotes intact on Adfin, Buff, CloudNC and Steamhaus. Slider shows 8 with Eli last: Gravita (Benn Raistrick) is still a draft with no avatar.
 - Left off the About Testimonial Card: it needs a 3:4 portrait at 600 x 800 and the photo is 400 x 400.
 
 ### Mega Nav panels editable in the Designer (2 Nov, Ben)
@@ -881,5 +881,5 @@ ChatGPT names Shrink where the question is service + audience + place and our pa
 ### Resources nav card from the CMS (2 Nov, Ben)
 - [x] **C** News & Insights: new switch **Feature In Nav** (`feature-in-nav`, Article group), on for "What most post-raise rebuilds miss".
 - [x] **C** Mega Nav, Resources panel: one-item Collection List on News & Insights (all `u-d-contents`, empty state `u-d-none`, limit 1) with the existing card moved inside. Eyebrow now "Featured article", mesh darkened to `#0d0833, #1b1060, #2a1ba0, #3a24d8, #5b3cf5`.
-- [ ] **B** In the Designer, on the list: filter Feature In Nav is on, sort Date newest first. Title bound to Title, text bound to Summary with `u-text-clamp-3` added, Button link to Current News & Insight. The MCP refuses filters and bindings on a list inside a component.
-- [ ] **C** After publish: card shows the switched-on post, button opens it, and Load more on `/resources` still pulls articles (Finsweet finds its list by `.w-dyn-list` index and the nav now adds one).
+- [x] **B** In the Designer, on the list: filter Feature In Nav is on, sort Date newest first. Title bound to Title, text bound to Summary with `u-text-clamp-3` added, Button link to Current News & Insight. The MCP refuses filters and bindings on a list inside a component.
+- [x] **C** Verified live 2 Nov: card shows "Webflow vs Framer for a B2B startup" (Ben's pick, the only post switched on), text legible on the darker mesh, link to the article. `/resources` has no pagination, so Load more doesn't apply; Finsweet filters still work with the nav list above them (Craft 5 of 17, reset 17).
