@@ -880,6 +880,6 @@ ChatGPT names Shrink where the question is service + audience + place and our pa
 
 ### Resources nav card from the CMS (2 Nov, Ben)
 - [x] **C** News & Insights: new switch **Feature In Nav** (`feature-in-nav`, Article group), on for "What most post-raise rebuilds miss".
-- [x] **C** Mega Nav, Resources panel: one-item Collection List on News & Insights (all `u-d-contents`, empty state `u-d-none`, limit 1) with the existing card moved inside. Eyebrow now "Featured article", summary clamped to three lines, mesh darkened to `#0d0833, #1b1060, #2a1ba0, #3a24d8, #5b3cf5`.
-- [ ] **B** In the Designer, on the list: filter Feature In Nav is on, sort Date newest first. Title bound to Title, text bound to Summary, Button link to Current News & Insight. The MCP refuses filters and bindings on a list inside a component.
+- [x] **C** Mega Nav, Resources panel: one-item Collection List on News & Insights (all `u-d-contents`, empty state `u-d-none`, limit 1) with the existing card moved inside. Eyebrow now "Featured article", mesh darkened to `#0d0833, #1b1060, #2a1ba0, #3a24d8, #5b3cf5`.
+- [ ] **B** In the Designer, on the list: filter Feature In Nav is on, sort Date newest first. Title bound to Title, text bound to Summary with `u-text-clamp-3` added, Button link to Current News & Insight. The MCP refuses filters and bindings on a list inside a component.
 - [ ] **C** After publish: card shows the switched-on post, button opens it, and Load more on `/resources` still pulls articles (Finsweet finds its list by `.w-dyn-list` index and the nav now adds one).
