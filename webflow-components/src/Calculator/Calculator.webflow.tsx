@@ -48,6 +48,11 @@ export default declareComponent(Calculator, {
       name: 'Lead submit endpoint',
       defaultValue: 'https://shrink-site-api.vercel.app/api/forms',
     }),
+    gateStyle: props.Variant({
+      name: 'Breakdown gate (reveal = first line shown)',
+      options: ['reveal', 'list'],
+      defaultValue: 'reveal',
+    }),
     disclaimer: props.Text({
       name: 'Small print',
       defaultValue:

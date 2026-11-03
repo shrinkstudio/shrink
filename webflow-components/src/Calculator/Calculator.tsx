@@ -50,7 +50,7 @@ export interface CalculatorProps {
   submitEndpoint?: string;
   /** Small print under the result. */
   disclaimer?: string;
-  /** How the breakdown is held back: "list" asks for an email up front; "reveal" shows the first line and fades the rest. */
+  /** How the breakdown is held back: "reveal" shows the first line and fades the rest; "list" asks for an email up front. */
   gateStyle?: 'list' | 'reveal';
 }
 
@@ -96,7 +96,7 @@ export function Calculator({
   optInLabel = 'Send me guides and resources from Shrink',
   submitEndpoint = 'https://shrink-site-api.vercel.app/api/forms',
   disclaimer = 'An estimate from our standard price list, before VAT, to help you plan. Your final price comes in a fixed proposal once we have agreed the scope together.',
-  gateStyle = 'list',
+  gateStyle = 'reveal',
 }: CalculatorProps) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [step, setStep] = useState(0);
@@ -160,7 +160,7 @@ export function Calculator({
     }
     if (gateSeen.current || unlocked || !estimate || submit.status === 'sent') return;
     gateSeen.current = true;
-    track('calculator_gate_seen', { kind: estimate.kind });
+    track('calculator_gate_seen', { kind: estimate.kind, gate: gateStyle });
   }, [phase, estimate, unlocked, submit.status]);
 
   // keep the top of the card in view as the phase changes
@@ -281,7 +281,7 @@ export function Calculator({
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error || 'Submit failed');
       setSubmit({ status: 'sent' });
-      track('calculator_email_requested', { kind: est?.kind || '' });
+      track('calculator_email_requested', { kind: est?.kind || '', gate: gateStyle });
     } catch {
       setSubmit({ status: 'error', message: 'Something went wrong on our side. Please try again, or email hey@shrink.studio.' });
     }
