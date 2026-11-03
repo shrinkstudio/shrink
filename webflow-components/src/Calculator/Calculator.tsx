@@ -50,6 +50,8 @@ export interface CalculatorProps {
   submitEndpoint?: string;
   /** Small print under the result. */
   disclaimer?: string;
+  /** How the breakdown is held back: "list" asks for an email up front; "reveal" shows the first line and fades the rest. */
+  gateStyle?: 'list' | 'reveal';
 }
 
 type Phase = 'intro' | 'questions' | 'results';
@@ -94,6 +96,7 @@ export function Calculator({
   optInLabel = 'Send me guides and resources from Shrink',
   submitEndpoint = 'https://shrink-site-api.vercel.app/api/forms',
   disclaimer = 'An estimate from our standard price list, before VAT, to help you plan. Your final price comes in a fixed proposal once we have agreed the scope together.',
+  gateStyle = 'list',
 }: CalculatorProps) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [step, setStep] = useState(0);
@@ -462,6 +465,39 @@ export function Calculator({
               </div>
             )}
 
+            {estimate.kind === 'range' && !unlocked && gateStyle === 'reveal' && submit.status !== 'sent' && (
+              <div className="sk-block">
+                <p className="sk-label">How it adds up</p>
+                <ol className="sk-rows">
+                  <li className="sk-row pc-driver">
+                    <span className="pc-driver-main">
+                      <span className="sk-row-marker" aria-hidden="true">01</span>
+                      <span className="pc-driver-text">
+                        <span className="pc-driver-label">{estimate.lines[0].label}: {estimate.lines[0].choice}</span>
+                        <span className="pc-driver-note">{estimate.lines[0].note}</span>
+                      </span>
+                    </span>
+                    <span className="sk-row-value pc-driver-value">{fmtGBP(estimate.lines[0].amount)}</span>
+                  </li>
+                </ol>
+                {/* placeholder rows only: the real lines are never in the markup until unlocked */}
+                <ol className="sk-rows pc-ghosts" aria-hidden="true">
+                  {Array.from({ length: Math.min(Math.max(estimate.lines.length - 1, 2), 4) }, (_, i) => (
+                    <li className="sk-row pc-driver" key={i}>
+                      <span className="pc-driver-main">
+                        <span className="sk-row-marker">{String(i + 2).padStart(2, '0')}</span>
+                        <span className="pc-driver-text">
+                          <span className="pc-ghost" style={{ width: `${[62, 48, 56, 40][i]}%` }} />
+                          <span className="pc-ghost pc-ghost--sm" style={{ width: `${[84, 70, 78, 64][i]}%` }} />
+                        </span>
+                      </span>
+                      <span className="pc-ghost pc-ghost--value" />
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
             {!unlocked && (
               <>
             {submit.status === 'sent' ? (
@@ -470,8 +506,19 @@ export function Calculator({
                 <p className="sk-small sk-success">Thank you. Your {estimate.kind === 'range' ? 'breakdown' : 'estimate'} is on its way to your inbox, and Ben will be in touch to talk through the next step. If you can't see it in a few minutes, it may be in your spam folder.</p>
               </div>
             ) : (
-              <form className="sk-block" onSubmit={handleSubmit} noValidate>
-                {estimate.kind === 'range' ? (
+              <form className={gateStyle === 'reveal' && estimate.kind === 'range' ? 'sk-block sk-block--tight' : 'sk-block'} onSubmit={handleSubmit} noValidate>
+                {estimate.kind === 'range' && gateStyle === 'reveal' ? (
+                  <>
+                    <p className="pc-next-title">Get the full breakdown by email</p>
+                    <ul className="sk-points pc-gets">
+                      <li className="sk-point">Every line behind your {fmtRange(estimate.low, estimate.high)}, with what each one covers</li>
+                      {priceLevers(answers).length > 0 && (
+                        <li className="sk-point">What would bring the price down, and how much each change saves</li>
+                      )}
+                      <li className="sk-point">A link that opens the full breakdown, to share with your team</li>
+                    </ul>
+                  </>
+                ) : estimate.kind === 'range' ? (
                   <>
                     <p className="pc-next-title">See how your {fmtRange(estimate.low, estimate.high)} breaks down</p>
                     <p className="sk-small" style={{ marginBottom: '1rem' }}>
