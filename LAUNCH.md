@@ -903,3 +903,27 @@ ChatGPT names Shrink where the question is service + audience + place and our pa
 - [x] **B** Homepage SEO, from Orbit's "0 clicks from 262 impressions" card: title "Webflow design agency London for B2B tech | Shrink Studio", description "Webflow design and development for B2B tech teams. Premium Partner in London, fixed price from £15,000, live in six weeks." Took "design" from Orbit's proposal, kept the positioning. Published 6 Nov.
 - [x] **C** Orbit prompt set (cap 15): deactivated "how much should I budget for a conversion rate optimization agency" and "who are the best Webflow agencies in London" (history kept); added "which Webflow agency is best for a seed-stage B2B tech startup" and "which Webflow agencies work with B2B tech startups in Europe". Baseline 4 Nov: ChatGPT mentions us in 5 of 15, Gemini, AI Mode and AI Overviews 0.
 - [ ] **C** Read the homepage card's searches ("webflow design agency london" at 6.3) and the two new prompts after a few scans.
+
+### Resources and Tools baseline before the weekend rework (6 Nov)
+Window 9 Oct to 5 Nov (28 days, before the 6 Nov LinkedIn calculator post). Orbit for landings (people only), PostHog for page views, scroll and tool events. PostHog undercounts against Orbit (blockers, cookieless). Tool event counts include a few of our own test runs; previews on `/tool-split.html` and `/ai-check.html` are left out.
+- **Landings on /resources and /tools/\*** (Orbit): 81 sessions, 52 visitors, 178 pageviews, 128s engaged, 24.7% bounce, 0 conversions.
+  - `/tools/project-calculator` 26 sessions, 205s, 15% bounce
+  - `/resources/php2shell-marketing-site` 17, 63s, 12%
+  - `/resources/ai-visibility-tools-b2b-saas` 10, 15s, 40%
+  - `/resources` 8, 244s, 13%
+  - `/resources/aeo-for-b2b-saas` 5, 84s, 20%; `/resources/plain-english-structured-data` 5, 18s, 80%
+  - `/tools/ready-to-brief-a-build` 3, 44s, 0%; every other article 3 or fewer
+- **Page views and scroll** (PostHog, deepest scroll per view, share of views reaching 75%):
+  - `/tools/project-calculator` 57 views, 40 people; scroll 70%, 56% reach 75%
+  - `/resources` 21 views, 19 people; 72%, 50%
+  - `/tools/ready-to-brief-a-build` 21 views, 17 people; 75%, 67%
+  - `/resources/php2shell-marketing-site` 14 views; 64%, 55%
+  - `/resources/ai-visibility-tools-b2b-saas` 10 views (no scroll events); `/resources/webflow-vs-framer-b2b-startup` 8 views; the rest 4 or fewer
+- **Tools** (PostHog): calculator 26 starts (20 people), 21 finishes (17 people), 5 gate views, 1 email; readiness quiz 2 starts, 1 finish, 1 email; AI Search Check has no live page views (preview only). `article-read` fired 17 times, 8 of them on php2shell.
+
+### 6 Nov LinkedIn calculator post, end of day
+- Site: 297 pageviews, 126 sessions (PostHog), against about 20 pageviews before 11:00. Peak 13:00 to 14:00 (145 pageviews).
+- LinkedIn (Orbit): 41 sessions, 113 pageviews, 118s engaged, 12% bounce. Landings: calculator 24, homepage 11, `/calls/intro` 3 (406s), `/contact` 3.
+- Calculator: 13 people started, 12 finished, 12 saw the reveal gate, 0 emails. One day matched the whole previous 28 days of finishes.
+- Next steps taken: 12 people viewed `/contact`, 5 viewed a call page (`/calls/intro`, `/calls/seed-website`). No form leads, calculator emails or bookings in #int-inbound-leads.
+- [ ] **C** Feed into the 20 Nov gate read: 12 reveal-gate views and 0 emails today, 14 views and 0 emails since 3 Nov.
