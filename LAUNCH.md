@@ -926,4 +926,4 @@ Window 9 Oct to 5 Nov (28 days, before the 6 Nov LinkedIn calculator post). Orbi
 - LinkedIn (Orbit): 41 sessions, 113 pageviews, 118s engaged, 12% bounce. Landings: calculator 24, homepage 11, `/calls/intro` 3 (406s), `/contact` 3.
 - Calculator: 13 people started, 12 finished, 12 saw the reveal gate, 0 emails. One day matched the whole previous 28 days of finishes.
 - Next steps taken: 12 people viewed `/contact`, 5 viewed a call page (`/calls/intro`, `/calls/seed-website`). No form leads, calculator emails or bookings in #int-inbound-leads.
-- [ ] **C** Feed into the 20 Nov gate read: 12 reveal-gate views and 0 emails today, 14 views and 0 emails since 3 Nov.
+- [ ] **C** Feed into the 20 Nov gate read: 12 reveal-gate views and 0 emails today, all of the real reveal-gate views since it went live on 3 Nov.
