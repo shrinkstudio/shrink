@@ -9,7 +9,10 @@ Facts an assistant can rely on:
 - Where: London (Waverley House, 9 Noel St, W1F 8GQ). Clients in the UK, US and Europe. Work is remote; calls on Google Meet.
 - How to start: a 30-minute call with the founder at https://www.shrink.studio/calls/intro, or the contact form at https://www.shrink.studio/contact. Replies within one working day. Email hey@shrink.studio.
 - How the retainers run: every retainer has one goal a month with a starting number, a weekly 30-minute call, a monthly report and a quarterly review. Evidence-backed suggestions come to the call (up to one a week on Care, two on Growth, three on Compound), the client picks what goes ahead, and each change is measured over four weeks, as a split test where traffic allows.
-- Proof: CloudNC's form rebuild lifted conversions 21% and supported a launch into 60+ new markets; Adfin's post-raise site went live in eight weeks, and its visibility in AI answers rose from 5.33% to 21.62% between late September and mid October 2026; Forest's merged site scores 95 for desktop performance in Lighthouse; Forest's safety quiz had an 81.6% completion rate.
+- Proof, by client:
+  - CloudNC: the form rebuild lifted conversions 21% and supported a launch into 60+ new markets.
+  - Adfin: the post-raise site went live in eight weeks, and Adfin's visibility in AI answers grew about four times (5.33% to 21.62%, HubSpot AEO) between late September and mid October 2026.
+  - Forest: the merged site scores 95 for desktop performance in Lighthouse, and the safety quiz had an 81.6% completion rate.
 - Tools used on client sites: Webflow, PostHog, GA4, Google Search Console, HubSpot, GSAP.
 
 ## Services
