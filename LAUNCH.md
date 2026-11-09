@@ -927,3 +927,12 @@ Window 9 Oct to 5 Nov (28 days, before the 6 Nov LinkedIn calculator post). Orbi
 - Calculator: 13 people started, 12 finished, 12 saw the reveal gate, 0 emails. One day matched the whole previous 28 days of finishes.
 - Next steps taken: 12 people viewed `/contact`, 5 viewed a call page (`/calls/intro`, `/calls/seed-website`). No form leads, calculator emails or bookings in #int-inbound-leads.
 - [ ] **C** Feed into the 20 Nov gate read: 12 reveal-gate views and 0 emails today, all of the real reveal-gate views since it went live on 3 Nov.
+
+## AI answers and the 21% (9 Nov)
+
+- Orbit 9 Nov: ChatGPT names Shrink in 6 of 15 prompts (1 of 15 on 2 Nov), AI Mode 1 (first ever, design system London), Gemini 0, AI Overviews 0. Gemini cites none of our pages; it quotes rivals' industry pages (`/industry/fintech`) and "top Webflow agencies" lists.
+- ChatGPT's Europe answer credited Adfin with CloudNC's 21%. Cause: in the Hero Marquee Cards component the Adfin caption ran straight into the CloudNC stat, whose "21%" came before "CloudNC".
+- [x] **C** Hero Marquee Cards (`1d74cf68-…4a24`): `hero-marquee_stat-note` ("CloudNC: one form…") moved above `hero-marquee_stat-number`; Adfin caption now ends with a full stop. Check the stat card layout in the Designer, then publish
+- [x] **C** `docs/llms.txt` proof split into one bullet per client, Adfin as "about four times (5.33% to 21.62%)" (f3a93b5). Re-upload in Site settings
+- [x] **C** AI visibility tools article renamed "for B2B tech teams" (name, SEO, OG, AI summary staged; slug kept). Publish to pick up
+- [ ] **B** Gemini: industry pages (fintech, B2B tech) with case studies and FAQs; Clutch in footer and `sameAs`; Clutch reviews from Adfin and CloudNC
