@@ -405,7 +405,7 @@ async function handleResource(s: Submission) {
   // email 1: the download. Webflow retries reuse the submission id, so the key stops doubles.
   const mail = guideEmail(guide, d.name);
   const emailed = mail
-    ? await sendResultsEmail(email, mail, `guide-${s.id || `${email}-${date(s)}`}`, 'guide', '')
+    ? await sendResultsEmail(email, mail, `guide-${s.id || `${email}-${date(s)}`}`, 'guide', '', undefined, { contact: contact.id })
     : 'not sent: no email for this guide';
 
   await notify(
@@ -1335,7 +1335,7 @@ function renderEmail(p: EmailParts): CalculatorEmail {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr><td>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td><a href="${withUtm(SITE + '/', p.campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0"></a></td>
+    <td><a href="${withUtm(SITE + '/', p.campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0;border-radius:19px"></a></td>
     <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${h(p.tag)}</span></td>
   </tr></table>
 </td></tr>
@@ -1562,7 +1562,7 @@ export function followUpEmail(guide: string, f: FollowUp, name: string | undefin
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 <tr><td>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0"></a></td>
+    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0;border-radius:19px"></a></td>
     <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${h(guide)}</span></td>
   </tr></table>
 </td></tr>
@@ -1678,10 +1678,19 @@ async function runGuideEmails() {
     if (due <= step) continue;
     const email = String(rec.fields.Email || '');
     const mail = followUpEmail(guide, emails[due - 2], rec.fields.Name as string | undefined, await unsubscribeUrl(rec.id));
-    const sent = await sendResultsEmail(email, mail, `followup-${rec.id}-${due}`, 'guide-followup', '', {
-      'List-Unsubscribe': `<${await unsubscribeUrl(rec.id)}>`,
-      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-    });
+    const contactId = ((rec.fields.Contact as string[]) || [])[0];
+    const sent = await sendResultsEmail(
+      email,
+      mail,
+      `followup-${rec.id}-${due}`,
+      'guide-followup',
+      '',
+      {
+        'List-Unsubscribe': `<${await unsubscribeUrl(rec.id)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+      { mailing: rec.id, ...(contactId ? { contact: contactId } : {}) }
+    );
     const log = String(rec.fields['Sequence log'] || '');
     const fields: Record<string, unknown> = { 'Sequence log': `${log ? `${log}\n` : ''}${today()} email ${due}: ${sent}` };
     if (sent.startsWith('sent')) fields['Sequence step'] = due;
@@ -2172,7 +2181,8 @@ async function sendResultsEmail(
   key: string,
   tool: string,
   deal: string,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
+  extraTags?: Record<string, string>
 ): Promise<string> {
   const mode = (process.env.RESULTS_EMAIL || 'off').toLowerCase();
   const testers = (process.env.RESULTS_EMAIL_TEST || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
@@ -2191,7 +2201,11 @@ async function sendResultsEmail(
         html: mail.html,
         text: mail.text,
         // the deal tag comes back on Resend events (api/email-events.ts)
-        tags: [{ name: 'tool', value: tool }, ...(deal ? [{ name: 'deal', value: deal }] : [])],
+        tags: [
+          { name: 'tool', value: tool },
+          ...(deal ? [{ name: 'deal', value: deal }] : []),
+          ...Object.entries(extraTags || {}).map(([name, value]) => ({ name, value })),
+        ],
         ...(headers ? { headers } : {}),
       }),
     });

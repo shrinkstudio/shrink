@@ -2,6 +2,7 @@
  * Resend webhook → Airtable Shrink OS, for the automatic results emails.
  *
  * Every results email carries a `deal` tag with its Deal record id (api/forms.ts).
+ * Guide emails carry `contact` instead (see guideEvent).
  * Events update that Deal's "Results email" status and "Last clicked":
  * - email.delivered: Sent → Delivered
  * - email.clicked: Clicked, Last clicked = now
@@ -19,6 +20,15 @@ declare const process: { env: Record<string, string | undefined> };
 
 const BASE = 'appx76yahrfuTcbiD';
 const DEALS = 'tbl5TAoijwcEctsso';
+const CONTACTS = 'tblXiE8Absty3l4HW';
+const MAILING = 'tblCy7RBJ1r86aWvo';
+
+const STATUS: Record<string, string> = {
+  'email.delivered': 'Delivered',
+  'email.clicked': 'Clicked',
+  'email.bounced': 'Bounced',
+  'email.complained': 'Complained',
+};
 const MAX_AGE_S = 5 * 60;
 
 /* status only climbs: a late "delivered" never undoes "clicked" */
@@ -48,7 +58,12 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const deal = tag(ev, 'deal');
-  if (!deal || !/^rec[A-Za-z0-9]{14}$/.test(deal)) return json({ ok: true, skipped: 'no deal tag' });
+  const contact = tag(ev, 'contact');
+  const isRec = (v: string) => /^rec[A-Za-z0-9]{14}$/.test(v);
+  if (!isRec(deal)) {
+    if (isRec(contact)) return guideEvent(ev, contact, tag(ev, 'mailing'));
+    return json({ ok: true, skipped: 'no deal or contact tag' });
+  }
 
   const status =
     ev.type === 'email.delivered'
@@ -88,6 +103,54 @@ export async function POST(request: Request): Promise<Response> {
   } catch (err) {
     console.error('email event', ev.type, deal, err);
     // 500 so Resend retries
+    return json({ ok: false, error: 'airtable failed' }, 500);
+  }
+}
+
+/**
+ * Guide emails (download + follow-ups) carry `contact` (and `mailing` on follow-ups).
+ * Contact gets "Guide email" (only climbs) and "Guide last clicked". A click on the
+ * call link moves the Contact to Needs follow-up and pings Slack; a spam complaint
+ * unsubscribes the Mailing list record.
+ */
+async function guideEvent(ev: ResendEvent, contact: string, mailing: string): Promise<Response> {
+  const status = STATUS[ev.type || ''] || '';
+  if (!status) return json({ ok: true, skipped: ev.type });
+  try {
+    const current = await airtable(`${CONTACTS}/${contact}`, 'GET');
+    const was = String(current.fields?.['Guide email'] || '');
+    const fields: Record<string, unknown> = {};
+    if ((RANK[status] || 0) > (RANK[was] || 0)) fields['Guide email'] = status;
+    const link = ev.data?.click?.link || '';
+    const who = `${current.fields?.Name || 'Someone'}${ev.data?.to?.[0] ? ` (${ev.data.to[0]})` : ''}`;
+    if (status === 'Clicked') {
+      fields['Guide last clicked'] = ev.data?.click?.timestamp || ev.created_at || new Date().toISOString();
+      if (/\/calls\//.test(link)) {
+        const next = String(current.fields?.['Next action'] || '');
+        if (next !== 'Meeting booked') fields['Next action'] = 'Needs follow-up';
+        const notes = String(current.fields?.Notes || '');
+        const line = `${new Date().toISOString().slice(0, 10)} Clicked the call link in "${ev.data?.subject || 'a guide email'}"`;
+        fields.Notes = notes ? `${notes}\n${line}` : line;
+      }
+    }
+    if (Object.keys(fields).length) await airtable(`${CONTACTS}/${contact}`, 'PATCH', { fields });
+
+    if (status === 'Clicked' && /\/calls\//.test(link)) {
+      await notify('Guide reader clicked the call link', [who, `In "${ev.data?.subject || 'a guide email'}"`], `https://airtable.com/${BASE}/${CONTACTS}/${contact}`);
+    }
+    if (status === 'Complained' && /^rec[A-Za-z0-9]{14}$/.test(mailing)) {
+      await airtable(`${MAILING}/${mailing}`, 'PATCH', { fields: { Status: 'Unsubscribed', 'Synced to provider': false } });
+    }
+    if (status === 'Bounced' || status === 'Complained') {
+      await notify(
+        status === 'Bounced' ? 'Guide email bounced' : 'Guide email marked as spam',
+        [who, status === 'Bounced' ? `The address may be wrong: ${ev.data?.bounce?.message || ev.data?.bounce?.type || 'no reason given'}` : 'They marked it as spam, so they are off the mailing list.'],
+        `https://airtable.com/${BASE}/${CONTACTS}/${contact}`
+      );
+    }
+    return json({ ok: true, contact, status });
+  } catch (err) {
+    console.error('guide email event', ev.type, contact, err);
     return json({ ok: false, error: 'airtable failed' }, 500);
   }
 }
