@@ -5,7 +5,17 @@
   "buildCommand": "",
   "outputDirectory": "dist",
   "functions": {
-    "api/forms.ts": { "maxDuration": 120 },
-    "api/scan.ts": { "maxDuration": 60 }
-  }
+    "api/forms.ts": {
+      "maxDuration": 120
+    },
+    "api/scan.ts": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/forms?job=guide-emails",
+      "schedule": "0 9 * * 1-5"
+    }
+  ]
 }

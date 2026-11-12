@@ -25,7 +25,8 @@
  * Env (Vercel): AIRTABLE_TOKEN, WEBFLOW_WEBHOOK_SECRET (optional, verifies the signature),
  * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook), ANTHROPIC_API_KEY, OPENAI_API_KEY,
  * PERPLEXITY_API_KEY (each optional: a missing key leaves that model out of the report),
- * OPENAI_MODEL / PERPLEXITY_MODEL (optional overrides), SCAN_ENDPOINT (optional).
+ * OPENAI_MODEL / PERPLEXITY_MODEL (optional overrides), SCAN_ENDPOINT (optional),
+ * CRON_SECRET + UNSUBSCRIBE_SECRET (guide follow-ups: see that section).
  */
 
 declare const process: { env: Record<string, string | undefined> };
@@ -199,6 +200,17 @@ export function OPTIONS(request: Request): Response {
 
 export async function POST(request: Request): Promise<Response> {
   const raw = await request.text();
+
+  // one-click unsubscribe (List-Unsubscribe-Post) from a follow-up email
+  const unsub = new URL(request.url).searchParams.get('unsubscribe');
+  if (unsub) {
+    try {
+      return json({ ok: await unsubscribe(unsub) });
+    } catch (err) {
+      console.error('unsubscribe', err);
+      return json({ ok: false }, 500);
+    }
+  }
 
   // quiz: browser POST from the code component, guarded by origin (no Webflow signature)
   const quiz = parseQuiz(raw);
@@ -384,6 +396,11 @@ async function handleResource(s: Submission) {
   const mailing = d.resources
     ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Guide', guide })
     : null;
+
+  // follow-ups (emails 2 to 4) for guides that have them, unless a sequence is already running
+  if (mailing && FOLLOWUPS[guide.trim()] && !mailing.fields.Sequence) {
+    await patch(T.mailing, mailing.id, { Sequence: guide.trim(), 'Sequence start': date(s), 'Sequence step': 1 });
+  }
 
   // email 1: the download. Webflow retries reuse the submission id, so the key stops doubles.
   const mail = guideEmail(guide, d.name);
@@ -1454,6 +1471,252 @@ export function guideEmail(guide: string, name?: string): CalculatorEmail | null
   });
 }
 
+/* ---------- guide follow-ups (emails 2 to 4) ---------- */
+// Only for people who ticked the box for new guides. handleResource starts the sequence
+// (Mailing list: Sequence, Sequence start, Sequence step = 1). A weekday cron calls
+// GET ?job=guide-emails, which sends the latest email that's due and moves the step on.
+// Every follow-up carries a signed unsubscribe link (GET shows a page, POST is one-click).
+// Env: CRON_SECRET (Vercel sends it on cron calls), UNSUBSCRIBE_SECRET (signs the links).
+
+const API = 'https://shrink-site-api.vercel.app/api/forms';
+
+type Para = string | { list: string[] };
+type FollowUp = { day: number; subject: string; preheader: string; paras: Para[] };
+
+const FOLLOWUPS: Record<string, FollowUp[]> = {
+  'AI visibility checklist': [
+    {
+      day: 3,
+      subject: 'Do your first two lines say what you do?',
+      preheader: 'One check to try first.',
+      paras: [
+        "Thanks again for downloading the checklist. I hope it's been useful so far.",
+        "If you only get to one check this week, I'd suggest the two-line test. Copy the first two lines under your homepage headline into a blank document, then read them as someone who's never heard of you.",
+        "If they don't say who you help, with what, and where, that's the one I'd fix first, because AI tools tend to quote from the top of the page. Check 2.1 in the guide has a before and after to work from.",
+        "I'd love to hear how yours reads, so please do reply if you try it.",
+      ],
+    },
+    {
+      day: 28,
+      subject: 'Your week 4 reading',
+      preheader: 'Same questions, asked the same way.',
+      paras: [
+        "I hope the last few weeks have gone well. It's now four weeks since you downloaded the checklist, which makes this a good time for the week 4 reading on page 27.",
+        "Ask the same questions you asked at the start, in the same way, and make a note of which of your pages come up. The most useful part is comparing the pages you've changed with the ones you've left as they were.",
+        "If you've hit a check you can't get past, or simply haven't had the time, I'm around for a [30-minute call](" + SITE + "/calls/intro) whenever suits you.",
+      ],
+    },
+    {
+      day: 56,
+      subject: 'Your week 8 reading',
+      preheader: 'The first proper trend.',
+      paras: [
+        "It's now eight weeks since you downloaded the checklist, so this is the week 8 reading on page 27. It's the first point where you'll be able to see a proper trend.",
+        "Run your questions a third time and compare all three readings side by side. Pages 28 and 29 cover what to do next, whichever way things have gone.",
+        "This is the last of these emails, so thank you for following along. If things haven't moved as much as you'd hoped, [book a 30-minute call](" + SITE + "/calls/intro) and we can look at it together.",
+      ],
+    },
+  ],
+};
+
+/** Escape, then turn [text](https://…) into links (with UTMs on our own pages). */
+function inline(v: string, campaign: string) {
+  return h(v).replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, (_m, label: string, url: string) => {
+    const href = url.startsWith(SITE) ? withUtm(url, campaign) : url;
+    return `<a href="${h(href)}" style="color:${C.ink};text-decoration:underline">${label}</a>`;
+  });
+}
+
+function plainLinks(v: string) {
+  return v.replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '$1 ($2)');
+}
+
+/** A plain letter from Ben, in the same shell as the results emails, with an unsubscribe footer. */
+export function followUpEmail(guide: string, f: FollowUp, name: string | undefined, unsubscribe: string): CalculatorEmail {
+  const campaign = GUIDES[guide]?.campaign || 'guide';
+  const first = (name || '').trim().split(/\s+/)[0]?.slice(0, 40);
+  const hi = first ? `Hi ${first},` : 'Hi,';
+  const body = f.paras
+    .map((p) =>
+      typeof p === 'string'
+        ? `<p class="sk-body" style="${t(18, 500, C.ink, 1.5, 'margin-top:16px')}">${inline(p, campaign)}</p>`
+        : `<ul style="${t(18, 500, C.ink, 1.5, 'margin-top:12px;padding-left:24px')}">${p.list
+            .map((li) => `<li style="margin-top:8px">${inline(li, campaign)}</li>`)
+            .join('')}</ul>`
+    )
+    .join('\n');
+  const why = `You're getting this because you asked for new guides from Shrink Studio when you downloaded the ${guide}.`;
+  const html = `<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>${h(f.subject)}</title>
+<style>@media (max-width:520px){.sk-outer{padding:16px 8px !important}.sk-pad{padding:24px !important}.sk-body{font-size:16px !important}.sk-stack{display:block !important;width:100% !important;text-align:left !important}.sk-photo{padding-top:16px !important}}</style>
+</head>
+<body style="margin:0;padding:0;background:${C.smoke}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${h(f.preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.smoke}"><tr><td class="sk-outer" align="center" style="padding:40px 16px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:${C.white};border-radius:8px"><tr><td class="sk-pad" style="padding:40px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><a href="${withUtm(SITE + '/', campaign)}" style="display:inline-block"><img src="${ASSETS}/mascot-pill-3x.png" width="75" height="38" alt="Shrink" style="display:block;border:0"></a></td>
+    <td align="right"><span style="display:inline-block;background:${C.smoke};border-radius:4px;padding:4px 8px;${t(14, 500, C.ink)}">${h(guide)}</span></td>
+  </tr></table>
+</td></tr>
+${gap(40)}
+<tr><td>
+  <p class="sk-body" style="${t(18, 500, C.ink, 1.5)}">${h(hi)}</p>
+${body}
+  <p class="sk-body" style="${t(18, 500, C.ink, 1.5, 'margin-top:16px')}">All the best,<br>Ben</p>
+</td></tr>
+${gap(32)}
+<tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td class="sk-stack" style="vertical-align:top">
+      <p style="${t(18, 500, C.ink, 1.3)}">Ben Hammond</p>
+      <p style="${t(18, 500, C.light, 1.3)}">Founder, Shrink Studio</p>
+    </td>
+    <td class="sk-stack sk-photo" width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
+  </tr></table>
+</td></tr>
+${gap(48)}
+<tr><td style="border-top:1px solid ${C.line};padding-top:16px">
+  <p style="${t(14, 500, C.grey)}">${h(why)} <a href="${h(unsubscribe)}" style="color:${C.grey};text-decoration:underline">Unsubscribe</a></p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788), Waverley House, 9 Noel St, London</p>
+</td></tr>
+</table>
+</td></tr></table>
+</td></tr></table>
+</body>
+</html>`;
+  const text = [
+    hi,
+    '',
+    ...f.paras.flatMap((p) => (typeof p === 'string' ? [plainLinks(p), ''] : [...p.list.map((li) => `- ${li}`), ''])),
+    'All the best,',
+    'Ben',
+    '',
+    'Ben Hammond, Founder, Shrink Studio',
+    '',
+    why,
+    `Unsubscribe: ${unsubscribe}`,
+  ].join('\n');
+  return { subject: f.subject, html, text };
+}
+
+/** HMAC of the Mailing list record id, so an unsubscribe link only works for its own record. */
+async function unsubscribeSig(id: string): Promise<string> {
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!secret) throw new Error('UNSUBSCRIBE_SECRET not set');
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode(`unsubscribe:${id}`));
+  return [...new Uint8Array(mac)].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function unsubscribeUrl(id: string) {
+  return `${API}?unsubscribe=${id}.${await unsubscribeSig(id)}`;
+}
+
+/** Sets the Mailing list record to Unsubscribed. Returns false for a bad or tampered link. */
+async function unsubscribe(token: string): Promise<boolean> {
+  const [id, sig] = token.split('.');
+  if (!/^rec[A-Za-z0-9]{14}$/.test(id || '') || !sig) return false;
+  if (!timingSafeEqual(await unsubscribeSig(id), sig)) return false;
+  const rec = (await airtable(`${T.mailing}/${id}`, 'GET')) as AirtableRecord;
+  const log = String(rec.fields['Sequence log'] || '');
+  await patch(T.mailing, id, {
+    Status: 'Unsubscribed',
+    'Synced to provider': false,
+    'Sequence log': `${log ? `${log}\n` : ''}${today()} unsubscribed`,
+  });
+  await notify('Unsubscribed', [`${rec.fields.Email} left the mailing list`], recordUrl(T.mailing, id));
+  return true;
+}
+
+function unsubscribedPage(ok: boolean) {
+  const msg = ok
+    ? "You're unsubscribed, so there'll be no more guide emails from Shrink Studio. If that was a mistake, just reply to any email and I'll add you back."
+    : "That link didn't work, so nothing has changed. Reply to the email and I'll take you off the list by hand.";
+  return new Response(
+    `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Shrink Studio</title></head><body style="margin:0;background:${C.smoke}"><div style="max-width:520px;margin:80px auto;padding:32px;background:${C.white};border-radius:8px"><p style="${t(18, 500, C.ink)}">${h(msg)}</p><p style="${t(14, 500, C.grey, 1.5, 'margin-top:24px')}">Ben, Shrink Studio</p></div></body></html>`,
+    { status: ok ? 200 : 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The daily job: for each person on a sequence, send the latest follow-up that's due. */
+async function runGuideEmails() {
+  const formula = `AND({Status} = "Subscribed", {Sequence} != "", {Sequence start} != "", {Sequence step} < 4)`;
+  const records: AirtableRecord[] = [];
+  let offset = '';
+  do {
+    const qs = new URLSearchParams({ filterByFormula: formula, pageSize: '100' });
+    if (offset) qs.set('offset', offset);
+    const res = await airtable(`${T.mailing}?${qs}`, 'GET');
+    records.push(...(res.records || []));
+    offset = res.offset || '';
+  } while (offset);
+
+  const now = Date.parse(today());
+  const results: string[] = [];
+  for (const rec of records) {
+    const guide = String(rec.fields.Sequence || '').trim();
+    const emails = FOLLOWUPS[guide];
+    if (!emails) continue;
+    const start = Date.parse(String(rec.fields['Sequence start']));
+    const step = Number(rec.fields['Sequence step']) || 1;
+    // the latest email that's due; earlier ones that were missed are skipped, not stacked
+    let due = 0;
+    emails.forEach((f, i) => {
+      if (now >= start + f.day * DAY_MS) due = i + 2;
+    });
+    if (due <= step) continue;
+    const email = String(rec.fields.Email || '');
+    const mail = followUpEmail(guide, emails[due - 2], rec.fields.Name as string | undefined, await unsubscribeUrl(rec.id));
+    const sent = await sendResultsEmail(email, mail, `followup-${rec.id}-${due}`, 'guide-followup', '', {
+      'List-Unsubscribe': `<${await unsubscribeUrl(rec.id)}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    });
+    const log = String(rec.fields['Sequence log'] || '');
+    const fields: Record<string, unknown> = { 'Sequence log': `${log ? `${log}\n` : ''}${today()} email ${due}: ${sent}` };
+    if (sent.startsWith('sent')) fields['Sequence step'] = due;
+    await patch(T.mailing, rec.id, fields);
+    results.push(`${email}: email ${due} ${sent}`);
+  }
+  if (results.length) await notify('Guide follow-ups', results);
+  return { ok: true, checked: records.length, sent: results };
+}
+
+/** Cron (Authorization: Bearer CRON_SECRET) and unsubscribe links. */
+export async function GET(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const token = url.searchParams.get('unsubscribe');
+  if (token) {
+    try {
+      return unsubscribedPage(await unsubscribe(token));
+    } catch (err) {
+      console.error('unsubscribe', err);
+      return unsubscribedPage(false);
+    }
+  }
+  if (url.searchParams.get('job') === 'guide-emails') {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) return json({ ok: false }, 401);
+    try {
+      return json(await runGuideEmails());
+    } catch (err) {
+      console.error('guide emails', err);
+      return json({ ok: false, error: 'failed' }, 500);
+    }
+  }
+  return json({ ok: false }, 404);
+}
+
 export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   const c = q.contact || {};
   const e = q.estimate || {};
@@ -1903,7 +2166,14 @@ async function askPerplexity(question: string): Promise<Reply> {
 }
 
 /** Sends through Resend. Returns the email id, or why it wasn't sent. */
-async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, tool: string, deal: string): Promise<string> {
+async function sendResultsEmail(
+  to: string,
+  mail: CalculatorEmail,
+  key: string,
+  tool: string,
+  deal: string,
+  headers?: Record<string, string>
+): Promise<string> {
   const mode = (process.env.RESULTS_EMAIL || 'off').toLowerCase();
   const testers = (process.env.RESULTS_EMAIL_TEST || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean);
   const apiKey = process.env.RESEND_API_KEY;
@@ -1922,6 +2192,7 @@ async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, 
         text: mail.text,
         // the deal tag comes back on Resend events (api/email-events.ts)
         tags: [{ name: 'tool', value: tool }, ...(deal ? [{ name: 'deal', value: deal }] : [])],
+        ...(headers ? { headers } : {}),
       }),
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
