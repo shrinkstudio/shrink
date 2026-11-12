@@ -13,7 +13,8 @@
  * Signed by Resend (Svix): RESEND_WEBHOOK_SECRET is the endpoint's signing secret.
  * Stays self-contained (no relative imports): Vercel runs api/ files unbundled.
  *
- * Env (Vercel): AIRTABLE_TOKEN, RESEND_WEBHOOK_SECRET, SLACK_LEADS_WEBHOOK (optional).
+ * Env (Vercel): AIRTABLE_TOKEN, RESEND_WEBHOOK_SECRET, SLACK_LEADS_WEBHOOK (optional),
+ * SLACK_GUIDES_WEBHOOK (optional: guide bounces and complaints; unset = Airtable only).
  */
 
 declare const process: { env: Record<string, string | undefined> };
@@ -145,7 +146,8 @@ async function guideEvent(ev: ResendEvent, contact: string, mailing: string): Pr
       await notify(
         status === 'Bounced' ? 'Guide email bounced' : 'Guide email marked as spam',
         [who, status === 'Bounced' ? `The address may be wrong: ${ev.data?.bounce?.message || ev.data?.bounce?.type || 'no reason given'}` : 'They marked it as spam, so they are off the mailing list.'],
-        `https://airtable.com/${BASE}/${CONTACTS}/${contact}`
+        `https://airtable.com/${BASE}/${CONTACTS}/${contact}`,
+        'guides'
       );
     }
     return json({ ok: true, contact, status });
@@ -201,8 +203,8 @@ async function airtable(path: string, method: string, body?: unknown) {
 /* Slack ping (SLACK_LEADS_WEBHOOK), same shape as api/forms.ts. Never throws. */
 const mrkdwn = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-async function notify(title: string, lines: string[], link: string): Promise<void> {
-  const url = process.env.SLACK_LEADS_WEBHOOK;
+async function notify(title: string, lines: string[], link: string, channel: 'leads' | 'guides' = 'leads'): Promise<void> {
+  const url = channel === 'guides' ? process.env.SLACK_GUIDES_WEBHOOK : process.env.SLACK_LEADS_WEBHOOK;
   if (!url) return;
   const blocks = [
     { type: 'section', text: { type: 'mrkdwn', text: `*${mrkdwn(title)}*\n${lines.map(mrkdwn).join('\n')}` } },

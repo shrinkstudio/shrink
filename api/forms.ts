@@ -26,7 +26,8 @@
  * SLACK_LEADS_WEBHOOK (optional, Slack incoming webhook), ANTHROPIC_API_KEY, OPENAI_API_KEY,
  * PERPLEXITY_API_KEY (each optional: a missing key leaves that model out of the report),
  * OPENAI_MODEL / PERPLEXITY_MODEL (optional overrides), SCAN_ENDPOINT (optional),
- * CRON_SECRET + UNSUBSCRIBE_SECRET (guide follow-ups: see that section).
+ * CRON_SECRET + UNSUBSCRIBE_SECRET (guide follow-ups: see that section), SLACK_GUIDES_WEBHOOK
+ * (optional, low-intent guide pings; see notify).
  */
 
 declare const process: { env: Record<string, string | undefined> };
@@ -416,7 +417,8 @@ async function handleResource(s: Submission) {
       sourceLine(d) && `Source: ${sourceLine(d)}`,
       `Email: ${emailed}`,
     ],
-    recordUrl(T.contacts, contact.id)
+    recordUrl(T.contacts, contact.id),
+    'guides'
   );
 
   return { ok: true, contact: contact.id, company: company?.id, mailing: mailing?.id, emailed };
@@ -1633,7 +1635,7 @@ async function unsubscribe(token: string): Promise<boolean> {
     'Synced to provider': false,
     'Sequence log': `${log ? `${log}\n` : ''}${today()} unsubscribed`,
   });
-  await notify('Unsubscribed', [`${rec.fields.Email} left the mailing list`], recordUrl(T.mailing, id));
+  await notify('Unsubscribed', [`${rec.fields.Email} left the mailing list`], recordUrl(T.mailing, id), 'guides');
   return true;
 }
 
@@ -1697,7 +1699,7 @@ async function runGuideEmails() {
     await patch(T.mailing, rec.id, fields);
     results.push(`${email}: email ${due} ${sent}`);
   }
-  if (results.length) await notify('Guide follow-ups', results);
+  if (results.length) await notify('Guide follow-ups', results, undefined, 'guides');
   return { ok: true, checked: records.length, sent: results };
 }
 
@@ -2240,8 +2242,11 @@ const clip = (s: string | undefined, n = 280) => {
 
 type Line = string | false | null | undefined;
 
-async function notify(title: string, lines: Line[], link?: string): Promise<void> {
-  const url = process.env.SLACK_LEADS_WEBHOOK;
+// 'leads' = someone to talk to (SLACK_LEADS_WEBHOOK). 'guides' = low intent: guide downloads,
+// follow-up sends, unsubscribes (SLACK_GUIDES_WEBHOOK, eg. #guide-downloads). No guides
+// webhook = no ping; it's all in Airtable either way, and never in the leads channel.
+async function notify(title: string, lines: Line[], link?: string, channel: 'leads' | 'guides' = 'leads'): Promise<void> {
+  const url = channel === 'guides' ? process.env.SLACK_GUIDES_WEBHOOK : process.env.SLACK_LEADS_WEBHOOK;
   if (!url) return;
 
   const body = lines
