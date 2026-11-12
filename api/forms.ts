@@ -385,17 +385,24 @@ async function handleResource(s: Submission) {
     ? await upsertMailing(s, { name: d.name, email, contact: contact.id, source: 'Guide', guide })
     : null;
 
+  // email 1: the download. Webflow retries reuse the submission id, so the key stops doubles.
+  const mail = guideEmail(guide, d.name);
+  const emailed = mail
+    ? await sendResultsEmail(email, mail, `guide-${s.id || `${email}-${date(s)}`}`, 'guide', '')
+    : 'not sent: no email for this guide';
+
   await notify(
     'Guide download',
     [
       `${d.name || 'No name'} (${email})`,
       `Took "${guide}"${d.resources ? ', opted in to resources' : ''}`,
       sourceLine(d) && `Source: ${sourceLine(d)}`,
+      `Email: ${emailed}`,
     ],
     recordUrl(T.contacts, contact.id)
   );
 
-  return { ok: true, contact: contact.id, company: company?.id, mailing: mailing?.id };
+  return { ok: true, contact: contact.id, company: company?.id, mailing: mailing?.id, emailed };
 }
 
 async function handleQuiz(q: QuizPayload) {
@@ -1334,7 +1341,7 @@ ${gap(24)}
     <td class="sk-stack" style="vertical-align:top">
       <p style="${t(18, 500, C.ink, 1.3)}">Ben Hammond</p>
       <p style="${t(18, 500, C.light, 1.3)}">Founder</p>
-      <p class="sk-cta" style="margin:48px 0 0"><a href="${p.cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${h(p.button)}</a></p>
+      ${p.button ? `<p class="sk-cta" style="margin:48px 0 0"><a href="${p.cta}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">${h(p.button)}</a></p>` : ''}
     </td>
     <td class="sk-stack sk-photo" width="100" style="vertical-align:bottom;text-align:right"><img src="${ASSETS}/ben-2x.jpg" width="100" height="100" alt="Ben Hammond" style="display:block;border:0;border-radius:2px"></td>
   </tr></table>
@@ -1351,7 +1358,7 @@ ${
 ${gap(48)}
 <tr><td style="border-top:1px solid ${C.line};padding-top:16px">
   <p style="${t(14, 500, C.grey)}">You asked for this ${p.thing} on shrink.studio on ${date}. We'll only send you guides and updates if you ticked the box to get them.</p>
-  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788) &middot; Waverley House, 9 Noel St, London</p>
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-top:12px')}">&copy; ${new Date().getFullYear()} Shrink Studio Limited (14735788), Waverley House, 9 Noel St, London</p>
 </td></tr>
 </table>
 </td></tr>
@@ -1370,7 +1377,7 @@ ${gap(48)}
     '',
     `What happens next: ${p.nextLine}`,
     p.note,
-    `${p.button}: ${p.cta}`,
+    ...(p.button ? [`${p.button}: ${p.cta}`] : []),
     ...(p.share ? ['', `${p.shareLabel || `Reopen your ${p.thing}`}: ${p.share}`] : []),
     '',
     'Ben Hammond, Founder, Shrink Studio',
@@ -1383,6 +1390,69 @@ ${gap(48)}
 const shareLink = (url: string | undefined, campaign: string) =>
   url && /^https:\/\/(www\.)?shrink\.studio\//.test(url) ? withUtm(url, campaign) : '';
 const firstName = (name?: string) => (name || '').trim().split(/\s+/)[0]?.slice(0, 40) || 'there';
+
+/* ---------- guide email ---------- */
+// Email 1 of a guide: the download, sent to everyone who takes it (they asked for it).
+// Keyed by the page h1 the form sends as "Guide". A guide missing here gets no email.
+// Re-uploading the PDF in the CMS changes its URL: update `pdf` here too.
+type GuideMail = { subject: string; preheader: string; body: string; contents: string; format: string; pdf: string; sheet?: string; campaign: string };
+const GUIDES: Record<string, GuideMail> = {
+  'AI visibility checklist': {
+    subject: 'Your AI visibility checklist',
+    preheader: '22 checks, and where to start.',
+    body:
+      'Start with the first 30 minutes on page 3: five checks you can run today with a browser.',
+    contents: '22 checks across five sections',
+    format: 'PDF, 34 pages',
+    pdf: 'https://cdn.prod.website-files.com/6a8daa40e6b8009a3d00e6a7/6af605db591bd5ed145c18af_AI%20Visibility%20Guide%20-%20Shrink%20Studio.pdf',
+    sheet: 'https://docs.google.com/spreadsheets/d/1xyFehhSDMSz6bO43bxXvi_-7WPa2Ceq2SOu4s60R9jI/copy',
+    campaign: 'ai-visibility-checklist',
+  },
+};
+
+export function guideEmail(guide: string, name?: string): CalculatorEmail | null {
+  const g = GUIDES[guide.trim()];
+  if (!g) return null;
+  const download = `${gap(32)}
+<tr><td style="border-top:1px solid ${C.line};border-bottom:1px solid ${C.line};padding:16px 0">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td style="${t(16, 500, C.ink, 1.4)}">${h(g.contents)}<br><span style="${t(14, 500, C.muted)}">${h(g.format)}</span></td>
+    <td align="right" style="white-space:nowrap"><a href="${h(g.pdf)}" style="display:inline-block;background:${C.ink};border-radius:4px;padding:10px 16px;text-decoration:none;${t(14, 500, C.white)}">Download the PDF</a></td>
+  </tr></table>
+</td></tr>`;
+  const sectionHtml = download + (g.sheet
+    ? `${gap(24)}
+<tr><td style="background:${C.smoke};border-radius:4px;padding:16px">
+  <p style="${t(14, 500, C.grey, 1.5, 'margin-bottom:8px')}">The tracking sheet</p>
+  <p style="${t(16, 500, C.ink, 1.5)}">Page 30 also comes as a Google Sheet. Fill in the first rows today, so you have a week 0 reading to compare against later.</p>
+  <p style="${t(14, 500, C.ink, 1.5, 'margin-top:12px')}"><a href="${h(g.sheet)}" style="color:${C.ink};text-decoration:underline">Make your own copy &rarr;</a></p>
+</td></tr>`
+    : '');
+  const sectionText = [
+    '',
+    `Download the PDF (${g.format}): ${g.pdf}`,
+    ...(g.sheet
+      ? ['', 'The tracking sheet: page 30 also comes as a Google Sheet. Fill in the first rows today, so you have a week 0 reading to compare against later.', `Make your own copy: ${g.sheet}`]
+      : []),
+  ];
+  return renderEmail({
+    subject: g.subject,
+    preheader: g.preheader,
+    tag: 'Free guide',
+    top: `Here's your checklist, ${firstName(name)}.`,
+    figure: guide.trim(),
+    body: h(g.body),
+    sectionHtml,
+    sectionText,
+    nextLine: 'Tell me what the first 30 minutes turns up.',
+    note: 'Reply to this email. It comes to me.',
+    button: '',
+    cta: '',
+    share: '',
+    thing: 'guide',
+    campaign: g.campaign,
+  });
+}
 
 export function calculatorEmail(q: CalculatorPayload): CalculatorEmail {
   const c = q.contact || {};
@@ -1851,10 +1921,7 @@ async function sendResultsEmail(to: string, mail: CalculatorEmail, key: string, 
         html: mail.html,
         text: mail.text,
         // the deal tag comes back on Resend events (api/email-events.ts)
-        tags: [
-          { name: 'tool', value: tool },
-          { name: 'deal', value: deal },
-        ],
+        tags: [{ name: 'tool', value: tool }, ...(deal ? [{ name: 'deal', value: deal }] : [])],
       }),
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
